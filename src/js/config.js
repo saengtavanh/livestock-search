@@ -4,7 +4,6 @@ jQuery.noConflict();
     let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID);
     let HASUPDATED = true;
     let GETVERSION = [];
-    console.log(CONFIG);
 
     // get field from kintone app.
     let GETFIELD = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
