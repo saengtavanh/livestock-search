@@ -152,6 +152,11 @@ tbody tr{
   align-items: center;
   width: 733px;
 }
+#div-code-master{
+  display: flex;
+  align-items: center;
+  width: 733px;
+}
 
 #label-show-title{
   margin-top: 10px;
@@ -164,6 +169,13 @@ tbody tr{
   margin-left: 50px;
 }
 #table-space-prompt-template-button{
+  margin-left: 35px;
+}
+#td-table-code-master{
+  border: 1px solid #3333;
+  margin-left: 50px;
+}
+#table-code-master{
   margin-left: 35px;
 }
 #td-setting-prompt-template{
@@ -213,7 +225,7 @@ tbody tr{
 }
 
 #spaceControls{
-  font-size: 12px;
+  font-size: 14px;
 }
 .custom-class{
   font-size: 10px;

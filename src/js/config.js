@@ -367,6 +367,9 @@ jQuery.noConflict();
                 $("#kintoneplugin-setting-prompt-template tr:first-child").after(
                     $("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden")
                 );
+                $("#kintoneplugin-setting-code-master tr:first-child").after(
+                    $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden")
+                );
                 let newRow = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
                 $("#kintoneplugin-setting-tspace tr:first-child").after(newRow);
                 newRow.find('#labelForButton').val(' 生成');
@@ -376,6 +379,7 @@ jQuery.noConflict();
                 HASUPDATED = false;
                 checkRow("#kintoneplugin-setting-prompt-template");
                 checkRow("#kintoneplugin-setting-tspace");
+                checkRow("#kintoneplugin-setting-code-master");
                 return
             } else {
                 getConfig = JSON.parse(CONFIG.config);
@@ -543,6 +547,7 @@ jQuery.noConflict();
         }
         checkRow("#kintoneplugin-setting-prompt-template");
         checkRow("#kintoneplugin-setting-tspace");
+        checkRow("#kintoneplugin-setting-code-master");
     }
 
     // check row function.
