@@ -118,63 +118,33 @@
 
               <div class="labelPrompt">
                 <div class="kintoneplugin-table-td-control" id="">
-                  <label for="select_field_column" style="font-size: 14px;">Search type</label>
+                  <label for="select_field_column" style="font-size: 14px;">Code field</label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
                       <select>
                         <option value="-----">-----</option>
-                        <option value="text_initial">Text(Initial)</option>
-                        <option value="text_patial">Text(Patial)</option>
-                        <option value="text_exact">Text(Exact)</option>
-                        <option value="multi_text_patial">MultiText(Patial)</option>
-                        <option value="multi_text_exact">MultiText(Exact)</option>
-                        <option value="number_exact">Number(Exact)</option>
-                        <option value="number_range">Number(Range)</option>
-                        <option value="date_exact">Date(Exact)</option>
-                        <option value="date_range">Date(Range)</option>
-                        <option value="dropdown_exact">Dropdown(Exact)</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
                 <div class="kintoneplugin-table-td-control" id="">
-                  <label for="select_field_column" style="font-size: 14px;">Search type</label>
+                  <label for="select_field_column" style="font-size: 14px;">Name field</label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
                       <select>
                         <option value="-----">-----</option>
-                        <option value="text_initial">Text(Initial)</option>
-                        <option value="text_patial">Text(Patial)</option>
-                        <option value="text_exact">Text(Exact)</option>
-                        <option value="multi_text_patial">MultiText(Patial)</option>
-                        <option value="multi_text_exact">MultiText(Exact)</option>
-                        <option value="number_exact">Number(Exact)</option>
-                        <option value="number_range">Number(Range)</option>
-                        <option value="date_exact">Date(Exact)</option>
-                        <option value="date_range">Date(Range)</option>
-                        <option value="dropdown_exact">Dropdown(Exact)</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
                 <div class="kintoneplugin-table-td-control" id="">
-                  <label for="select_field_column" style="font-size: 14px;">Search type</label>
+                  <label for="select_field_column" style="font-size: 14px;">Type</label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
                       <select>
                         <option value="-----">-----</option>
-                        <option value="text_initial">Text(Initial)</option>
-                        <option value="text_patial">Text(Patial)</option>
-                        <option value="text_exact">Text(Exact)</option>
-                        <option value="multi_text_patial">MultiText(Patial)</option>
-                        <option value="multi_text_exact">MultiText(Exact)</option>
-                        <option value="number_exact">Number(Exact)</option>
-                        <option value="number_range">Number(Range)</option>
-                        <option value="date_exact">Date(Exact)</option>
-                        <option value="date_range">Date(Range)</option>
-                        <option value="dropdown_exact">Dropdown(Exact)</option>
                       </select>
                     </div>
                   </div>
@@ -194,37 +164,6 @@
         </tbody>
       </table>
     </div>
-    <!-- <div id="kintoneplugin-ai-setting">
-     
-      <div id="api-key"> 
-
-        <div class="maxTokens">
-          <label for="title-field">Master ID<span class="kintoneplugin-require"></span></label>
-          <div class="kintoneplugin-input-outer">
-            <input type="text" class="kintoneplugin-input-text maxToken" id="maxToken"/>
-          </div>
-        </div>
-
-        <div class="maxTokens">
-          <label for="title-field">AppID<span class="kintoneplugin-require"></span></label>
-          <div class="kintoneplugin-input-outer">
-            <input type="text" class="kintoneplugin-input-text maxToken" id="maxToken"/>
-          </div>
-        </div>
-
-
-        <div class="kintoneplugin-table-td-control" >
-          <label for="title-field">API Token <span class="kintoneplugin-require">*</span></label>
-          <div class="kintoneplugin-table-td-control-value">
-            <div class="kintoneplugin-input-outer">
-              <input type="text" class="kintoneplugin-input-text apiKey" id="apiKey"/>
-            </div>
-          </div>
-        </div>
-  
-        
-      </div>
-    </div> -->
 
     <div class="button-update-space-space-button">
       <p class="kintoneplugin-row" id="button-action">
@@ -233,114 +172,102 @@
     </div>
 
     <div id="label-show-title">
-      <label for="select_field_column">Search item setting<span class="kintoneplugin-require"></span></label>
+      <label for="select_field_column">Search content<span class="kintoneplugin-require"></span></label>
     </div>
     <div id="container-table-setting-prompt-template">
       <table class="kintoneplugin-table" id="kintoneplugin-setting-body">
         <thead>
           <tr>
+            <th class="kintoneplugin-table-th-blankspace"></th>
             <th class="kintoneplugin-table-th" id="kintoneplugin-table-th-table"></th>
             <th class="kintoneplugin-table-th-blankspace"></th>
           </tr>
         </thead>
         <tbody id="kintoneplugin-setting-prompt-template">
           <tr class="tr-setting-prompt-template" hidden>
+            <td class="kintoneplugin-table-td-operation operation-column">
+              <div class="button-add-remove-row-promptSetting">
+                <i class="kintoneplugin-button-add-row-image"></i>
+              </div>
+            </td>
             <td id="td-setting-prompt-template">
               <div id="navbar-show-content">
                 <div id="label-show-setting-name">
-                  <div id="showContent">
-                    <label></label>
-                  </div>
-                  <div class=" slide-down">
+                  <div class="slide-down">
                     <i class="fa-solid fa-chevron-down"></i>
                   </div>
                 </div>
               </div>
+              <div id="checkbox-slide-up">
+                <div class="slide-up">
+                  <i class="fa-solid fa-chevron-up slide-up"></i>
+                </div>
+              </div>
               <div id="container-table-settingPromptTemplate">
-                <div id="checkbox-slide-up">
-                  <div class="kintoneplugin-input-checkbox status-setting">
-                    <span class="kintoneplugin-input-checkbox-item">
-                      <input type="checkbox" name="checkbox" id="checkbox" checked>
-                      <label for="checkbox-0">設定有効</label>
-                    </span>
-                  </div>
+                <!-- <div id="checkbox-slide-up">
                   <div class="slide-up">
                     <i class="fa-solid fa-chevron-up slide-up"></i>
                   </div>
-                </div>
-
-                <div class="kintoneplugin-table-td-control">
-                  <label for="title-field">名称<span class="kintoneplugin-require">*</span></label>
-                  <div class="kintoneplugin-table-td-control-value">
+                </div> -->
+                <div class="labelPrompt">
+                  <div class="kintoneplugin-table-td-control" id="">
+                    <label for="select_field_column" style="font-size: 14px;">Search group name</label>
+                    <div class="kintoneplugin-select-outer">
+                      <div class="kintoneplugin-select">
+                        <select>
+                          <option value="-----">-----</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+  
+                  <div class="kintoneplugin-table-td-control">
+                    <label for="title-field" style="font-size: 14px;">Search name</label>
                     <div class="kintoneplugin-input-outer">
-                      <input type="text" class="kintoneplugin-input-text settingName" id="settingName" />
+                      <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
                     </div>
                   </div>
+                  
                 </div>
 
-                <div class="kintoneplugin-table-td-control spacePromptTemplate">
-                  <label for="select_field_column" id="spaceControls">プロンプトテンプレート用のスペース<span
-                      class="kintoneplugin-require label">*</span></label>
-                  <div class="kintoneplugin-table-td-control-value">
-                    <div class="kintoneplugin-select spacePromptTemplate" id="dropdown-select">
-                      <select name="field_dropdown_column_space_for_prompt"
-                        class="select_field_column spacePromptTemplate" id="spacePromptTemplate">
-                        <option value="-----">-----</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                <div class="kintoneplugin-table-td-control space_Button">
-                  <label for="select_field_column" id="space-control">ボタン用のスペース<span
-                      class="kintoneplugin-require label">*</span></label>
-                  <div class="kintoneplugin-table-td-control-value">
-                    <div class="kintoneplugin-select spaceButton" id="dropdown-select">
-                      <select name="field_dropdown_column_space_button" class="select_field_column spaceButton"
-                        id="spaceButtons">
-                        <option value="-----">-----</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="kintoneplugin-table-td-control">
-                  <label for="select_field_column">結果格納用フィールド <span class="kintoneplugin-require">*</span></label>
-                  <div class="kintoneplugin-table-td-control-value">
-                    <div class="kintoneplugin-select fieldResult" id="dropdown-select">
-                      <select name="field_dropdown_column_fieldResult" class="select_field_column fieldResult"
-                        id="fieldResult">
-                        <option value="-----">-----</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="kintoneplugin-table-td-control">
-                  <label for="title-field">プロンプトテンプレート<span class="kintoneplugin-require"></span></label>
-                  <div class="prompt-setting">
-                    <div class="system-role">
-                      <div>
-                        <label for="title-field">システム指示<span class="kintoneplugin-require"></span></label>
-                      </div>
-                      <div class="kintoneplugin-input-outer">
-                        <textarea cols="30" class="systemRole" spellcheck="false"></textarea>
+                <div class="labelPrompt">
+                  <div class="kintoneplugin-table-td-control" id="">
+                    <label for="select_field_column" style="font-size: 14px;">Code Master ID</label>
+                    <div class="kintoneplugin-select-outer">
+                      <div class="kintoneplugin-select">
+                        <select>
+                          <option value="-----">-----</option>
+                        </select>
                       </div>
                     </div>
-
-                    <div class="prompt-content" id="prompt-value">
-                      <div>
-                        <label for="title-field">プロンプト内容<span class="kintoneplugin-require">*</span></label>
-                      </div>
-                      <div class="kintoneplugin-input-outer">
-                        <textarea cols="30" class="promptContent" spellcheck="false"></textarea>
-                      </div>
-                    </div>
-
-                    <div class="Explain">
-                      <label for="">プロンプトテンプレートでフィールドを指定する場合、右クリックでフィールド一覧を表示し、選択することができます。</label>
-                    </div>
                   </div>
                 </div>
+
+                <div class="labelPrompt">
+                  <div class="kintoneplugin-table-td-control" id="">
+                    <label for="select_field_column" style="font-size: 14px;">Search target field</label>
+                    <div class="kintoneplugin-select-outer">
+                      <div class="kintoneplugin-select">
+                        <select>
+                          <option value="-----">-----</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="kintoneplugin-table-td-control" id="">
+                    <label for="select_field_column" style="font-size: 14px;">Field for search</label>
+                    <div class="kintoneplugin-select-outer">
+                      <div class="kintoneplugin-select">
+                        <select>
+                          <option value="-----">-----</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
               </div>
             </td>
             <td class="kintoneplugin-table-td-operation operation-column">
