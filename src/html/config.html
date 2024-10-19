@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 
 <form class="js-submit-settings">
   <div class="kintoneplugin-input-outer">
@@ -17,55 +17,52 @@
           <tr class="table-space" hidden>
             <td id="td-table-space-prompt-template-button">
               <div class="labelPrompt">
-                <div >
+                <div class="kintoneplugin-table-td-control">
                   <label for="title-field">Name Marker</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id=""/>
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
                   </div>
                 </div>
 
-                <div>
-                  <label for="title-field">Group name</label>
+                <div class="kintoneplugin-table-td-control">
+                  <label for="title-field" style="font-size: 14px;">Group name</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id=""/>
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
                   </div>
                 </div>
 
               </div>
 
-              <div id="div-code-master">
-                <div class="space_ptompt_template_button">
-                  <div class="kintoneplugin-table-td-control" id="space-for-prompt-template">
-                    <label for="select_field_column" id="spaceControls" style="font-size: 14px;">Search length<span class="kintoneplugin-require"></span></label>
-                    <div class="kintoneplugin-table-td-control-value">
-                      <div class="kintoneplugin-input-outer">
-                        <input type="text" class="kintoneplugin-input-text labelForButton" id=""/>
-                      </div>
+              <div class="labelPrompt">
+                <div class="kintoneplugin-table-td-control">
+                  <label for="title-field">Search length</label>
+                  <div class="kintoneplugin-input-outer">
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
+                  </div>
+                </div>
+
+
+                <div class="kintoneplugin-table-td-control" id="">
+                  <label for="select_field_column" style="font-size: 14px;">Search type</label>
+                  <div class="kintoneplugin-select-outer">
+                    <div class="kintoneplugin-select">
+                      <select>
+                        <option value="-----">-----</option>
+                        <option value="text_initial">Text(Initial)</option>
+                        <option value="text_patial">Text(Patial)</option>
+                        <option value="text_exact">Text(Exact)</option>
+                        <option value="multi_text_patial">MultiText(Patial)</option>
+                        <option value="multi_text_exact">MultiText(Exact)</option>
+                        <option value="number_exact">Number(Exact)</option>
+                        <option value="number_range">Number(Range)</option>
+                        <option value="date_exact">Date(Exact)</option>
+                        <option value="date_range">Date(Range)</option>
+                        <option value="dropdown_exact">Dropdown(Exact)</option>
+                      </select>
                     </div>
                   </div>
-
-                  
-
                 </div>
               </div>
-
-              <div id="div-space_ptompt_template_button">
-                <div class="space_ptompt_template_button">
-                  
-
-                  <div class="kintoneplugin-table-td-control" id="space-for-prompt-template">
-                    <label for="select_field_column" id="spaceControls">Fieldcode for save search field<span class="kintoneplugin-require"></span></label>
-                    <div class="kintoneplugin-table-td-control-value">
-                      <div class="kintoneplugin-select spaceForPromptTemplate" id="dropdown-select">
-                        <select name="field_dropdown_column_spaceForPromptTemplate" class="select_field_column" id="">
-                          <option value="-----">-----</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
 
             </td>
             <td class="kintoneplugin-table-td-operation operation-column">
@@ -95,39 +92,92 @@
           <tr class="table-space" hidden>
             <td id="td-table-code-master">
               <div class="labelPrompt">
-                <div >
+                <div class="kintoneplugin-table-td-control">
                   <label for="title-field">Master ID</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id=""/>
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
                   </div>
                 </div>
 
-                <div >
-                  <label for="title-field">App ID<span class="kintoneplugin-require">*</span></label>
+                <div class="kintoneplugin-table-td-control">
+                  <label for="title-field" style="font-size: 14px;">App ID</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id=""/>
-                  </div>
-                </div>
-
-                <div >
-                  <label for="title-field">Title display<span class="kintoneplugin-require">*</span></label>
-                  <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id=""/>
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
                   </div>
                 </div>
               </div>
 
-              <div id="div-code-master" style="width: 100%;">
-                <div class="space_ptompt_template_button" style="width: 100%;">
-                  <div class="kintoneplugin-table-td-control" id="space-for-prompt-template" style="width: 100%;">
-                    <label for="select_field_column" id="spaceControls" style="font-size: 14px;">API Token<span class="kintoneplugin-require"></span></label>
-                    <div class="kintoneplugin-table-td-control-value" style="width: 100%;">
-                      <div class="kintoneplugin-input-outer" style="width: 100%;">
-                        <input type="text" class="kintoneplugin-input-text labelForButton" id="" style="width: 100%;"/>
-                      </div>
+              <div class="labelPrompt">
+                <div class="kintoneplugin-table-td-control" style="width: 100%;">
+                  <label for="title-field">API Token</label>
+                  <div class="kintoneplugin-input-outer" style="width: 100%;">
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" style="width: 100%;"/>
+                  </div>
+                </div>
+              </div>
+
+              <div class="labelPrompt">
+                <div class="kintoneplugin-table-td-control" id="">
+                  <label for="select_field_column" style="font-size: 14px;">Search type</label>
+                  <div class="kintoneplugin-select-outer">
+                    <div class="kintoneplugin-select">
+                      <select>
+                        <option value="-----">-----</option>
+                        <option value="text_initial">Text(Initial)</option>
+                        <option value="text_patial">Text(Patial)</option>
+                        <option value="text_exact">Text(Exact)</option>
+                        <option value="multi_text_patial">MultiText(Patial)</option>
+                        <option value="multi_text_exact">MultiText(Exact)</option>
+                        <option value="number_exact">Number(Exact)</option>
+                        <option value="number_range">Number(Range)</option>
+                        <option value="date_exact">Date(Exact)</option>
+                        <option value="date_range">Date(Range)</option>
+                        <option value="dropdown_exact">Dropdown(Exact)</option>
+                      </select>
                     </div>
                   </div>
+                </div>
 
+                <div class="kintoneplugin-table-td-control" id="">
+                  <label for="select_field_column" style="font-size: 14px;">Search type</label>
+                  <div class="kintoneplugin-select-outer">
+                    <div class="kintoneplugin-select">
+                      <select>
+                        <option value="-----">-----</option>
+                        <option value="text_initial">Text(Initial)</option>
+                        <option value="text_patial">Text(Patial)</option>
+                        <option value="text_exact">Text(Exact)</option>
+                        <option value="multi_text_patial">MultiText(Patial)</option>
+                        <option value="multi_text_exact">MultiText(Exact)</option>
+                        <option value="number_exact">Number(Exact)</option>
+                        <option value="number_range">Number(Range)</option>
+                        <option value="date_exact">Date(Exact)</option>
+                        <option value="date_range">Date(Range)</option>
+                        <option value="dropdown_exact">Dropdown(Exact)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="kintoneplugin-table-td-control" id="">
+                  <label for="select_field_column" style="font-size: 14px;">Search type</label>
+                  <div class="kintoneplugin-select-outer">
+                    <div class="kintoneplugin-select">
+                      <select>
+                        <option value="-----">-----</option>
+                        <option value="text_initial">Text(Initial)</option>
+                        <option value="text_patial">Text(Patial)</option>
+                        <option value="text_exact">Text(Exact)</option>
+                        <option value="multi_text_patial">MultiText(Patial)</option>
+                        <option value="multi_text_exact">MultiText(Exact)</option>
+                        <option value="number_exact">Number(Exact)</option>
+                        <option value="number_range">Number(Range)</option>
+                        <option value="date_exact">Date(Exact)</option>
+                        <option value="date_range">Date(Range)</option>
+                        <option value="dropdown_exact">Dropdown(Exact)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -223,26 +273,30 @@
                   <label for="title-field">名称<span class="kintoneplugin-require">*</span></label>
                   <div class="kintoneplugin-table-td-control-value">
                     <div class="kintoneplugin-input-outer">
-                      <input type="text" class="kintoneplugin-input-text settingName" id="settingName"/>
+                      <input type="text" class="kintoneplugin-input-text settingName" id="settingName" />
                     </div>
                   </div>
                 </div>
 
                 <div class="kintoneplugin-table-td-control spacePromptTemplate">
-                  <label for="select_field_column" id="spaceControls">プロンプトテンプレート用のスペース<span class="kintoneplugin-require label">*</span></label>
+                  <label for="select_field_column" id="spaceControls">プロンプトテンプレート用のスペース<span
+                      class="kintoneplugin-require label">*</span></label>
                   <div class="kintoneplugin-table-td-control-value">
                     <div class="kintoneplugin-select spacePromptTemplate" id="dropdown-select">
-                      <select name="field_dropdown_column_space_for_prompt" class="select_field_column spacePromptTemplate" id="spacePromptTemplate">
+                      <select name="field_dropdown_column_space_for_prompt"
+                        class="select_field_column spacePromptTemplate" id="spacePromptTemplate">
                         <option value="-----">-----</option>
                       </select>
                     </div>
                   </div>
                 </div>
                 <div class="kintoneplugin-table-td-control space_Button">
-                  <label for="select_field_column" id="space-control">ボタン用のスペース<span class="kintoneplugin-require label">*</span></label>
+                  <label for="select_field_column" id="space-control">ボタン用のスペース<span
+                      class="kintoneplugin-require label">*</span></label>
                   <div class="kintoneplugin-table-td-control-value">
                     <div class="kintoneplugin-select spaceButton" id="dropdown-select">
-                      <select name="field_dropdown_column_space_button" class="select_field_column spaceButton" id="spaceButtons">
+                      <select name="field_dropdown_column_space_button" class="select_field_column spaceButton"
+                        id="spaceButtons">
                         <option value="-----">-----</option>
                       </select>
                     </div>
@@ -253,7 +307,8 @@
                   <label for="select_field_column">結果格納用フィールド <span class="kintoneplugin-require">*</span></label>
                   <div class="kintoneplugin-table-td-control-value">
                     <div class="kintoneplugin-select fieldResult" id="dropdown-select">
-                      <select name="field_dropdown_column_fieldResult" class="select_field_column fieldResult" id="fieldResult">
+                      <select name="field_dropdown_column_fieldResult" class="select_field_column fieldResult"
+                        id="fieldResult">
                         <option value="-----">-----</option>
                       </select>
                     </div>
@@ -277,7 +332,7 @@
                         <label for="title-field">プロンプト内容<span class="kintoneplugin-require">*</span></label>
                       </div>
                       <div class="kintoneplugin-input-outer">
-                        <textarea cols="30" class="promptContent"spellcheck="false"></textarea>
+                        <textarea cols="30" class="promptContent" spellcheck="false"></textarea>
                       </div>
                     </div>
 
@@ -292,7 +347,8 @@
               <br>
               <div class="button-add-remove-row-promptSetting">
                 <button type="button" class="kintoneplugin-button-add-row-image addRow" title="Addrow"></button>
-                <button type="button" class="kintoneplugin-button-remove-row-image removeRow" title="Delete this row"></button>
+                <button type="button" class="kintoneplugin-button-remove-row-image removeRow"
+                  title="Delete this row"></button>
               </div>
             </td>
           </tr>
@@ -301,7 +357,8 @@
     </div>
     <p class="kintoneplugin-row" id="button-action">
       <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="button_save">保存</button>
-      <button type="button" class="js-cancel-button kintoneplugin-button-dialog-cancel cancel" id="cancel">キャンセル</button>
+      <button type="button" class="js-cancel-button kintoneplugin-button-dialog-cancel cancel"
+        id="cancel">キャンセル</button>
       <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="Import">設定情報の読み込み</button>
       <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="Export">設定情報の書き出し</button>
       <input type="file" id="fileInput" accept=".json" style="display: none;">
