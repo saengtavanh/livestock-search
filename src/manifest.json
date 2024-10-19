@@ -21,14 +21,10 @@
       "js/jquery.min.js",
       "js/sweetalert2.all.js",
       "js/config.js"
-      
     ],
     "css": [
       "css/51-modern-default.css",
       "css/config.css"
-    ],
-    "required_params": [
-      "message"
     ]
   },
   "name": {
