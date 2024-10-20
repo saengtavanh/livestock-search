@@ -3,18 +3,20 @@
   width: 220px;
 }
 
-table td:first-child { 
+table td:first-child {
   border-bottom-style: hidden;
   border-top-style: hidden;
   border-left-style: hidden;
 }
-#dropdown-question{
+
+#dropdown-question {
   display: flex;
   align-items: center;
   margin-top: 15px;
   margin-bottom: 15px;
 }
-#kintoneplugin-ai-setting{
+
+#kintoneplugin-ai-setting {
   margin-left: 52px;
   border: 1px solid #3333;
   height: 30%px;
@@ -23,64 +25,75 @@ table td:first-child {
   flex-direction: column;
 }
 
-#apiKey{
+#apiKey {
   width: 465px;
 }
 
-#api-key{
+#api-key {
   margin-top: 10px;
   margin-bottom: 15px;
   display: flex;
   gap: 7px;
 }
 
-.azureComponent input{
+.azureComponent input {
   width: 220px;
 }
-.hidden{
+
+.hidden {
   display: none;
 }
-.version-platform{
+
+.version-platform {
   margin-top: 15px;
   display: flex;
 }
-.azureComponent{
+
+.azureComponent {
   display: flex;
   margin-top: 10px;
   gap: 7px;
   margin-left: 8px;
 }
-.azureComponent > div {
-  flex: 1; /* Distribute equal width to all child divs */
-  min-width: 0; /* Ensures the divs can shrink */
+
+.azureComponent>div {
+  flex: 1;
+  /* Distribute equal width to all child divs */
+  min-width: 0;
+  /* Ensures the divs can shrink */
 }
-.space_ptompt_template_button{
+
+.space_ptompt_template_button {
   margin-top: 15px;
   margin-bottom: 15px;
   display: flex;
 }
+
 #button-action {
   display: flex;
   margin-left: 52px;
   margin-top: 35px;
   gap: 2.3%;
 }
-#container-table-setting-prompt-template{
+
+#container-table-setting-prompt-template {
   margin-left: 35px;
 }
-.button-insert{
+
+.button-insert {
   margin-top: 25px;
 }
 
-tbody tr{
+tbody tr {
   align-items: center;
 }
 
-#kintoneplugin-table-th-table{
+#kintoneplugin-table-th-table {
   height: 0.5px;
-  background-color:#3333;
+  background-color: #3333;
   display: none;
 }
+
 #navbar-show-content {
   display: flex;
   flex-direction: column;
@@ -93,16 +106,17 @@ tbody tr{
 /* #navbar-show-content{
   display: none;
 } */
-.kintoneplugin-input-checkbox{
+.kintoneplugin-input-checkbox {
   margin-top: 10px;
   margin-bottom: 10px;
   margin-left: 4px;
 }
 
-#settingName{
+#settingName {
   margin-bottom: 10px;
 }
-#label-show-setting-name{
+
+#label-show-setting-name {
   display: flex;
   align-items: center;
   margin-top: 22px;
@@ -110,130 +124,158 @@ tbody tr{
   margin-right: 15px;
   justify-content: end;
 }
-.Explain{
+
+.Explain {
   margin-top: 10;
   width: 705px;
 }
-.prompt-setting{
-  border:  1px solid #3333;
+
+.prompt-setting {
+  border: 1px solid #3333;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 5px;
 }
-.system-role{
+
+.system-role {
   display: none;
 }
 
-.promptContent, .systemRole{
+.promptContent,
+.systemRole {
   height: 100px;
   width: 699px;
 }
-.promptContent:focus, .systemRole:focus{
+
+.promptContent:focus,
+.systemRole:focus {
   outline: none;
 }
 
-#checkbox-slide-up{
+#checkbox-slide-up {
   display: flex;
   justify-content: end;
   align-items: center;
   margin-top: 7px;
 }
-.slide-up{
+
+.slide-up {
   margin-right: 15px;
   cursor: pointer;
 }
-.slide-down{
+
+.slide-down {
   margin-right: 15px;
   cursor: pointer;
 }
-.slice-down{
+
+.slice-down {
   margin-right: 15px;
 }
-#div-space_ptompt_template_button{
-  display: flex;
-  align-items: center;
-  width: 733px;
-}
-#div-code-master{
+
+#div-space_ptompt_template_button {
   display: flex;
   align-items: center;
   width: 733px;
 }
 
-#label-show-title{
+#div-code-master {
+  display: flex;
+  align-items: center;
+  width: 733px;
+}
+
+#label-show-title {
   margin-top: 10px;
   margin-left: 53px;
   font-size: 20px;
   font-weight: bold;
 }
-#td-table-space-prompt-template-button{
+
+#td-table-space-prompt-template-button {
   border: 1px solid #3333;
   margin-left: 50px;
 }
-#table-space-prompt-template-button{
+
+#table-space-prompt-template-button {
   margin-left: 35px;
 }
-#td-table-code-master{
+
+#td-table-code-master {
   border: 1px solid #3333;
   margin-left: 50px;
 }
-#table-code-master{
+
+#table-code-master {
   margin-left: 35px;
 }
-#td-setting-prompt-template{
+
+#td-setting-prompt-template {
   border: 1px solid #3333;
-  height:70px ;
+  height: 70px;
   min-width: 500px;
 }
-.button-add-remove-row-promptSetting{
+
+.button-add-remove-row-promptSetting {
   display: flex;
 }
-.button-add-remove-row-table-spaceForPrompt{
+
+.button-add-remove-row-table-spaceForPrompt {
   display: flex;
   margin-top: 20px;
 }
-.button-update-space-spaceButton{
+
+.button-update-space-spaceButton {
   margin-left: 5px;
 }
 
-.space_Button{
-  display: none;
-}
-.modelVersion-Azure{
-  display: flex;
-  flex-direction: column;
-}
-.modelVersion-Azure{
+.space_Button {
   display: none;
 }
 
-.validation-error{
+.modelVersion-Azure {
+  display: flex;
+  flex-direction: column;
+}
+
+.modelVersion-Azure {
+  display: none;
+}
+
+.validation-error {
   border-color: red;
 }
-.maxToken{
+
+.maxToken {
   width: 220px;
   margin-top: 4px;
 }
-.maxTokens{
+
+.maxTokens {
   margin-left: 10px;
 }
+
 .swal2-content {
-  max-height: 300px; /* Adjust this value based on the desired maximum height */
+  max-height: 300px;
+  /* Adjust this value based on the desired maximum height */
   overflow-y: auto;
   width: auto;
 
 }
+
 .swal2-header {
   width: auto;
 }
 
-#spaceControls{
+#spaceControls {
   font-size: 14px;
 }
-.custom-class{
+
+.custom-class {
   font-size: 10px;
 }
+
 /* styles.css */
 #custom-context-menu {
   position: absolute;
@@ -255,33 +297,36 @@ tbody tr{
   text-align: left;
   cursor: pointer;
 }
+
 .custom-confirm-button {
   color: #f7f9fa !important;
 }
 
 .custom-cancel-button {
-  color:  #3498db!important;
+  color: #3498db !important;
 }
-.kintoneplugin-select{
+
+.kintoneplugin-select {
   width: 220px;
 }
-#label-token
-{
+
+#label-token {
   font-size: 12px;
 }
+
 .labelPrompt {
   display: flex;
   margin: 8px;
   gap: 25px;
 }
 
-.labelPrompt > div {
+.labelPrompt>div {
   display: flex;
-  flex-direction: column; 
-  margin-bottom: 10px; 
+  flex-direction: column;
+  margin-bottom: 10px;
 }
 
-.labelPrompt > div:first-child label {
+.labelPrompt>div:first-child label {
   font-size: 14px;
 }
 
@@ -294,10 +339,26 @@ tbody tr{
 #kintoneplugin-setting-body #td-setting-prompt-template {
   min-width: 750px;
 }
+
 #kintoneplugin-setting-body .kintoneplugin-table-td-operation.operation-column {
   min-width: 100px;
 }
 
+.drag-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100% !important; 
+  padding: 20px;
+}
 
+.drag-icon i{
+  font-size: 20px;
+  cursor: grab;
+}
 
-
+.ui-state-highlight {
+  height: 2.5em;
+  background-color: #f0f0f0;
+  border: 1px dashed #ccc;
+}

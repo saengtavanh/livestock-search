@@ -9,25 +9,31 @@
       <table class="kintoneplugin-table" id="kintoneplugin-setting-space">
         <thead>
           <tr>
+            <th class="kintoneplugin-table-th-blankspace"></th>
             <th class="kintoneplugin-table-th" id="kintoneplugin-table-th-table"></th>
             <th class="kintoneplugin-table-th-blankspace"></th>
           </tr>
         </thead>
         <tbody id="kintoneplugin-setting-tspace">
           <tr class="table-space" hidden>
+            <td>
+              <div class="drag-icon">
+                <i class="fa-solid fa-bars"></i>
+              </div>
+            </td>
             <td id="td-table-space-prompt-template-button">
               <div class="labelPrompt">
                 <div class="kintoneplugin-table-td-control">
                   <label for="title-field">Name Marker</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="name_marker" />
                   </div>
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
                   <label for="title-field" style="font-size: 14px;">Group name</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="group_name" />
                   </div>
                 </div>
 
@@ -37,7 +43,7 @@
                 <div class="kintoneplugin-table-td-control">
                   <label for="title-field">Search length</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="search_length" />
                   </div>
                 </div>
 
@@ -46,7 +52,7 @@
                   <label for="select_field_column" style="font-size: 14px;">Search type</label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
-                      <select>
+                      <select id="search_type">
                         <option value="-----">-----</option>
                         <option value="text_initial">Text(Initial)</option>
                         <option value="text_patial">Text(Patial)</option>
@@ -84,25 +90,31 @@
       <table class="kintoneplugin-table" id="kintoneplugin-code-master">
         <thead>
           <tr>
+            <th class="kintoneplugin-table-th-blankspace"></th>
             <th class="kintoneplugin-table-th" id="kintoneplugin-table-th-table"></th>
             <th class="kintoneplugin-table-th-blankspace"></th>
           </tr>
         </thead>
         <tbody id="kintoneplugin-setting-code-master">
           <tr class="table-space" hidden>
+            <td>
+              <div class="drag-icon">
+                <i class="fa-solid fa-bars"></i>
+              </div>
+            </td>
             <td id="td-table-code-master">
               <div class="labelPrompt">
                 <div class="kintoneplugin-table-td-control">
                   <label for="title-field">Master ID</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="master_id" />
                   </div>
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
                   <label for="title-field" style="font-size: 14px;">App ID</label>
                   <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="app_id" />
                   </div>
                 </div>
               </div>
@@ -111,7 +123,7 @@
                 <div class="kintoneplugin-table-td-control" style="width: 100%;">
                   <label for="title-field">API Token</label>
                   <div class="kintoneplugin-input-outer" style="width: 100%;">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id="" style="width: 100%;"/>
+                    <input type="text" class="kintoneplugin-input-text labelForButton" id="api_token" style="width: 100%;"/>
                   </div>
                 </div>
               </div>
@@ -121,29 +133,29 @@
                   <label for="select_field_column" style="font-size: 14px;">Code field</label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
-                      <select>
+                      <select id="code_field">
                         <option value="-----">-----</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
-                <div class="kintoneplugin-table-td-control" id="">
+                <div class="kintoneplugin-table-td-control">
                   <label for="select_field_column" style="font-size: 14px;">Name field</label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
-                      <select>
+                      <select id="name_field">
                         <option value="-----">-----</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
-                <div class="kintoneplugin-table-td-control" id="">
+                <div class="kintoneplugin-table-td-control" >
                   <label for="select_field_column" style="font-size: 14px;">Type</label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
-                      <select>
+                      <select id="type_field">
                         <option value="-----">-----</option>
                       </select>
                     </div>
@@ -184,11 +196,11 @@
           </tr>
         </thead>
         <tbody id="kintoneplugin-setting-prompt-template">
-          <tr class="tr-setting-prompt-template" hidden>
-            <td class="kintoneplugin-table-td-operation operation-column">
-              <!-- <div class="button-add-remove-row-promptSetting">
-                <i class="kintoneplugin-button-add-row-image"></i>
-              </div> -->
+          <tr class="tr-setting-prompt-template" draggable="true" hidden>
+            <td>
+              <div class="drag-icon">
+                <i class="fa-solid fa-bars"></i>
+              </div>
             </td>
             <td id="td-setting-prompt-template">
               <div id="navbar-show-content">
@@ -211,10 +223,10 @@
                 </div> -->
                 <div class="labelPrompt">
                   <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Search group name</label>
+                    <label for="select_field_column" style="font-size: 14px;">Group name</label>
                     <div class="kintoneplugin-select-outer">
                       <div class="kintoneplugin-select">
-                        <select>
+                        <select id="group_name_ref">
                           <option value="-----">-----</option>
                         </select>
                       </div>
@@ -224,7 +236,7 @@
                   <div class="kintoneplugin-table-td-control">
                     <label for="title-field" style="font-size: 14px;">Search name</label>
                     <div class="kintoneplugin-input-outer">
-                      <input type="text" class="kintoneplugin-input-text labelForButton" id="" />
+                      <input type="text" class="kintoneplugin-input-text labelForButton" id="search_name" />
                     </div>
                   </div>
                   
@@ -232,10 +244,10 @@
 
                 <div class="labelPrompt">
                   <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Code Master ID</label>
+                    <label for="select_field_column" style="font-size: 14px;">Master ID</label>
                     <div class="kintoneplugin-select-outer">
                       <div class="kintoneplugin-select">
-                        <select>
+                        <select id="master_id_ref">
                           <option value="-----">-----</option>
                         </select>
                       </div>
@@ -248,7 +260,7 @@
                     <label for="select_field_column" style="font-size: 14px;">Search target field</label>
                     <div class="kintoneplugin-select-outer">
                       <div class="kintoneplugin-select">
-                        <select>
+                        <select id="search_target">
                           <option value="-----">-----</option>
                         </select>
                       </div>
@@ -259,7 +271,7 @@
                     <label for="select_field_column" style="font-size: 14px;">Field for search</label>
                     <div class="kintoneplugin-select-outer">
                       <div class="kintoneplugin-select">
-                        <select>
+                        <select id="field_for_search">
                           <option value="-----">-----</option>
                         </select>
                       </div>

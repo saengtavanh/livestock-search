@@ -53,86 +53,110 @@ jQuery.noConflict();
 
 	//function set value to config setting.
 	async function setValueConfig() {
+		const fieldType = ["SINGLE_LINE_TEXT", "MULTI_LINE_TEXT", "NUMBER", "CALC", "CHECK_BOX", "RADIO_BUTTON", "DROP_DOWN", "DATE", "DATETIME"];
+		console.log('FIELDFROMAPP', FIELDFROMAPP);
 		FIELDFROMAPP.forEach((items) => {
-			if (items.type == "SINGLE_LINE_TEXT" || items.type == "MULTI_LINE_TEXT") {
-				$("select[name=\"field_dropdown_column_fieldQuestion\"]").append(
+			if (fieldType.includes(items.type)) {
+				$("select#search_target").append(
 					$("<option>").attr("value", items.code).attr("title", items.label).text(`${items.label}(${items.code}) `)
 				);
-				$("select[name=\"field_dropdown_column_fieldResult\"]").append(
-					$("<option>").attr("value", items.code).attr("title", items.label).text(`${items.label}(${items.code})  `)
-				);
-				$("select[name=\"field_dropdown_column-storeFields\"]").append(
+				$("select#field_for_search").append(
 					$("<option>").attr("value", items.code).attr("title", items.label).text(`${items.label}(${items.code})  `)
 				);
 			}
 		});
 
 		//set space to dropdown spaceForPromptTemplate and spaceForButton.
-		SORTSPACE.forEach(spacer => {
-			$("select[name=\"field_dropdown_column_spaceForPromptTemplate\"]").append(
-				$("<option>").attr("value", spacer.value).text(`${spacer.value} (${spacer.value})`)
-			);
-			$("select[name=\"field_dropdown_column_spaceButton\"]").append(
-				$("<option>").attr("value", spacer.value).text(`${spacer.value} (${spacer.value})`)
-			);
-		});
+		// SORTSPACE.forEach(spacer => {
+		// 	$("select[name=\"field_dropdown_column_spaceForPromptTemplate\"]").append(
+		// 		$("<option>").attr("value", spacer.value).text(`${spacer.value} (${spacer.value})`)
+		// 	);
+		// 	$("select[name=\"field_dropdown_column_spaceButton\"]").append(
+		// 		$("<option>").attr("value", spacer.value).text(`${spacer.value} (${spacer.value})`)
+		// 	);
+		// });
 	}
 
 	// function get data from table.
 	function getData() {
-		let selectPlatForm = $(".platForm").val()
-		let modelVersion = selectPlatForm == "Chat_GPT" ? $("#modelVersionChatGPT").val() : $("#modelVersionAzure").val();
-		let resourceName = "";
-		let deploymentID = "";
-		let apiVersion = "";
+		// let selectPlatForm = $(".platForm").val()
+		// let modelVersion = selectPlatForm == "Chat_GPT" ? $("#modelVersionChatGPT").val() : $("#modelVersionAzure").val();
+		// let resourceName = "";
+		// let deploymentID = "";
+		// let apiVersion = "";
 
-		if (selectPlatForm == "Azure_OpenAI") {
-			resourceName = $("#resourceName").val();
-			deploymentID = $("#deploymentID").val();
-			apiVersion = $("#apiVersion").val();
-		}
+		// if (selectPlatForm == "Azure_OpenAI") {
+		// 	resourceName = $("#resourceName").val();
+		// 	deploymentID = $("#deploymentID").val();
+		// 	apiVersion = $("#apiVersion").val();
+		// }
 
-		let getDataSettings = {
-			versionFromAI: GETVERSION,
-			platForm: selectPlatForm,
-			modelVersion: modelVersion,
-			apiKey: $("#apiKey").val(),
-			maxToken: $("#maxToken").val(),
-			resourceName: resourceName,
-			deploymentID: deploymentID,
-			apiVersion: apiVersion
-		};
+		// let getDataSettings = {
+		// 	versionFromAI: GETVERSION,
+		// 	platForm: selectPlatForm,
+		// 	modelVersion: modelVersion,
+		// 	apiKey: $("#apiKey").val(),
+		// 	maxToken: $("#maxToken").val(),
+		// 	resourceName: resourceName,
+		// 	deploymentID: deploymentID,
+		// 	apiVersion: apiVersion
+		// };
 
 		//get value from space for prompt template and button.
-		let spaceSetting = $("#kintoneplugin-setting-tspace > tr:gt(0)").map(function () {
-			let spaceForPromptTemplate = $(this).find("#spaceForPromptTemplate").val();
-			let storeField = $(this).find("#storeFields").val();
-			let spaceForButton = $(this).find("#spaceForButton").val();
-			let labelForPromptTemplate = $(this).find("#labelForPromptTemplate").val();
-			let labelForButton = $(this).find("#labelForButton").val();
-			return { spaceForPromptTemplate, spaceForButton, storeField, labelForButton, labelForPromptTemplate };
+		let groupSetting = $("#kintoneplugin-setting-tspace > tr:gt(0)").map(function () {
+			let nameMarker = $(this).find("#name_marker").val();
+			let groupName = $(this).find("#group_name").val();
+			let searchLength = $(this).find("#search_length").val();
+			let searchType = $(this).find("#search_type").val();
+			return { nameMarker, groupName, searchLength, searchType };
 		}).get();
+		console.log('groupSetting', groupSetting);
 
-		//get value from setting prompt template.
-		let settingPromptTemplate = $("#kintoneplugin-setting-prompt-template > tr:gt(0)").map(function () {
-			let spacePromptTemplate = "-----";
-			let spaceButton = "-----";
-			let status = $(this).find("#checkbox").prop("checked");
-			if (status == true) {
-				spacePromptTemplate = $(this).find("#spacePromptTemplate").val();
-			} else {
-				spaceButton = $(this).find("#spaceButtons").val();
-			}
-			let settingName = $(this).find("#settingName").val();
-			let fieldResult = $(this).find("#fieldResult").val();
-			let slide = $(this).find("#container-table-settingPromptTemplate").css("display");
-			let systemInstruction = $(this).find(".systemRole").val();
-			let prompt = $(this).find(".promptContent").val();
-			return { status, settingName, fieldResult, slide, spacePromptTemplate, spaceButton, systemInstruction, prompt };
+		let codeMasterSetting = $("#kintoneplugin-setting-code-master > tr:gt(0)").map(function () {
+			let masterId = $(this).find("#master_id").val();
+			let appId = $(this).find("#app_id").val();
+			let apiToken = $(this).find("#api_token").val();
+			let codeField = $(this).find("#code_field").val();
+			let nameField = $(this).find("#name_field").val();
+			let typeField = $(this).find("#type_field").val();
+			return { masterId, appId, apiToken, codeField, nameField, typeField };
 		}).get();
-		getDataSettings.spaceSetting = spaceSetting;
-		getDataSettings.settingPromptTemplate = settingPromptTemplate;
-		return getDataSettings;
+		console.log('codeMasterSetting', codeMasterSetting);
+
+		let searchContent = $("#kintoneplugin-setting-prompt-template > tr:gt(0)").map(function () {
+			let groupName = $(this).find("#group_name_ref").val();
+			let searchName = $(this).find("#search_name").val();
+			let masterId = $(this).find("#master_id_ref").val();
+			let searchTarget = $(this).find("#search_target").val();
+			let fieldForSearch = $(this).find("field_for_search").val();
+			return { groupName, searchName, masterId, searchTarget, fieldForSearch };
+		}).get();
+		console.log('searchContent', searchContent);
+
+		// //get value from setting prompt template.
+		// let settingPromptTemplate = $("#kintoneplugin-setting-prompt-template > tr:gt(0)").map(function () {
+		// 	let spacePromptTemplate = "-----";
+		// 	let spaceButton = "-----";
+		// 	let status = $(this).find("#checkbox").prop("checked");
+		// 	if (status == true) {
+		// 		spacePromptTemplate = $(this).find("#spacePromptTemplate").val();
+		// 	} else {
+		// 		spaceButton = $(this).find("#spaceButtons").val();
+		// 	}
+		// 	let settingName = $(this).find("#settingName").val();
+		// 	let fieldResult = $(this).find("#fieldResult").val();
+		// 	let slide = $(this).find("#container-table-settingPromptTemplate").css("display");
+		// 	let systemInstruction = $(this).find(".systemRole").val();
+		// 	let prompt = $(this).find(".promptContent").val();
+		// 	return { status, settingName, fieldResult, slide, spacePromptTemplate, spaceButton, systemInstruction, prompt };
+		// }).get();
+		// getDataSettings.spaceSetting = spaceSetting;
+		// getDataSettings.settingPromptTemplate = settingPromptTemplate;
+		return {
+			groupSetting,
+			codeMasterSetting,
+			searchContent
+		};
 	}
 
 	//function validation of button save.
@@ -568,6 +592,14 @@ jQuery.noConflict();
 		await setValueConfig();
 		await setInitialValue('setInitial');
 
+		$('#kintoneplugin-setting-body tbody, #kintoneplugin-setting-code-master, #kintoneplugin-setting-tspace').sortable({
+			handle: '.drag-icon',  // Restrict dragging to the drag icon (bars)
+			items: 'tr:not([hidden])', // Ensure only visible rows can be dragged
+			cursor: 'move',
+			placeholder: 'ui-state-highlight',
+			axis: 'y'
+		});
+
 		// button save.
 		$('#button_save').on('click', async function () {
 			let createConfig = getData();
@@ -586,29 +618,31 @@ jQuery.noConflict();
 		// button-update.
 		$("#button-update").click(async function () {
 			let getValueUpdated = getData();
-			let valueValidation = await validationUpdate(getValueUpdated);
+			console.log(getValueUpdated);
+			// let valueValidation = await validationUpdate(getValueUpdated);
+			let valueValidation = true;
 			let dataLost = false;
 			if (valueValidation == false) {
 				return;
 			} else {
 				// Clear validation-error.
-				$('.spaceForPromptTemplate, .storeFields, .spaceForButton').removeClass('validation-error');
+				// $('.spaceForPromptTemplate, .storeFields, .spaceForButton').removeClass('validation-error');
 
 				// Clear value in row 0 of table space for prompt template and button and set to default value.
 				let firstRow = $('#kintoneplugin-setting-prompt-template tr:eq(0)');
-				firstRow.find(`select[name="field_dropdown_column_space_for_prompt"]`).empty().append($('<option>').text('-----').val('-----'));
-				firstRow.find('select[name="field_dropdown_column_space_button"]').empty().append($('<option>').text('-----').val('-----'));
+				firstRow.find(`select#group_name_ref`).empty().append($('<option>').text('-----').val('-----'));
+				firstRow.find('select#master_id_ref').empty().append($('<option>').text('-----').val('-----'));
 
 				// set data to row 0 of table space for prompt template and button.
-				getValueUpdated.spaceSetting.forEach((fields) => {
-					if (fields.spaceForPromptTemplate !== "-----") {
-						firstRow.find('select[name="field_dropdown_column_space_for_prompt"]').append(
-							$('<option>').attr("value", fields.spaceForPromptTemplate).text(`${fields.spaceForPromptTemplate} (${fields.spaceForPromptTemplate})`)
+				getValueUpdated.groupSetting.forEach((item) => {
+					if (item.spaceForPromptTemplate !== "-----") {
+						firstRow.find('select#group_name_ref').append(
+							$('<option>').attr("value", item.spaceForPromptTemplate).text(`${item.spaceForPromptTemplate} (${item.spaceForPromptTemplate})`)
 						);
 					}
 
-					firstRow.find('select[name="field_dropdown_column_space_button"]').append(
-						$('<option>').attr("value", fields.spaceForButton).text(`${fields.spaceForButton} (${fields.spaceForButton})`)
+					firstRow.find('select#master_id_ref').append(
+						$('<option>').attr("value", item.spaceForButton).text(`${item.spaceForButton} (${item.spaceForButton})`)
 					);
 				});
 
@@ -617,41 +651,44 @@ jQuery.noConflict();
 					let row = $(this); // Store the current row in a jQuery object.
 
 					// Get the selected values from the dropdowns space for button and space for prompt template.
-					let selectedSpaceForPrompt = row.find('select[name="field_dropdown_column_space_for_prompt"]').val();
-					let selectedSpaceForButton = row.find('select[name="field_dropdown_column_space_button"]').val();
+					let selectedGroupName = row.find('select#group_name_ref').val();
+					let selectedMasterId = row.find('select#master_id_ref').val();
 
 					// Clear the value and set to default value.
-					row.find('select[name="field_dropdown_column_space_for_prompt"]').empty().append($('<option>').val('-----').text("-----"));
-					row.find('select[name="field_dropdown_column_space_button"]').empty().append($('<option>').val('-----').text("-----"));
+					row.find('select#group_name_ref').empty().append($('<option>').val('-----').text("-----"));
+					row.find('select#master_id_ref').empty().append($('<option>').val('-----').text("-----"));
 					let appendedValues = new Set();
-					getValueUpdated.spaceSetting.forEach((fields) => {
-						if (fields.spaceForPromptTemplate !== "-----") {
-							row.find('select[name="field_dropdown_column_space_for_prompt"]').append(
-								$('<option>').attr("value", fields.spaceForPromptTemplate).text(`${fields.spaceForPromptTemplate} (${fields.spaceForPromptTemplate})`)
+					getValueUpdated.groupSetting.forEach((item) => {
+						if (item.groupName) {
+							row.find('select#group_name_ref').append(
+								$('<option>').attr("value", item.groupName).text(`${item.groupName}`)
 							);
 						}
-						let optionElement = $('<option>').attr("value", fields.spaceForButton).text(`${fields.spaceForButton} (${fields.spaceForButton})`);
-						if (!appendedValues.has(fields.spaceForButton)) {
-							appendedValues.add(fields.spaceForButton);
-						} else {
-							optionElement.attr("hidden", true);
+						
+					});
+
+					getValueUpdated.codeMasterSetting.forEach((item) => {
+						if (item.masterId) {
+							row.find('select#master_id_ref').append(
+								$('<option>').attr("value", item.masterId).text(`${item.masterId}`)
+							);
 						}
-						row.find('select[name="field_dropdown_column_space_button"]').append(optionElement);
+						
 					});
 
 					// Check to see if not same value is set "-----".
-					if (row.find('select[name="field_dropdown_column_space_for_prompt"] option[value="' + selectedSpaceForPrompt + '"]').length == 0) {
-						selectedSpaceForPrompt = "-----";
+					if (row.find('select#group_name_ref option[value="' + selectedGroupName + '"]').length == 0) {
+						selectedGroupName = "-----";
 						dataLost = true;
 					}
-					if (row.find('select[name="field_dropdown_column_space_button"] option[value="' + selectedSpaceForButton + '"]').length == 0) {
-						selectedSpaceForButton = "-----";
+					if (row.find('select#master_id_ref option[value="' + selectedMasterId + '"]').length == 0) {
+						selectedMasterId = "-----";
 						dataLost = true;
 					}
 
 					// Set to the value selected.
-					row.find('select[name="field_dropdown_column_space_for_prompt"]').val(selectedSpaceForPrompt);
-					row.find('select[name="field_dropdown_column_space_button"]').val(selectedSpaceForButton);
+					row.find('select#group_name_ref').val(selectedGroupName);
+					row.find('select#master_id_ref').val(selectedMasterId);
 				});
 				Swal10.fire({
 					position: 'center',
@@ -915,6 +952,8 @@ jQuery.noConflict();
 			$(this).closest("tr").find("#navbar-show-content label").text(settingNameValue);
 			$(this).closest("tr").find(".slide-up").hide();
 		};
+
+		
 
 		//add new row function
 		$(".addRow").on('click', function () {
