@@ -58,12 +58,18 @@ jQuery.noConflict();
 		FIELDFROMAPP.forEach((items) => {
 			if (fieldType.includes(items.type)) {
 				$("select#search_target").append(
-					$("<option>").attr("value", items.code).attr("title", items.label).text(`${items.label}(${items.code}) `)
+					$("<option>").attr("value", items.code).attr("type", items.type).text(`${items.label}(${items.code}) `)
 				);
-				$("select#field_for_search").append(
-					$("<option>").attr("value", items.code).attr("title", items.label).text(`${items.label}(${items.code})  `)
-				);
+				if (items.type == "SINGLE_LINE_TEXT" || items.type == "MULTI_LINE_TEXT") {
+					$("select#field_for_search").append(
+						$("<option>").attr("value", items.code).text(`${items.label}(${items.code})  `)
+					);
+				}
 			}
+			$("select#search_target").on('change', (e) => {
+				console.log(e.target.type);
+			})
+			
 		});
 
 		//set space to dropdown spaceForPromptTemplate and spaceForButton.
@@ -78,7 +84,7 @@ jQuery.noConflict();
 	}
 
 	// function get data from table.
-	function getData() {
+	async function getData() {
 		// let selectPlatForm = $(".platForm").val()
 		// let modelVersion = selectPlatForm == "Chat_GPT" ? $("#modelVersionChatGPT").val() : $("#modelVersionAzure").val();
 		// let resourceName = "";
@@ -128,7 +134,7 @@ jQuery.noConflict();
 			let searchName = $(this).find("#search_name").val();
 			let masterId = $(this).find("#master_id_ref").val();
 			let searchTarget = $(this).find("#search_target").val();
-			let fieldForSearch = $(this).find("field_for_search").val();
+			let fieldForSearch = $(this).find("#field_for_search").val();
 			return { groupName, searchName, masterId, searchTarget, fieldForSearch };
 		}).get();
 		console.log('searchContent', searchContent);
@@ -589,8 +595,10 @@ jQuery.noConflict();
 
 	//function start when open the plugin.
 	$(document).ready(async function () {
+		window.RsComAPI.showSpinner();
 		await setValueConfig();
 		await setInitialValue('setInitial');
+		window.RsComAPI.hideSpinner();
 
 		$('#kintoneplugin-setting-body tbody, #kintoneplugin-setting-code-master, #kintoneplugin-setting-tspace').sortable({
 			handle: '.drag-icon',  // Restrict dragging to the drag icon (bars)
@@ -602,7 +610,7 @@ jQuery.noConflict();
 
 		// button save.
 		$('#button_save').on('click', async function () {
-			let createConfig = getData();
+			let createConfig = await getData();
 			let validation = await validationSave(createConfig);
 			if (validation === false) {
 				return;
@@ -617,7 +625,7 @@ jQuery.noConflict();
 
 		// button-update.
 		$("#button-update").click(async function () {
-			let getValueUpdated = getData();
+			let getValueUpdated = await getData();
 			console.log(getValueUpdated);
 			// let valueValidation = await validationUpdate(getValueUpdated);
 			let valueValidation = true;
@@ -664,7 +672,7 @@ jQuery.noConflict();
 								$('<option>').attr("value", item.groupName).text(`${item.groupName}`)
 							);
 						}
-						
+
 					});
 
 					getValueUpdated.codeMasterSetting.forEach((item) => {
@@ -673,7 +681,7 @@ jQuery.noConflict();
 								$('<option>').attr("value", item.masterId).text(`${item.masterId}`)
 							);
 						}
-						
+
 					});
 
 					// Check to see if not same value is set "-----".
@@ -697,6 +705,117 @@ jQuery.noConflict();
 					showConfirmButton: true,
 				});
 				HASUPDATED = true;
+			}
+		});
+
+		// button-load data.
+		$("#load_data").click(async function () {
+			window.RsComAPI.showSpinner();
+			console.log($("#kintoneplugin-setting-code-master > tr:gt(0)"))
+			let allResponse = [];
+			for (let row of $("#kintoneplugin-setting-code-master > tr:gt(0)")) {
+				let appId = $(row).find('#app_id').val();
+				let apiToken = $(row).find('#api_token').val();
+				let body = { app: appId };
+
+				if (!appId) continue;  // Skip if appId is not present
+
+				if (apiToken) body.token = apiToken;
+
+				let checkData = allResponse.filter(item => item.appId == appId);
+				console.log('checkData', checkData);
+
+				let response = [];
+				if (checkData.length <= 0) {
+					response = await window.RsComAPI.getRecords(body);
+					allResponse.push({ appId, response });
+				} else {
+					console.log('get old');
+					response = checkData[0].response;
+				}
+
+				$(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
+				$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+				$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+				for (const item of response) {
+					console.log(item);
+					if (($(row).find('select#type_field option[value="' + item.type.value + '"]')).length <= 0) {
+						$(row).find('select#type_field').append(
+							$('<option>').attr("value", item.type.value).text(`${item.type.value}`)
+						);
+					}
+					// $(row).find('select#code_field').append(
+					// 	$('<option>').attr("value", item.code.value).text(`${item.code.value}`)
+					// );
+					// $(row).find('select#name_field').append(
+					// 	$('<option>').attr("value", item.name.value).text(`${item.name.value}`)
+					// );
+				}
+				$(row).find('select#type_field').on('change', async (e) => {
+					console.log(e.target.value);
+					if (e.target.value !== '-----') {
+						$(row).find('select#code_field').prop('disabled', false).parent().removeClass('disabled-select');
+						$(row).find('select#name_field').prop('disabled', false).parent().removeClass('disabled-select');
+						let selectedType = e.target.value;
+
+						let filteredCode = response
+							.filter(item => item.type.value === selectedType) // Keep items matching the selected type
+							.map(item => item.code.value) // Map to code values
+							.filter(code => code != null) // Filter out null and undefined values
+							.map(Number) // Convert string values to numbers for accurate sorting
+							.sort((a, b) => a - b); // Sort in ascending order
+						console.log('filteredCode', filteredCode);
+						$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+						for (const code of filteredCode) {
+							$(row).find('select#code_field').append(
+								$('<option>').attr("value", code).text(`${code}`)
+							);
+						}
+
+						let filteredName = response
+							.filter(item => item.type.value === selectedType) // Keep items matching the selected type
+							.map(item => item.name.value) // Map to name values
+							.filter(name => name != null) // Filter out null and undefined values
+							.sort((a, b) => a.localeCompare(b)); // Sort in alphabetical order
+						$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+						for (const name of filteredName) {
+							$(row).find('select#name_field').append(
+								$('<option>').attr("value", name).text(`${name}`)
+							);
+						}
+					} else {
+						$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----")).prop('disabled', true).parent().addClass('disabled-select');
+						$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----")).prop('disabled', true).parent().addClass('disabled-select');
+						// $(row).find('select#code_field').prop('disabled', true).parent().addClass('disabled-select');
+						// $(row).find('select#name_field').prop('disabled', true).parent().addClass('disabled-select');
+					}
+				})
+				console.log('response', response);
+			}
+			window.RsComAPI.hideSpinner();
+		});
+
+		$("#recreate-button").click(async function (e) { 
+			e.preventDefault();
+			let latestValue = await getData();
+			console.log('latestValue', latestValue);
+			let records = await window.RsComAPI.getRecords({app: kintone.app.getId()});
+			console.log('records',records);
+			for (let row of $("#kintoneplugin-setting-prompt-template > tr:gt(0)")) {
+				let groupName = $(row).find('select#group_name_ref').val();
+				let targetField = $(row).find('select#search_target').val();
+				let fieldForSearch = $(row).find('select#field_for_search').val();
+				let getGroupData = latestValue.groupSetting.filter(item => item.groupName == groupName);
+				console.log('groupSetting', getGroupData);
+
+				for(let record of records) {
+					let targetValue = record[targetField].value;
+					let convertedValue = "";
+					if(getGroupData[0].searchType == "text_initial" || getGroupData[0].searchType == "text_initial"){
+						
+					}
+				}
+
 			}
 		});
 
@@ -953,7 +1072,7 @@ jQuery.noConflict();
 			$(this).closest("tr").find(".slide-up").hide();
 		};
 
-		
+
 
 		//add new row function
 		$(".addRow").on('click', function () {

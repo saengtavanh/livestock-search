@@ -129,11 +129,22 @@
               </div>
 
               <div class="labelPrompt">
-                <div class="kintoneplugin-table-td-control" id="">
-                  <label for="select_field_column" style="font-size: 14px;">Code field</label>
+                <div class="kintoneplugin-table-td-control" >
+                  <label for="select_field_column" style="font-size: 14px;">Type</label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
-                      <select id="code_field">
+                      <select id="type_field">
+                        <option value="-----">-----</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="kintoneplugin-table-td-control" id="">
+                  <label for="select_field_column" style="font-size: 14px;">Code</label>
+                  <div class="kintoneplugin-select-outer">
+                    <div class="kintoneplugin-select disabled-select">
+                      <select id="code_field" disabled>
                         <option value="-----">-----</option>
                       </select>
                     </div>
@@ -141,21 +152,10 @@
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="select_field_column" style="font-size: 14px;">Name field</label>
+                  <label for="select_field_column" style="font-size: 14px;">Name</label>
                   <div class="kintoneplugin-select-outer">
-                    <div class="kintoneplugin-select">
-                      <select id="name_field">
-                        <option value="-----">-----</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="kintoneplugin-table-td-control" >
-                  <label for="select_field_column" style="font-size: 14px;">Type</label>
-                  <div class="kintoneplugin-select-outer">
-                    <div class="kintoneplugin-select">
-                      <select id="type_field">
+                    <div class="kintoneplugin-select disabled-select">
+                      <select id="name_field" disabled>
                         <option value="-----">-----</option>
                       </select>
                     </div>
@@ -180,6 +180,7 @@
     <div class="button-update-space-space-button">
       <p class="kintoneplugin-row" id="button-action">
         <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="button-update">更新</button>
+        <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="load_data">Load data</button>
       </p>
     </div>
 
@@ -293,6 +294,9 @@
           </tr>
         </tbody>
       </table>
+      <div class="recreate-button">
+        <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="recreate-button">Recreate</button>
+      </div>
     </div>
     <p class="kintoneplugin-row" id="button-action">
       <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="button_save">保存</button>

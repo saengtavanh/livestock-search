@@ -71,7 +71,7 @@ table td:first-child {
 
 #button-action {
   display: flex;
-  margin-left: 52px;
+  margin-left: 6.9rem;
   margin-top: 35px;
   gap: 2.3%;
 }
@@ -361,4 +361,23 @@ tbody tr {
   height: 2.5em;
   background-color: #f0f0f0;
   border: 1px dashed #ccc;
+}
+
+.recreate-button {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+}
+.recreate-button button {
+  margin-left: 4.7rem;
+}
+
+select:disabled {
+  cursor: no-drop;
+}
+
+.kintoneplugin-select select:disabled,
+.kintoneplugin-select.disabled-select{
+  background-color: #eee;
 }

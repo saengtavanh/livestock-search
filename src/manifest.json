@@ -19,6 +19,7 @@
       "https://js.cybozu.com/jquery/3.3.1/jquery.min.js",
       "js/jquery-ui.js",
       "js/sweetalert2.all.js",
+      "common/RsComAPI.js",
       "js/config.js"
       
     ],
