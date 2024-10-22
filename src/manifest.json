@@ -5,7 +5,12 @@
   "type": "APP",
   "desktop": {
     "js": [
-      "js/desktop.js"
+      "js/desktop.js",
+      "https://js.cybozu.com/jquery/3.3.1/jquery.min.js",
+      "js/jquery-ui.js",
+      "js/jquery.min.js",
+      "js/kuc.min.js",
+      "js/sweetalert2.all.js"
     ],
     "css": [
       "css/51-modern-default.css",
@@ -21,14 +26,10 @@
       "js/jquery.min.js",
       "js/sweetalert2.all.js",
       "js/config.js"
-      
     ],
     "css": [
       "css/51-modern-default.css",
       "css/config.css"
-    ],
-    "required_params": [
-      "message"
     ]
   },
   "name": {
