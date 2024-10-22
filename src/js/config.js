@@ -69,7 +69,7 @@ jQuery.noConflict();
 			$("select#search_target").on('change', (e) => {
 				console.log(e.target.type);
 			})
-			
+
 		});
 
 		//set space to dropdown spaceForPromptTemplate and spaceForButton.
@@ -795,28 +795,75 @@ jQuery.noConflict();
 			window.RsComAPI.hideSpinner();
 		});
 
-		$("#recreate-button").click(async function (e) { 
+		$("#recreate-button").click(async function (e) {
 			e.preventDefault();
+			window.RsComAPI.showSpinner();
 			let latestValue = await getData();
 			console.log('latestValue', latestValue);
-			let records = await window.RsComAPI.getRecords({app: kintone.app.getId()});
-			console.log('records',records);
+			let records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
+			console.log('records', records);
 			for (let row of $("#kintoneplugin-setting-prompt-template > tr:gt(0)")) {
 				let groupName = $(row).find('select#group_name_ref').val();
 				let targetField = $(row).find('select#search_target').val();
 				let fieldForSearch = $(row).find('select#field_for_search').val();
+				if (!fieldForSearch) continue;
 				let getGroupData = latestValue.groupSetting.filter(item => item.groupName == groupName);
 				console.log('groupSetting', getGroupData);
+				let updateRecords = [];
 
-				for(let record of records) {
+				for (let record of records) {
 					let targetValue = record[targetField].value;
 					let convertedValue = "";
-					if(getGroupData[0].searchType == "text_initial" || getGroupData[0].searchType == "text_initial"){
-						
+
+					switch (getGroupData[0].searchType) {
+						case "text_initial":
+						case "multi_text_initial":
+							convertedValue = `_,${targetValue.split('').join(',')}`
+							console.log('convertedValue', convertedValue);
+							break;
+
+						case "text_patial":
+						case "multi_text_patial":
+							convertedValue = `${targetValue.split('').join(',')}`
+							break;
+
+						case "text_exact":
+							convertedValue = `_,${targetValue.split('').join(',')},_`
+							break;
+
+						default:
+							break;
 					}
+					// if (getGroupData[0].searchType == "text_initial") {
+					// 	convertedValue = `_,${targetValue.split('').join(',')}`
+					// 	console.log('convertedValue', convertedValue);
+					// }
+					record[fieldForSearch].value = convertedValue;
+					updateRecords.push({
+						id: record.$id.value,
+						record: {
+							[fieldForSearch]: {
+								value: convertedValue
+							}
+						}
+					});
+
+				}
+				let body = {
+					app: kintone.app.getId(),
+					records: updateRecords
+				}
+				console.log('body', body);
+				try {
+					await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body);
+				} catch (error) {
+					console.log(error);
 				}
 
+				console.log('update records:', records);
+
 			}
+			window.RsComAPI.hideSpinner();
 		});
 
 		$("#resourceName, #deploymentID, #apiVersion, #apiKey, #platForm, #maxToken").on("change", function () {
