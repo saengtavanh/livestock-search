@@ -10,7 +10,8 @@
       "js/jquery-ui.js",
       "js/jquery.min.js",
       "js/kuc.min.js",
-      "js/sweetalert2.all.js"
+      "js/sweetalert2.all.js",
+      "js/RsComAPI.js"
     ],
     "css": [
       "css/51-modern-default.css",

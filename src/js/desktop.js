@@ -1,4 +1,4 @@
-(function (PLUGIN_ID) {
+(async function (PLUGIN_ID) {
   const config = {
     search_displays: [
       {
@@ -142,42 +142,42 @@
         group_name: "DropdownExact",
         search_name: "fark111",
         code_master_id: "",
-        target_field: "food",
+        target_field: "TextInitialCode",
         field_for_search: "foodSearch"
       },
       {
         group_name: "DropdownExact",
         search_name: "fark000",
         code_master_id: "",
-        target_field: "animal",
+        target_field: "DropdownExact",
         field_for_search: "foodSearch"
       },
       {
         group_name: "DropdownExactEmpy",
         search_name: "fark999",
         code_master_id: "",
-        target_field: "DropdownExactCode",
+        target_field: "DropdownExact",
         field_for_search: "foodSearch"
       },
       {
         group_name: "DropdownExactEmpy",
         search_name: "fark888",
         code_master_id: "",
-        target_field: "DropdownExactCode",
+        target_field: "NumberExactCode",
         field_for_search: "foodSearch"
       },
       {
         group_name: "DropdownExactTest",
         search_name: "Test1",
         code_master_id: "",
-        target_field: "DropdownExactCode",
+        target_field: "DropdownExact",
         field_for_search: "foodSearch"
       },
       {
         group_name: "DropdownExactTest",
         search_name: "Test2",
         code_master_id: "",
-        target_field: "DropdownExactCode",
+        target_field: "TextInitialCode",
         field_for_search: "foodSearch"
       },
     ],
@@ -194,13 +194,14 @@
   };
 
   // Event listener for showing the record index page
-  kintone.events.on('app.record.index.show', () => {
+  kintone.events.on('app.record.index.show', async (event) => {
 
+    let records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
+    console.log("records", records);
     const spaceEl = kintone.app.getHeaderSpaceElement();
     if (!spaceEl) {
       throw new Error('The header element is unavailable on this page.');
     }
-
     const $spaceEl = $(spaceEl).css({
       'display': 'flex',
       'flex-wrap': 'wrap',
@@ -208,7 +209,8 @@
       'justify-content': 'flex-start',
       'marginBottom': '50px'
     });
-
+    let space = [];
+    console.log(space);
     function createDropDowns(config) {
       config.search_displays.forEach((display) => {
         if (display.search_type === "Dropdown_Exact") {
@@ -236,6 +238,7 @@
                 const filteredItems = config.search_content.filter(
                   (content) => content.group_name === display.group_name && !display.name_marker
                 );
+                console.log("filteredItems", filteredItems);
 
                 const itemsList = filteredItems.map((content) => content.search_name);
 
@@ -248,18 +251,20 @@
                     return options;
                   }, {}),
                   showCancelButton: true,
-                  inputValidator: (value) => {
-                    return new Promise((resolve) => {
-                      if (value === '') {
-                        resolve('You need to select something!');
-                      } else {
-                        resolve();
-                      }
-                    });
-                  }
+                  // inputValidator: (value) => {
+                  //   return new Promise((resolve) => {
+                  //     if (value === '') {
+                  //       resolve('You need to select something!');
+                  //     } else {
+                  //       resolve();
+                  //     }
+                  //   });
+                  // }
                 }).then((result) => {
+                  console.log("object54545", result.value);
                   if (result.value !== undefined) {
                     const selectedItem = itemsList[result.value];
+                    console.log("selectedItem", selectedItem);
 
                     // Update the title of the drop-down with the selected item
                     $dropDownTitle.text(selectedItem);
@@ -271,11 +276,10 @@
                       (content) => content.search_name === selectedItem
                     );
                     console.log("object", selectedContent);
-                    if (selectedContent) {
+                    for (let item of records) {
                       const $selectedOption = $("<option>")
-                        .text(selectedContent.search_name)
-                        .attr('value', selectedContent.search_name || selectedContent.target_field);
-                      // .val(selectedContent.code_master_id || selectedContent.target_field);
+                        .text(item[selectedContent.target_field].value)
+                        .attr('value', item[selectedContent.target_field].value);
                       $dropDown.append($selectedOption);
                     }
                   }
@@ -285,6 +289,7 @@
             // Create drop-down
             const $dropDown = $("<select>")
               .addClass("kintoneplugin-dropdown")
+              .attr("name", "mySelect")
               .css({ width: display.search_length });
 
             // Add default option
@@ -293,50 +298,49 @@
               .val('');
             $dropDown.append($defaultOption);
 
-            // Initially add all related content as options
-            relatedContent.forEach((content) => {
-              const $option = $("<option>")
-                .text(content.search_name)
-                .attr('value', content.search_name || content.target_field);
-              // .val(content.code_master_id || content.target_field);
-              $dropDown.append($option);
-            });
+
             // Event listener for when the dropdown value changes
             $dropDown.on('change', function (e) {
               console.log("value::", e.target.value);
               const selectedValue = $(this).val();
-              // let option = $("select[name='kintoneplugin-dropdown'] option:selected").val();
-              // console.log("Selected value:", option);
               console.log("Selected value:", selectedValue);
             });
 
             // Set specific option value if name_marker is not empty
             if (display.name_marker) {
-              // const specificContent = relatedContent.find((content) => content.search_name);
-              const specificContent = relatedContent.find((content) => content.search_name === display.group_name);
-              // console.log('111', specificContent);
-              if (specificContent) {
-                $dropDown.empty();
-                const $specificOption = $("<option>")
-                  .text(specificContent.search_name)
-                  .attr('value', specificContent.search_name || specificContent.target_field);
-                // .val(specificContent.code_master_id || specificContent.target_field);
-                $dropDown.append($specificOption);
-                // console.log("object", $specificOption);
+              let filteredRecords = config.search_content.filter(item => item.group_name == display.group_name);
+              console.log('filteredRecords', filteredRecords);
+              for (let item of filteredRecords) {
+                console.log('target', item.target_field);
+                for (let record of records) {
+                  const $option = $("<option>")
+                    .text(record[item.target_field].value)
+                    .attr('value', record[item.target_field].value);
+                  $dropDown.append($option);
+                }
               }
+
+              console.log("1");
+
 
             } else {
               const initialContent = relatedContent[0];
-              // console.log('rer', initialContent);
               $dropDownTitle.text(initialContent.search_name);
 
               $dropDown.empty();
-              const $initialOption = $("<option>")
-                .text(initialContent.search_name)
-                .attr('value', initialContent.search_name || initialContent.target_field);
-              // .val(initialContent.code_master_id || initialContent.target_field);
-              $dropDown.append($initialOption);
+              for (let item of records) {
+                const $initialOption = $("<option>")
+                  .text(item[initialContent.target_field].value)
+                  .attr('value', item[initialContent.target_field].value);
+                $dropDown.append($initialOption);
+              }
+              console.log("2");
             }
+
+            let selected = $("select[name='mySelect'] option:selected");
+
+            console.log("selected ++++", selected.val());
+
             const $element = $('<div></div>').addClass('search-item').css({
               'display': 'flex',
               'flex-direction': 'column',
@@ -344,7 +348,8 @@
             });
             $element.append($dropDownTitle);
             $element.append($dropDown);
-            $spaceEl.append($element);
+            space.push($element);
+            // $spaceEl.append($element);
           }
         }
       });
@@ -507,22 +512,23 @@
         case 'Date_Range':
           inputElement = createDateRangeInput();
           break;
+        // case 'Dropdown_Exact':
+        //   inputElement = createDropDowns(config);
+        //   break;
         default:
           inputElement = null;
       }
-      // else if (search_type === 'Dropdown_Exact') {
-
-      //   inputElement = createDropDowns(config);
-      // }
       if (inputElement) {
         $(inputElement).css({
           'width': searchItem.search_length
         });
         const $label = $('<label>').text(group_name);
         $element.append($label).append(inputElement);
-        $spaceEl.append($element);
+        space.push($element)
+        // $spaceEl.append($element);
       }
     });
+    $spaceEl.append(space);
     $spaceEl.append($searchButton, $clearButton);
   });
 })(kintone.$PLUGIN_ID);
