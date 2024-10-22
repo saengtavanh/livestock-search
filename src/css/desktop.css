@@ -8,3 +8,19 @@
   margin: 0.8rem;
   margin-top: 0;
 }
+.custom-container{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kintoneplugin-select-outer{
+ margin-top: 6px;
+}
+.kintoneplugin-input-text{
+  width: 50px;
+}
+.custom-main{
+  display: flex;
+  flex-direction: column;
+
+}

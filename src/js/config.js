@@ -627,11 +627,16 @@ jQuery.noConflict();
 		$("#button-update").click(async function () {
 			let getValueUpdated = await getData();
 			console.log(getValueUpdated);
-			// let valueValidation = await validationUpdate(getValueUpdated);
-			let valueValidation = true;
+			let valueValidation = await validationUpdate(getValueUpdated);
+			// let valueValidation = true;
 			let dataLost = false;
-			if (valueValidation == false) {
-				return;
+			if (valueValidation == true) {
+				return Swal10.fire({
+					position: 'center',
+					icon: 'error',
+					text: 'Some thing went wrong!',
+					showConfirmButton: true,
+				});
 			} else {
 				// Clear validation-error.
 				// $('.spaceForPromptTemplate, .storeFields, .spaceForButton').removeClass('validation-error');
@@ -872,171 +877,38 @@ jQuery.noConflict();
 
 		// validate update function.
 		async function validationUpdate(setUpdate) {
-			let checkMaxToken = false;
-			let checkAISetting = false;
-			let titleError = "";
-			let errorTexts = [];
-			let duplicateRows = new Set();
-			let duplicateTracker = {
-				spaceForPromptTemplate: {},
-				spaceForButton: {},
-				storeField: {},
-			};
-			$('.spaceForPromptTemplate').removeClass('validation-error');
-			$('.storeFields').removeClass('validation-error');
-			$('.spaceForButton').removeClass('validation-error');
-
-			// Step 1: Validate empty values
-			if (setUpdate.maxToken !== "") {
-				if (Number(setUpdate.maxToken) < 1) {
-					errorTexts.push(`<div style='padding-left: 10px;'>最大トークンは1以上を入力してください。</div>`);
-					$(`.maxToken`).addClass('validation-error');
-					checkMaxToken = true;
-				} else {
-					$(`.maxToken`).removeClass('validation-error');
-				}
-			}
-
-			if (checkMaxToken == false) {
-				if (setUpdate.apiKey === "") {
-					errorTexts.push(`<div style='padding-left: 10px;'>APIキーが未入力です。</div>`);
-					$(`.apiKey`).addClass('validation-error');
-					checkAISetting = true;
-				}
-				if (setUpdate.platForm === "Azure_OpenAI") {
-					if (setUpdate.apiVersion === "") {
-						errorTexts.push(`<div style='padding-left: 10px;'>APIバージョンが未入力です。</div>`);
-						$(`.apiVersion`).addClass('validation-error');
-						checkAISetting = true;
-					}
-					if (setUpdate.resourceName === "") {
-						errorTexts.push(`<div style='padding-left: 10px;'> リソース名が未入力です。</div>`);
-						$(`.resourceName`).addClass('validation-error');
-						checkAISetting = true;
-					}
-					if (setUpdate.deploymentID === "") {
-						errorTexts.push(`<div style='padding-left: 10px;'>デプロイメントIDが未入力です。</div>`);
-						$(`.deploymentID`).addClass('validation-error');
-						checkAISetting = true;
-					}
-				} else if (setUpdate.apiKey !== "") {
-					await validateApiKey(setUpdate.apiKey, errorTexts);
-					if (errorTexts.length > 0) {
-						checkAISetting = true;
-					}
-				}
-			}
-			if (checkAISetting == false && checkMaxToken == false) {
-				for (let i = 0; i < setUpdate.spaceSetting.length; i++) {
-					let { spaceForPromptTemplate, storeField, spaceForButton, labelForPromptTemplate, labelForButton } = setUpdate.spaceSetting[i];
-					let currentRow = $(`#kintoneplugin-setting-tspace > tr:eq(${i + 1})`);
-					let displayTitleNameErrorText = '';
-					if (spaceForButton === "-----") {
-						displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目： ボタン用のスペース。</div>`;
-						currentRow.find('.spaceForButton').addClass('validation-error');
-					}
-					if (labelForPromptTemplate === "") {// y bor thun leoo
-						displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目：プロンプトテンプレート。</div>`;
-						currentRow.find('.labelForPromptTemplate').addClass('validation-error');
-					}
-					if (labelForButton === "") {// y bor thun leo
-						displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目：ボタン名。</div>`;
-						currentRow.find('.labelForButton').addClass('validation-error');
-					}
-					if (spaceForPromptTemplate !== "-----") {
-						if (storeField === "-----") {
-							displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目：ストアフィールド。</div>`;
-							currentRow.find('.storeFields').addClass('validation-error');
-						}
-					}
-					if (displayTitleNameErrorText !== "") {
-						errorTexts.push(`<div style='text-align: left;'>${displayTitleNameErrorText}</div>`);
-					}
-				}
-				titleError = `プロンプトの設定\n以下の項目を入力してください。`;
-
-			}
-
-			// If there are errors in empty values, display them and return false
-			if (errorTexts.length > 0) {
-				let errors = errorTexts.join("");
-				let customClass = $("<div></div>")
-					.text(titleError)
-					.css("font-size", "25px");
-				await Swal10.fire({
-					title: customClass.prop("outerHTML"),
-					icon: "error",
-					html: errors,
-					confirmButtonColor: "#3498db",
-				});
-				return false;
-			}
-
-			// Step 2: Validate duplicate values if no empty values were found
-			errorTexts = []; // Clear the error texts for the next step
-			for (let i = 0; i < setUpdate.spaceSetting.length; i++) {
-				let { spaceForPromptTemplate, storeField, spaceForButton } = setUpdate.spaceSetting[i];
-				let currentRow = $(`#kintoneplugin-setting-tspace > tr:eq(${i + 1})`);
-				let displayTitleNameErrorText = '';
-
-				if (spaceForPromptTemplate !== "-----") {
-					if (duplicateTracker.spaceForPromptTemplate[spaceForPromptTemplate]) {
-						let duplicateRow = duplicateTracker.spaceForPromptTemplate[spaceForPromptTemplate];
-						duplicateRows.add(duplicateRow);
-						displayTitleNameErrorText += `<div style='padding-left: 10px;'>${duplicateRow}行目で設定された「プロンプトテンプレート用のスペース」は${i + 1}行目で設定された「プロンプトテンプレート用のスペース」と一致します。</div>`;
-						currentRow.find('.spaceForPromptTemplate').addClass('validation-error');
-						$(`#kintoneplugin-setting-tspace > tr:eq(${duplicateRow})`).find('.spaceForPromptTemplate').addClass('validation-error');
-					} else {
-						duplicateTracker.spaceForPromptTemplate[spaceForPromptTemplate] = i + 1;
-					}
+			let hasError = false;
+			//group setting table
+			$('#kintoneplugin-setting-tspace > tr:gt(0)').each(function () {
+				let groupName = $(this).find('#group_name');
+				let searchType = $(this).find('#search_type');
+				if (searchType.val() == "-----"){
+					// errorTexts.push(`<div style='padding-left: 10px;'>「��索対象フィールド」が未選択です。</div>`);
+          $(searchType).parent().addClass('validation-error');
+					hasError = true;
+				}else {
+					$(searchType).parent().removeClass('validation-error');
+					hasError = false;
 				}
 
-				if (storeField !== "-----") {
-					if (duplicateTracker.storeField[storeField]) {
-						let duplicateRow = duplicateTracker.storeField[storeField];
-						duplicateRows.add(duplicateRow);
-						displayTitleNameErrorText += `<div style='padding-left: 10px;'>${duplicateRow}行目で設定された「ストアフィールド」は${i + 1}行目で設定された「ストアフィールド」と一致します。</div>`;
-						currentRow.find('.storeFields').addClass('validation-error');
-						$(`#kintoneplugin-setting-tspace > tr:eq(${duplicateRow})`).find('.storeFields').addClass('validation-error');
-					} else {
-						duplicateTracker.storeField[storeField] = i + 1;
-					}
+				if (!groupName.val()){
+					// errorTexts.push(`<div style='padding-left: 10px;'>「��索対象フィールド」が未選択です。</div>`);
+          $(groupName).addClass('validation-error');
+					hasError = true;
+				}else {
+					$(groupName).removeClass('validation-error');
+					hasError = false;
 				}
-
-				if (spaceForPromptTemplate !== "-----" || spaceForButton !== "-----") {
-					setUpdate.spaceSetting.forEach((otherSetting, j) => {
-						if (spaceForPromptTemplate === otherSetting.spaceForButton) {
-							displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目で設定された「プロンプトテンプレート用のスペース」は${j + 1}行目で設定された「ボタン用のスペース」と一致します。 </div>`;
-							currentRow.find('.spaceForPromptTemplate').addClass('validation-error');
-							$(`#kintoneplugin-setting-tspace > tr:eq(${j + 1})`).find('.spaceForButton').addClass('validation-error');
-						}
-					});
-				}
-
-				if (displayTitleNameErrorText !== "") {
-					errorTexts.push(`<div style='text-align: left;'>${displayTitleNameErrorText}</div>`);
-				}
-			}
-
-
-			duplicateRows.forEach(row => {
-				$(`#kintoneplugin-setting-tspace > tr:eq(${row + 1})`).addClass('validation-error');
 			});
 
-			if (errorTexts.length > 0) {
-				let errors = errorTexts.join("");
-				let customClass = $("<div></div>")
-					.text("プロンプトの設定")
-					.css("font-size", "25px");
-				await Swal10.fire({
-					title: customClass.prop("outerHTML"),
-					icon: "error",
-					html: errors,
-					confirmButtonColor: "#3498db",
-				});
-				return false;
-			}
-			return true;
+			//code master table
+			$('#kintoneplugin-setting-code-master > tr:gt(0)').each(function () {
+				
+			});
+			$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function () {
+
+			});
+			return hasError;
 		}
 
 		// get version of chat gpt from api 
