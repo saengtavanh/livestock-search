@@ -125,7 +125,7 @@ jQuery.noConflict();
 	async function setInitialValue(status, setInitial) {
 		let getConfig = {};
 		if (status == "setInitial") {
-			// if (Object.keys(CONFIG).length === 0) {
+			if (Object.keys(CONFIG).length === 0) {
 				$("#kintoneplugin-setting-prompt-template tr:first-child").after(
 					$("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden")
 				);
@@ -138,9 +138,9 @@ jQuery.noConflict();
 				HASUPDATED = false;
 				checkRow();
 				return;
-			// } else {
-			// 	getConfig = JSON.parse(CONFIG.config);
-			// }
+			} else {
+				getConfig = JSON.parse(CONFIG.config);
+			}
 		} else {
 			// Clear all rows except the first row of table space for prompt template and button and table setting prompt template.
 			$("#kintoneplugin-setting-tspace > tr:not(:first)").remove();
@@ -151,157 +151,9 @@ jQuery.noConflict();
 			getConfig = setInitial;
 		}
 
-		let appendedValues = new Set();
-		getConfig.spaceSetting.forEach((space) => {
-			let rowForClone = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
-			$("#kintoneplugin-setting-tspace tr:last-child").after(rowForClone);
-			rowForClone.find("#labelForPromptTemplate").val(space.labelForPromptTemplate);
-			rowForClone.find("#labelForButton").val(space.labelForButton);
-			for (let i = 0; i < SORTSPACE.length; i++) {
-				let spacer = SORTSPACE[i];
-				if (spacer.value == space.spaceForPromptTemplate || space.spaceForPromptTemplate == "-----") {
-					if (space.spaceForPromptTemplate == "-----") {
-						rowForClone.find("#storeFields").prop("disabled", true);
-						rowForClone.find("#spaceForPromptTemplate").val(space.spaceForPromptTemplate);
-						rowForClone.find("#storeFields").val("-----");
-					} else {
-						rowForClone.find("#storeFields").prop("disabled", false);
-						rowForClone.find("#spaceForPromptTemplate").val(space.spaceForPromptTemplate);
-						if (space.spaceForPromptTemplate !== "-----") {
-							$('select[name="field_dropdown_column_space_for_prompt"]').append(
-								$('<option>').attr("value", space.spaceForPromptTemplate).text(`${space.spaceForPromptTemplate} (${space.spaceForPromptTemplate})`)
-							);
-						}
-						for (let j = 0; j < FIELDFROMAPP.length; j++) {
-							let items = FIELDFROMAPP[j];
-							if (items.code == space.storeField) {
-								rowForClone.find("#storeFields").val(space.storeField);
-								break;
-							} else {
-								rowForClone.find("#storeFields").val("-----");
-							}
-						}
-					}
-					break;
-				} else {
-					rowForClone.find("#spaceForPromptTemplate").val("-----");
-					rowForClone.find("#storeFields").val("-----");
-					rowForClone.find("#storeFields").prop("disabled", true);
-				}
-			}
-			// Handle the spaceForButton check
-			for (let k = 0; k < SORTSPACE.length; k++) {
-				let spacer = SORTSPACE[k];
-				if (spacer.value == space.spaceForButton) {
-					rowForClone.find("#spaceForButton").val(space.spaceForButton);
-					if (space.spaceForButton !== "-----") {
-						let optionElement = $('<option>').attr("value", space.spaceForButton).text(`${space.spaceForButton} (${space.spaceForButton})`);
-						if (!appendedValues.has(space.spaceForButton)) {
-							appendedValues.add(space.spaceForButton);
-						} else {
-							optionElement.attr("hidden", true);
-						}
-						$('select[name="field_dropdown_column_space_button"]').append(optionElement);
-					}
-					break;
-				} else {
-					rowForClone.find("#spaceForButton").val("-----");
-				}
-			}
-		});
+		if (Object.keys(CONFIG).length === 0)
 
-		getConfig.settingPromptTemplate.forEach((field) => {
-			let rowForClone = $("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden");
-			$("#kintoneplugin-setting-prompt-template tr:last-child").after(rowForClone);
-			rowForClone.find("#settingName").val(field.settingName);
-			rowForClone.find(".systemRole").val(field.systemInstruction);
-			rowForClone.find(".promptContent").val(field.prompt);
-			for (let i = 0; i < FIELDFROMAPP.length; i++) {
-				let items = FIELDFROMAPP[i];
-				if (field.fieldResult.includes(items.code)) {
-					rowForClone.find("#fieldResult").val(field.fieldResult);
-					break;  // Exit the loop if a match is found
-				} else {
-					rowForClone.find("#fieldResult").val("-----");
-				}
-			}
-
-			for (let i = 0; i < getConfig.spaceSetting.length; i++) {
-				let space = getConfig.spaceSetting[i];
-				let matchFound = false;
-
-				if (space.spaceForPromptTemplate == field.spacePromptTemplate) {
-					rowForClone.find("#spacePromptTemplate").val(field.spacePromptTemplate);
-					matchFound = true;
-				} else {
-					rowForClone.find("#spacePromptTemplate").val("-----");
-				}
-
-				if (space.spaceForButton == field.spaceButton) {
-					rowForClone.find("#spaceButtons").val(field.spaceButton);
-					matchFound = true;
-				} else {
-					rowForClone.find("#spaceButtons").val("-----");
-				}
-				if (matchFound) {
-					break;
-				}
-			}
-
-			if (field.slide == "none") {
-				rowForClone.find("#container-table-settingPromptTemplate").css("display", field.slide);
-				rowForClone.find("#navbar-show-content").show();
-				rowForClone.find("#navbar-show-content label").text(field.settingName);
-			}
-			if (field.status == true) {
-				rowForClone.find("#checkbox").prop("checked", true);
-				rowForClone.find(".spacePromptTemplate").show();
-				rowForClone.find(".space_Button").hide();
-			} else {
-				rowForClone.find("#checkbox").prop("checked", false);
-				rowForClone.find(".spacePromptTemplate").hide();
-				rowForClone.find(".space_Button").show();
-			}
-		})
-
-		$("#resourceName").val(getConfig.resourceName);
-		$("#deploymentID").val(getConfig.deploymentID);
-		$("#apiVersion").val(getConfig.apiVersion);
-		$("#apiKey").val(getConfig.apiKey);
-		$(".maxToken").val(getConfig.maxToken);
-
-		if (getConfig.platForm == "Chat_GPT") {
-			$(".platForm").val(getConfig.platForm);
-			if (getConfig.versionFromAI.length !== 0) {
-				getConfig.versionFromAI.forEach(modelVersion => {
-					$('select[name="field_dropdown_column_model_version_chatGPT"]').append(
-						$('<option>').attr("value", modelVersion).text(modelVersion)
-					);
-				});
-			}
-			$("#modelVersionChatGPT").val(getConfig.modelVersion);
-			$(".modelVersion-ChatGPT").show();
-			$(".azureComponent").hide();
-			$(".system-role").hide();
-		} else if (getConfig.platForm == "Azure_OpenAI") {
-			$(".platForm").val(getConfig.platForm);
-			$(".modelVersion-ChatGPT").hide();
-			$(".azureComponent").show();
-			$(".system-role").show();
-		} else {
-			$(".platForm").val("Chat_GPT");
-			if (getConfig.versionFromAI.length !== 0) {
-				getConfig.versionFromAI.forEach(modelVersion => {
-					$('select[name="field_dropdown_column_model_version_chatGPT"]').append(
-						$('<option>').attr("value", modelVersion).text(modelVersion)
-					);
-				});
-			}
-			$(".modelVersion-ChatGPT").show();
-			$(".modelVersion-Azure").hide();
-			$(".azureComponent").hide();
-			$(".system-role").hide();
-		}
+		
 		checkRow();
 	}
 
