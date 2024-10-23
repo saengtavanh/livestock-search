@@ -10,11 +10,7 @@
       "js/jquery.min.js",
       "js/kuc.min.js",
       "js/sweetalert2.all.js",
-<<<<<<< HEAD
-      "js/RsComAPI.js",
-=======
       "common/RsComAPI.js",
->>>>>>> 00820df3c7e3d21f45c8f21d3cdfae5de9c1a89b
       "js/desktop.js"
     ],
     "css": [

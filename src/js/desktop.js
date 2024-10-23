@@ -33,202 +33,204 @@ jQuery.noConflict();
         required: true
       }]));
     });
-  const config = {
-    search_displays: [
-      // {
-      //   name_marker: "TextInitial",
-      //   group_name: "TextInitial",
-      //   search_length: "1rem 10px",
-      //   search_type: "text_initial"
-      // },
-      // {
-      //   name_marker: "textPartial",
-      //   group_name: "textPartial",
-      //   search_length: "1rem 10px",
-      //   search_type: "text_partial"
-      // },
-      // {
-      //   name_marker: "textExact",
-      //   group_name: "textExact",
-      //   search_length: "1rem 10px",
-      //   search_type: "text_exact"
-      // },
-      // {
-      //   name_marker: "MultiTextInitial",
-      //   group_name: "MultiTextInitial",
-      //   search_length: "1rem 10px",
-      //   search_type: "MultiText_initial"
-      // },
-      // {
-      //   name_marker: "MultiTextPartial",
-      //   group_name: "MultiTextPartial",
-      //   search_length: "1rem 10px",
-      //   search_type: "MultiText_Partial"
-      // },
-      // {
-      //   name_marker: "NumberExact",
-      //   group_name: "NumberExact",
-      //   search_length: "1rem 10px",
-      //   search_type: "Number_Exact"
-      // },
-      // {
-      //   name_marker: "NumberRange",
-      //   group_name: "NumberRange",
-      //   search_length: "1rem 10px",
-      //   search_type: "Number_Range"
-      // },
-      // {
-      //   name_marker: "DateExact",
-      //   group_name: "DateExact",
-      //   search_length: "1rem 10px",
-      //   search_type: "Date_Exact"
-      // },
-      // {
-      //   name_marker: "DateRange",
-      //   group_name: "DateRange",
-      //   search_length: "1rem 10px",
-      //   search_type: "Date_Range"
-      // },
-      {
-        name_marker: "DropdownExact",
-        group_name: "DropdownExact",
-        search_length: "1rem 10px",
-        search_type: "Dropdown_Exact"
-      },
-      {
-        name_marker: "",
-        group_name: "DropdownExactEmpy",
-        search_length: "1rem 10px",
-        search_type: "Dropdown_Exact"
-      },
-      {
-        name_marker: "DropdownExactTest",
-        group_name: "DropdownExactTest",
-        search_length: "1rem 10px",
-        search_type: "Dropdown_Exact"
-      },
-    ],
-    search_content: [
-      {
-        group_name: "TextInitial",
-        search_name: "food",
-        code_master_id: "",
-        target_field: "TextInitialCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "textPartial",
-        search_name: "food1",
-        code_master_id: "",
-        target_field: "textPartialCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "textExact",
-        search_name: "food12",
-        code_master_id: "",
-        target_field: "textExactCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "MultiTextInitial",
-        search_name: "food2134",
-        code_master_id: "",
-        target_field: "MultiTextInitialCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "MultiTextPartial",
-        search_name: "food000",
-        code_master_id: "",
-        target_field: "MultiTextPartialCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "NumberExact",
-        search_name: "food0033",
-        code_master_id: "",
-        target_field: "NumberExactCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "NumberRange",
-        search_name: "food0033",
-        code_master_id: "",
-        target_field: "NumberRangeCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "DateExact",
-        search_name: "food0033",
-        code_master_id: "",
-        target_field: "DateExactCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "DateRange",
-        search_name: "food0033",
-        code_master_id: "",
-        target_field: "DateRangeCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "DropdownExact",
-        search_name: "fark111",
-        code_master_id: "",
-        target_field: "TextInitialCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "DropdownExact",
-        search_name: "fark000",
-        code_master_id: "",
-        target_field: "DropdownExact",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "DropdownExactEmpy",
-        search_name: "fark999",
-        code_master_id: "",
-        target_field: "DropdownExact",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "DropdownExactEmpy",
-        search_name: "fark888",
-        code_master_id: "",
-        target_field: "NumberExactCode",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "DropdownExactTest",
-        search_name: "Test1",
-        code_master_id: "",
-        target_field: "DropdownExact",
-        field_for_search: "foodSearch"
-      },
-      {
-        group_name: "DropdownExactTest",
-        search_name: "Test2",
-        code_master_id: "",
-        target_field: "TextInitialCode",
-        field_for_search: "foodSearch"
-      },
-    ],
-    code_master: [
-      {
-        master_id: "12345678",
-        app_id: "",
-        api_token: "",
-        code_field: "",
-        name_field: "",
-        type: "",
-      }
-    ]
-  };
+  // const config = {
+  //   search_displays: [
+  //     // {
+  //     //   name_marker: "TextInitial",
+  //     //   group_name: "TextInitial",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "text_initial"
+  //     // },
+  //     // {
+  //     //   name_marker: "textPartial",
+  //     //   group_name: "textPartial",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "text_partial"
+  //     // },
+  //     // {
+  //     //   name_marker: "textExact",
+  //     //   group_name: "textExact",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "text_exact"
+  //     // },
+  //     // {
+  //     //   name_marker: "MultiTextInitial",
+  //     //   group_name: "MultiTextInitial",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "MultiText_initial"
+  //     // },
+  //     // {
+  //     //   name_marker: "MultiTextPartial",
+  //     //   group_name: "MultiTextPartial",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "MultiText_Partial"
+  //     // },
+  //     // {
+  //     //   name_marker: "NumberExact",
+  //     //   group_name: "NumberExact",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "Number_Exact"
+  //     // },
+  //     // {
+  //     //   name_marker: "NumberRange",
+  //     //   group_name: "NumberRange",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "Number_Range"
+  //     // },
+  //     // {
+  //     //   name_marker: "DateExact",
+  //     //   group_name: "DateExact",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "Date_Exact"
+  //     // },
+  //     // {
+  //     //   name_marker: "DateRange",
+  //     //   group_name: "DateRange",
+  //     //   search_length: "1rem 10px",
+  //     //   search_type: "Date_Range"
+  //     // },
+  //     {
+  //       name_marker: "DropdownExact",
+  //       group_name: "DropdownExact",
+  //       search_length: "1rem 10px",
+  //       search_type: "Dropdown_Exact"
+  //     },
+  //     {
+  //       name_marker: "",
+  //       group_name: "DropdownExactEmpy",
+  //       search_length: "1rem 10px",
+  //       search_type: "Dropdown_Exact"
+  //     },
+  //     {
+  //       name_marker: "DropdownExactTest",
+  //       group_name: "DropdownExactTest",
+  //       search_length: "1rem 10px",
+  //       search_type: "Dropdown_Exact"
+  //     },
+  //   ],
+  //   search_content: [
+  //     {
+  //       group_name: "TextInitial",
+  //       search_name: "food",
+  //       code_master_id: "",
+  //       target_field: "TextInitialCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "textPartial",
+  //       search_name: "food1",
+  //       code_master_id: "",
+  //       target_field: "textPartialCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "textExact",
+  //       search_name: "food12",
+  //       code_master_id: "",
+  //       target_field: "textExactCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "MultiTextInitial",
+  //       search_name: "food2134",
+  //       code_master_id: "",
+  //       target_field: "MultiTextInitialCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "MultiTextPartial",
+  //       search_name: "food000",
+  //       code_master_id: "",
+  //       target_field: "MultiTextPartialCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "NumberExact",
+  //       search_name: "food0033",
+  //       code_master_id: "",
+  //       target_field: "NumberExactCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "NumberRange",
+  //       search_name: "food0033",
+  //       code_master_id: "",
+  //       target_field: "NumberRangeCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "DateExact",
+  //       search_name: "food0033",
+  //       code_master_id: "",
+  //       target_field: "DateExactCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "DateRange",
+  //       search_name: "food0033",
+  //       code_master_id: "",
+  //       target_field: "DateRangeCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "DropdownExact",
+  //       search_name: "fark111",
+  //       code_master_id: "",
+  //       target_field: "TextInitialCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "DropdownExact",
+  //       search_name: "fark000",
+  //       code_master_id: "",
+  //       target_field: "DropdownExact",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "DropdownExactEmpy",
+  //       search_name: "fark999",
+  //       code_master_id: "",
+  //       target_field: "DropdownExact",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "DropdownExactEmpy",
+  //       search_name: "fark888",
+  //       code_master_id: "",
+  //       target_field: "NumberExactCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "DropdownExactTest",
+  //       search_name: "Test1",
+  //       code_master_id: "",
+  //       target_field: "DropdownExact",
+  //       field_for_search: "foodSearch"
+  //     },
+  //     {
+  //       group_name: "DropdownExactTest",
+  //       search_name: "Test2",
+  //       code_master_id: "",
+  //       target_field: "TextInitialCode",
+  //       field_for_search: "foodSearch"
+  //     },
+  //   ],
+  //   code_master: [
+  //     {
+  //       master_id: "12345678",
+  //       app_id: "",
+  //       api_token: "",
+  //       code_field: "",
+  //       name_field: "",
+  //       type: "",
+  //     }
+  //   ]
+  // };
 
   // Kintone event to show records
   kintone.events.on('app.record.index.show', async (event) => {
+    config = kintone.plugin.app.getConfig(PLUGIN_ID);
+    pluginId = PLUGIN_ID;
     const records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
     console.log("records", records);
 
