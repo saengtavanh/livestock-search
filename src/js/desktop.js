@@ -1,7 +1,7 @@
 jQuery.noConflict();
 (async function ($, Swal10,PLUGIN_ID) {
 
-  window.RsComAPI.getRecords({ app: 255 })
+  window.RsComAPI.getRecords({ app: 234 })
       .then(dataFromMaster => {
         sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
         sessionStorage.setItem('dataspace', JSON.stringify([{
