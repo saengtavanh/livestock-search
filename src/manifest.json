@@ -5,13 +5,13 @@
   "type": "APP",
   "desktop": {
     "js": [
-      "js/desktop.js",
       "https://js.cybozu.com/jquery/3.3.1/jquery.min.js",
       "js/jquery-ui.js",
       "js/jquery.min.js",
       "js/kuc.min.js",
       "js/sweetalert2.all.js",
-      "common/RsComAPI.js"
+      "common/RsComAPI.js",
+      "js/desktop.js"
     ],
     "css": [
       "css/51-modern-default.css",

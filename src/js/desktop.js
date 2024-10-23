@@ -1,4 +1,38 @@
-(async function (PLUGIN_ID) {
+jQuery.noConflict();
+(async function ($, Swal10,PLUGIN_ID) {
+
+  window.RsComAPI.getRecords({ app: 255 })
+      .then(dataFromMaster => {
+        sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
+        sessionStorage.setItem('dataspace', JSON.stringify([{
+          spc: 'spaceA',
+          kind: '品種',
+          code: '品種CD',
+          name: '品種',
+          required: true
+        },
+        {
+          spc: 'spaceB',
+          kind: '性別',
+          code: '性別CD',
+          name: '性別',
+          required: true
+        },
+        {
+          spc: 'spaceC',
+          kind: '產地',
+          code: '產地CD',
+          name: '產地',
+          required: true
+        },
+        {
+          spc: 'spaceD',
+          kind: '預託区分',
+          code: '預託区分CD',
+          name: '預託区分',
+          required: true
+        }]));
+      });
   const config = {
     search_displays: [
       {
@@ -243,7 +277,7 @@
                 const itemsList = filteredItems.map((content) => content.search_name);
 
                 // Use SweetAlert to display a selection pop-up
-                Swal.fire({
+                Swal10.fire({
                   title: 'Select an Item',
                   input: 'select',
                   inputOptions: itemsList.reduce((options, item, index) => {
@@ -313,6 +347,7 @@
               for (let item of filteredRecords) {
                 console.log('target', item.target_field);
                 for (let record of records) {
+                  if (!record[item.target_field].value) continue;
                   const $option = $("<option>")
                     .text(record[item.target_field].value)
                     .attr('value', record[item.target_field].value);
@@ -532,7 +567,7 @@
     $spaceEl.append($searchButton, $clearButton);
   });
   
-  kintone.events.on(['app.record.index.show', 'app.record.edit.show'], async (event) => {
+  kintone.events.on('app.record.edit.show', async (event) => {
     const record = event.record;
     window.RsComAPI.getRecords({ app: 255 })
       .then(dataFromMaster => {
@@ -609,7 +644,7 @@
         sortedSpaces.forEach(space => {
           let selectElement;
           if (item.spc === space.value) {
-            let filteredRecords = storedRecords.filter(rec => rec.Type.value == item.kind);
+            let filteredRecords = storedRecords.filter(rec => rec.type.value == item.kind);
             let blankElement = kintone.app.record.getSpaceElement(space.value);
 
             if (blankElement) {
@@ -635,7 +670,7 @@
                   selectElement.append($('<option>')
                     .attr('value', record.name.value)
                     .attr('code', record.code.value)
-                    .attr('types', record.Type.value)
+                    .attr('types', record.type.value)
                     .text(record.name.value));
                 });
               }
@@ -739,4 +774,4 @@
     }
     return event;
   });
-})(kintone.$PLUGIN_ID);
+})(jQuery, Sweetalert2_10.noConflict(true),kintone.$PLUGIN_ID);

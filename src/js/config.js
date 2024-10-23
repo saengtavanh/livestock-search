@@ -732,69 +732,72 @@ jQuery.noConflict();
 
 				let response = [];
 				if (checkData.length <= 0) {
-					response = await window.RsComAPI.getRecords(body);
+					response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
+						app: appId
+					}).then(res => {return res.properties});
 					allResponse.push({ appId, response });
 				} else {
 					console.log('get old');
 					response = checkData[0].response;
 				}
+				console.log('response', response);
 
-				$(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
+				// $(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
 				$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
 				$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-				for (const item of response) {
-					console.log(item);
-					if (($(row).find('select#type_field option[value="' + item.type.value + '"]')).length <= 0) {
-						$(row).find('select#type_field').append(
-							$('<option>').attr("value", item.type.value).text(`${item.type.value}`)
-						);
-					}
-					// $(row).find('select#code_field').append(
-					// 	$('<option>').attr("value", item.code.value).text(`${item.code.value}`)
-					// );
-					// $(row).find('select#name_field').append(
-					// 	$('<option>').attr("value", item.name.value).text(`${item.name.value}`)
-					// );
-				}
-				$(row).find('select#type_field').on('change', async (e) => {
-					console.log(e.target.value);
-					if (e.target.value !== '-----') {
-						$(row).find('select#code_field').prop('disabled', false).parent().removeClass('disabled-select');
-						$(row).find('select#name_field').prop('disabled', false).parent().removeClass('disabled-select');
-						let selectedType = e.target.value;
+				// for (const item of response) {
+				// 	console.log(item);
+					// if (($(row).find('select#type_field option[value="' + item.type.value + '"]')).length <= 0) {
+					// 	$(row).find('select#type_field').append(
+					// 		$('<option>').attr("value", item.type.value).text(`${item.type.value}`)
+					// 	);
+					// }
+					$(row).find('select#code_field').append(
+						$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
+					);
+					$(row).find('select#name_field').append(
+						$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
+					);
+				// }
+				// $(row).find('select#type_field').on('change', async (e) => {
+				// 	console.log(e.target.value);
+				// 	if (e.target.value !== '-----') {
+				// 		$(row).find('select#code_field').prop('disabled', false).parent().removeClass('disabled-select');
+				// 		$(row).find('select#name_field').prop('disabled', false).parent().removeClass('disabled-select');
+				// 		let selectedType = e.target.value;
 
-						let filteredCode = response
-							.filter(item => item.type.value === selectedType) // Keep items matching the selected type
-							.map(item => item.code.value) // Map to code values
-							.filter(code => code != null) // Filter out null and undefined values
-							.map(Number) // Convert string values to numbers for accurate sorting
-							.sort((a, b) => a - b); // Sort in ascending order
-						console.log('filteredCode', filteredCode);
-						$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
-						for (const code of filteredCode) {
-							$(row).find('select#code_field').append(
-								$('<option>').attr("value", code).text(`${code}`)
-							);
-						}
+				// 		let filteredCode = response
+				// 			.filter(item => item.type.value === selectedType) // Keep items matching the selected type
+				// 			.map(item => item.code.value) // Map to code values
+				// 			.filter(code => code != null) // Filter out null and undefined values
+				// 			.map(Number) // Convert string values to numbers for accurate sorting
+				// 			.sort((a, b) => a - b); // Sort in ascending order
+				// 		console.log('filteredCode', filteredCode);
+				// 		$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+				// 		for (const code of filteredCode) {
+				// 			$(row).find('select#code_field').append(
+				// 				$('<option>').attr("value", code).text(`${code}`)
+				// 			);
+				// 		}
 
-						let filteredName = response
-							.filter(item => item.type.value === selectedType) // Keep items matching the selected type
-							.map(item => item.name.value) // Map to name values
-							.filter(name => name != null) // Filter out null and undefined values
-							.sort((a, b) => a.localeCompare(b)); // Sort in alphabetical order
-						$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-						for (const name of filteredName) {
-							$(row).find('select#name_field').append(
-								$('<option>').attr("value", name).text(`${name}`)
-							);
-						}
-					} else {
-						$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----")).prop('disabled', true).parent().addClass('disabled-select');
-						$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----")).prop('disabled', true).parent().addClass('disabled-select');
-						// $(row).find('select#code_field').prop('disabled', true).parent().addClass('disabled-select');
-						// $(row).find('select#name_field').prop('disabled', true).parent().addClass('disabled-select');
-					}
-				})
+				// 		let filteredName = response
+				// 			.filter(item => item.type.value === selectedType) // Keep items matching the selected type
+				// 			.map(item => item.name.value) // Map to name values
+				// 			.filter(name => name != null) // Filter out null and undefined values
+				// 			.sort((a, b) => a.localeCompare(b)); // Sort in alphabetical order
+				// 		$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+				// 		for (const name of filteredName) {
+				// 			$(row).find('select#name_field').append(
+				// 				$('<option>').attr("value", name).text(`${name}`)
+				// 			);
+				// 		}
+				// 	} else {
+				// 		$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----")).prop('disabled', true).parent().addClass('disabled-select');
+				// 		$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----")).prop('disabled', true).parent().addClass('disabled-select');
+				// 		// $(row).find('select#code_field').prop('disabled', true).parent().addClass('disabled-select');
+				// 		// $(row).find('select#name_field').prop('disabled', true).parent().addClass('disabled-select');
+				// 	}
+				// })
 				console.log('response', response);
 			}
 			window.RsComAPI.hideSpinner();
