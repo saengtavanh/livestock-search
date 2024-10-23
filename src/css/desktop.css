@@ -1,4 +1,4 @@
-.plugin-space-heading {
+/* .plugin-space-heading {
   font-size: 1.5rem;
   margin: 0.8rem;
 }
@@ -7,4 +7,120 @@
   font-size: 1.2em;
   margin: 0.8rem;
   margin-top: 0;
+} */
+
+.custom-space-el {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: none;
+  gap: 10px;
+  justify-content: flex-start;
+  margin-top: -20px;
+  /* max-width: 100%;
+  /* overflow-y: auto; */
+  /* max-height: 450px; */
+}
+
+.custom-dropdownTitle {
+  color: #4CAF50;
+  margin-bottom: -20px;
+  font-size: 13px;
+}
+
+.search-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.separatornumber {
+  margin: 0;
+  font-size: 15px;
+  margin-top: -3px;
+  color: #4CAF50;
+}
+
+.wrapperd-number {
+  display: flex;
+  align-items: center;
+  margin-top: -4px;
+}
+
+.separator-datepicker {
+  margin: 0;
+  font-size: 15px;
+  margin-top: -6px;
+  color: #4CAF50;
+}
+
+.wrapper-datepiker {
+  display: flex;
+  margin-bottom: -10px;
+}
+
+.kintoneplugin-button-dialog-ok {
+  background-color: #4CAF50;
+  font-size: 15px;
+  min-Width: 80px;
+  margin-Left: 10px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.kintoneplugin-button-dialog-ok:hover {
+  background-color: #5eb461;
+}
+
+
+.search-items {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  margin-bottom: -20px;
+  font-size: 13px;
+  color: #4CAF50;
+}
+
+.kintoneplugin-dropdown {
+  margin: 0;
+  padding: 0;
+  height: 35px;
+  font-size: 13px;
+  color: rgb(93, 92, 92);
+}
+
+.element-button {
+  margin-left: -10px;
+}
+
+.options-class .kuc-date-picker-1-18-0__group input[type="text"].kuc-base-date-1-18-0__input {
+  margin: 0;
+  padding: 0;
+  height: 35px;
+  font-size: 13px;
+}
+
+.options-class textarea.kuc-textarea-1-18-0__group__textarea {
+  /* width: 100px !important; */
+  min-height: 0 !important;
+  height: 35px !important;
+  font-size: 13px;
+
+}
+
+.kintoneplugin-input-text {
+  height: 35px;
+  font-size: 13px;
+}
+
+.option {
+  font-size: 13px;
+}
+.searchButton{
+  font-size: 15px;
 }
