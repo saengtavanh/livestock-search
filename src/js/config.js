@@ -66,9 +66,9 @@ jQuery.noConflict();
 					);
 				}
 			}
-			$("select#search_target").on('change', (e) => {
-				console.log(e.target.type);
-			})
+			// $("select#search_target").on('change', (e) => {
+			// 	console.log(e.target.type);
+			// })
 
 		});
 
@@ -85,29 +85,6 @@ jQuery.noConflict();
 
 	// function get data from table.
 	async function getData() {
-		// let selectPlatForm = $(".platForm").val()
-		// let modelVersion = selectPlatForm == "Chat_GPT" ? $("#modelVersionChatGPT").val() : $("#modelVersionAzure").val();
-		// let resourceName = "";
-		// let deploymentID = "";
-		// let apiVersion = "";
-
-		// if (selectPlatForm == "Azure_OpenAI") {
-		// 	resourceName = $("#resourceName").val();
-		// 	deploymentID = $("#deploymentID").val();
-		// 	apiVersion = $("#apiVersion").val();
-		// }
-
-		// let getDataSettings = {
-		// 	versionFromAI: GETVERSION,
-		// 	platForm: selectPlatForm,
-		// 	modelVersion: modelVersion,
-		// 	apiKey: $("#apiKey").val(),
-		// 	maxToken: $("#maxToken").val(),
-		// 	resourceName: resourceName,
-		// 	deploymentID: deploymentID,
-		// 	apiVersion: apiVersion
-		// };
-
 		//get value from space for prompt template and button.
 		let groupSetting = $("#kintoneplugin-setting-tspace > tr:gt(0)").map(function () {
 			let nameMarker = $(this).find("#name_marker").val();
@@ -116,7 +93,6 @@ jQuery.noConflict();
 			let searchType = $(this).find("#search_type").val();
 			return { nameMarker, groupName, searchLength, searchType };
 		}).get();
-		console.log('groupSetting', groupSetting);
 
 		let codeMasterSetting = $("#kintoneplugin-setting-code-master > tr:gt(0)").map(function () {
 			let masterId = $(this).find("#master_id").val();
@@ -127,7 +103,6 @@ jQuery.noConflict();
 			let typeField = $(this).find("#type_field").val();
 			return { masterId, appId, apiToken, codeField, nameField, typeField };
 		}).get();
-		console.log('codeMasterSetting', codeMasterSetting);
 
 		let searchContent = $("#kintoneplugin-setting-prompt-template > tr:gt(0)").map(function () {
 			let groupName = $(this).find("#group_name_ref").val();
@@ -137,27 +112,6 @@ jQuery.noConflict();
 			let fieldForSearch = $(this).find("#field_for_search").val();
 			return { groupName, searchName, masterId, searchTarget, fieldForSearch };
 		}).get();
-		console.log('searchContent', searchContent);
-
-		// //get value from setting prompt template.
-		// let settingPromptTemplate = $("#kintoneplugin-setting-prompt-template > tr:gt(0)").map(function () {
-		// 	let spacePromptTemplate = "-----";
-		// 	let spaceButton = "-----";
-		// 	let status = $(this).find("#checkbox").prop("checked");
-		// 	if (status == true) {
-		// 		spacePromptTemplate = $(this).find("#spacePromptTemplate").val();
-		// 	} else {
-		// 		spaceButton = $(this).find("#spaceButtons").val();
-		// 	}
-		// 	let settingName = $(this).find("#settingName").val();
-		// 	let fieldResult = $(this).find("#fieldResult").val();
-		// 	let slide = $(this).find("#container-table-settingPromptTemplate").css("display");
-		// 	let systemInstruction = $(this).find(".systemRole").val();
-		// 	let prompt = $(this).find(".promptContent").val();
-		// 	return { status, settingName, fieldResult, slide, spacePromptTemplate, spaceButton, systemInstruction, prompt };
-		// }).get();
-		// getDataSettings.spaceSetting = spaceSetting;
-		// getDataSettings.settingPromptTemplate = settingPromptTemplate;
 		return {
 			groupSetting,
 			codeMasterSetting,
@@ -165,253 +119,28 @@ jQuery.noConflict();
 		};
 	}
 
-	//function validation of button save.
-	async function validationSave(getData) {
-		let checkError = false;
-		let duplicateRows = new Set();
-		let errorTexts = [];
-		let duplicateTracker = {
-			spacePromptTemplate: {},
-			fieldResult: {},
-			spaceButton: {},
-			settingName: {}
-		};
 
-		// remove validation-error before validation
-		$('.fieldResult,.settingName,.storeFields,.promptContent,.systemRole').removeClass('validation-error');
-
-		// Get option values of dropdown spacePromptTemplate and spaceButton
-		let getOptions = (selector) => $(selector).find("option")
-			.filter((index, option) => option.text !== "-----").map((index, option) => option.value).get();
-
-		// Get all option values including hidden options, excluding "-----"
-		let getAllOptionsIncludingHidden = (selector) => $(selector).find("option")
-			.filter((index, option) => option.text !== "-----").map((index, option) => option.value).get();
-
-		// Get values
-		let spacePromptTemplateOptions = getOptions("#spacePromptTemplate");
-		let spaceButtonOptions = getAllOptionsIncludingHidden("#spaceButtons");
-
-		// Check the button update click
-		if (HASUPDATED == false) {
-			errorTexts.push(`<div style='padding-left: 10px;'>保存する前に「更新」ボタンをクリックしてください。</div>`);
-			checkError = true;
-		} else {
-			if (getData.spaceSetting.length !== spaceButtonOptions.length) {
-				errorTexts.push(`<div style='padding-left: 10px;'>保存する前に「更新」ボタンをクリックしてください。</div>`);
-				checkError = true;
-			} else {
-				let hasError = false;  // Define hasError before the loop
-				for (let i = 0; i < getData.spaceSetting.length; i++) {
-					let setting = getData.spaceSetting[i];
-					if (setting.spaceForPromptTemplate !== "-----") {
-						let spaceForPromptTemplate = setting.spaceForPromptTemplate;
-						if (!spacePromptTemplateOptions.includes(spaceForPromptTemplate)) {
-							hasError = true;
-							break;
-						}
-					}
-					if (!spaceButtonOptions.includes(setting.spaceForButton)) {
-						hasError = true;
-						break;
-					}
-				}
-				if (hasError == true) {
-					errorTexts.push(`<div style='padding-left: 10px;'>保存する前に「更新」ボタンをクリックしてください。</div>`);
-					checkError = true;
-				}
-			}
-		}
-
-		// Step 1: Validate empty values
-		let errorTitle = ""
-		if (checkError == false) {
-			for (let i = 0; i < getData.settingPromptTemplate.length; i++) {
-				let { status, settingName, prompt, fieldResult, spacePromptTemplate, spaceButton } = getData.settingPromptTemplate[i];
-				let currentRow = $(`#kintoneplugin-setting-prompt-template > tr:eq(${i + 1})`);
-				let displayTitleNameErrorText = "";
-
-				if (settingName === "") {
-					displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目： 設定名が未入力です。</div>`;
-					currentRow.find(".settingName").addClass("validation-error");
-				}
-				if (status == true) {
-					if (spacePromptTemplate === "-----") {
-						displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目： プロンプトテンプレート用のスペースが未入力です。</div>`;
-						currentRow.find(".spacePromptTemplate").addClass("validation-error");
-					}
-				} else {
-					if (spaceButton === "-----") {
-						displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目： ボタン用のスペースが未入力です。</div>`;
-						currentRow.find(".spaceButton").addClass("validation-error");
-					}
-				}
-				if (prompt === "") {
-					displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目：プロンプトが未入力です</div>`;
-					currentRow.find(".promptContent").addClass("validation-error");
-				}
-				if (fieldResult === "-----") {
-					displayTitleNameErrorText += `<div style='padding-left: 10px;'>${i + 1}行目：結果格納用フィールドが未入力です。</div>`;
-					currentRow.find(".fieldResult").addClass("validation-error");
-				}
-				if (displayTitleNameErrorText) {
-					errorTexts.push(`<div style='text-align: left;'>${displayTitleNameErrorText}</div>`);
-				}
-			}
-			errorTitle = "プロンプトテンプレートの設定";
-		}
-
-		// If there are errors in empty values, display them and return false
-		if (errorTexts.length > 0) {
-			let errors = errorTexts.join("");
-			let customClass = $("<div></div>")
-				.text(errorTitle)
-				.css("font-size", "25px");
-			await Swal10.fire({
-				title: customClass.prop("outerHTML"),
-				icon: "error",
-				html: errors,
-				confirmButtonColor: "#3498db",
-			});
-			return false;
-		}
-
-		// Step 2: Validate duplicate values if no empty values were found
-		errorTexts = []; // Clear the error texts for the next step
-		for (let i = 0; i < getData.settingPromptTemplate.length; i++) {
-			let { status, settingName, fieldResult, spacePromptTemplate, spaceButton, prompt, systemInstruction } = getData.settingPromptTemplate[i];
-			let currentRow = $(`#kintoneplugin-setting-prompt-template > tr:eq(${i + 1})`);
-			let displayTitleNameErrorText = "";
-
-			// Validate settingName duplicates
-			if (duplicateTracker.settingName[settingName]) {
-				let duplicateRow = duplicateTracker.settingName[settingName];
-				duplicateRows.add(duplicateRow);
-				displayTitleNameErrorText += `<div style='padding-left: 10px;'>${duplicateRow}行目で設定された「設定名」は${i + 1}行目で設定された「設定名」と一致します。</div>`;
-				currentRow.find(".settingName").addClass("validation-error");
-				$(`#kintoneplugin-setting-prompt-template > tr:eq(${duplicateRow})`).find(".settingName").addClass("validation-error");
-			} else {
-				duplicateTracker.settingName[settingName] = i + 1;
-			}
-
-			// Validate other fields duplicates
-			if (status === true) {
-				displayTitleNameErrorText += checkDuplicate('spacePromptTemplate', spacePromptTemplate, fieldResult, currentRow, duplicateTracker, duplicateRows, i, prompt, systemInstruction);
-			} else {
-				displayTitleNameErrorText += checkDuplicate('spaceButton', spaceButton, fieldResult, currentRow, duplicateTracker, duplicateRows, i, prompt, systemInstruction);
-			}
-			if (displayTitleNameErrorText) {
-				errorTexts.push(`<div style='text-align: left;'>${displayTitleNameErrorText}</div>`);
-			}
-		}
-
-		duplicateRows.forEach(row => {
-			$(`#kintoneplugin-setting-prompt-template > tr:eq(${row + 1})`).addClass("validation-error");
-		});
-
-		if (errorTexts.length > 0) {
-			let errors = errorTexts.join("");
-			let customClass = $("<div></div>")
-				.text(errorTitle)
-				.css("font-size", "25px");
-			await Swal10.fire({
-				title: customClass.prop("outerHTML"),
-				icon: "error",
-				html: errors,
-				confirmButtonColor: "#3498db",
-			});
-			return false;
-		}
-		return true;
-
-		// Check duplicate value function.
-		function checkDuplicate(fieldType, fieldSpace, fieldResult, currentRow, duplicateTracker, duplicateRows, i, prompt, systemInstruction) {
-			let displayTitleNameErrorText = "";
-
-			// Check if space for prompt template or space for button is duplicate
-			if (duplicateTracker[fieldType][fieldSpace]) {
-				let duplicateRow = duplicateTracker[fieldType][fieldSpace];
-				duplicateRows.add(duplicateRow);
-				let previousIndex = duplicateTracker[fieldType][fieldSpace] - 1;
-				let previousFieldResult = getData.settingPromptTemplate[previousIndex].fieldResult;
-
-				// Check if field result is duplicate value
-				if (fieldResult === previousFieldResult) {
-					displayTitleNameErrorText += `<div style='padding-left: 10px;'>${duplicateRow} 行目で設定された「結果格納用フィールド」は ${i + 1} 行目で設定された「結果格納用フィールド」と一致します。</div>`;
-					currentRow.find(".fieldResult").addClass("validation-error");
-					$(`#kintoneplugin-setting-prompt-template > tr:eq(${duplicateRow})`).find(".fieldResult").addClass("validation-error");
-				}
-			} else {
-				duplicateTracker[fieldType][fieldSpace] = i + 1;
-			}
-
-			// Check if store field is duplicate with field result or field information
-			for (let m = 0; m < getData.spaceSetting.length; m++) {
-				let rowSpaceSetting = $(`#kintoneplugin-setting-tspace > tr:eq(${m + 1})`);
-				let storeField = getData.spaceSetting[m].storeField;
-				if (storeField !== "-----") {
-					if (storeField === fieldResult) {
-						displayTitleNameErrorText += `<div style='padding-left: 10px;'>${m + 1} 行目で設定された「ストアフィールド」は ${i + 1} 行目で設定された「結果格納用フィールド」と一致します。</div>`;
-						rowSpaceSetting.find(".storeFields").addClass("validation-error");
-						$(`#kintoneplugin-setting-prompt-template > tr:eq(${i + 1})`).find(".fieldResult").addClass("validation-error");
-					}
-
-					if (prompt !== "") {
-						let promptPlaceholders = [];
-						let regex = /{%([^%]+)%}/g;
-						let match;
-						while ((match = regex.exec(prompt)) !== null) {
-							promptPlaceholders.push(match[1]);
-						}
-						if (promptPlaceholders.includes(storeField)) {
-							displayTitleNameErrorText += `<div style='padding-left: 10px;'>${m + 1} 行目で設定された「ストアフィールド」は ${i + 1} 行目で設定された「プロンプト内容」と一致します。</div>`;
-							rowSpaceSetting.find(".storeFields").addClass("validation-error");
-							$(`#kintoneplugin-setting-prompt-template > tr:eq(${i + 1})`).find(".promptContent").addClass("validation-error");
-						}
-					}
-
-					if (systemInstruction !== "") {
-						let instructionPlaceholders = [];
-						let regex = /{%([^%]+)%}/g;
-						let match;
-						while ((match = regex.exec(systemInstruction)) !== null) {
-							instructionPlaceholders.push(match[1]);
-						}
-						if (instructionPlaceholders.includes(storeField)) {
-							displayTitleNameErrorText += `<div style='padding-left: 10px;'>${m + 1} 行目で設定された「ストアフィールド」は ${i + 1} 行目で設定された「システム指示」と一致します。</div>`;
-							rowSpaceSetting.find(".storeFields").addClass("validation-error");
-							$(`#kintoneplugin-setting-prompt-template > tr:eq(${i + 1})`).find(".systemRole").addClass("validation-error");
-						}
-					}
-				}
-			}
-			return displayTitleNameErrorText;
-		}
-	}
 
 	// setInitialValue function
 	async function setInitialValue(status, setInitial) {
 		let getConfig = {};
 		if (status == "setInitial") {
-			if (Object.keys(CONFIG).length === 0) {
+			// if (Object.keys(CONFIG).length === 0) {
 				$("#kintoneplugin-setting-prompt-template tr:first-child").after(
 					$("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden")
 				);
 				$("#kintoneplugin-setting-code-master tr:first-child").after(
 					$("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden")
 				);
-				let newRow = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
-				$("#kintoneplugin-setting-tspace tr:first-child").after(newRow);
-				newRow.find('#labelForButton').val(' 生成');
-				newRow.find('#labelForPromptTemplate').val('プロンプトテンプレート');
-
-				$(".azureComponent").hide();
+				$("#kintoneplugin-setting-tspace tr:first-child").after(
+					$("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden")
+				)
 				HASUPDATED = false;
 				checkRow();
-				return
-			} else {
-				getConfig = JSON.parse(CONFIG.config);
-			}
+				return;
+			// } else {
+			// 	getConfig = JSON.parse(CONFIG.config);
+			// }
 		} else {
 			// Clear all rows except the first row of table space for prompt template and button and table setting prompt template.
 			$("#kintoneplugin-setting-tspace > tr:not(:first)").remove();
@@ -610,34 +339,23 @@ jQuery.noConflict();
 
 		// button save.
 		$('#button_save').on('click', async function () {
+			let hasError = await validation("save");
+			if (hasError) return;
 			let createConfig = await getData();
-			let validation = await validationSave(createConfig);
-			if (validation === false) {
-				return;
-			} else {
-				$('.fieldResult, .settingName, .storeFields, .promptContent, .systemRole, .spacePromptTemplate, .spaceButton').removeClass('validation-error');
-				let config = JSON.stringify(createConfig);
-				kintone.plugin.app.setConfig({ config }, () => {
-					window.location.href = `../../flow?app=${kintone.app.getId()}#section=settings`;
-				});
-			};
+			let config = JSON.stringify(createConfig);
+			kintone.plugin.app.setConfig({ config }, () => {
+				window.location.href = `../../flow?app=${kintone.app.getId()}#section=settings`;
+			});
 		});
 
 		// button-update.
 		$("#button-update").click(async function () {
 			let getValueUpdated = await getData();
 			console.log(getValueUpdated);
-			let valueValidation = await validationUpdate(getValueUpdated);
+			let hassError = await validation("update");
 			// let valueValidation = true;
 			let dataLost = false;
-			if (valueValidation == true) {
-				return Swal10.fire({
-					position: 'center',
-					icon: 'error',
-					text: 'Some thing went wrong!',
-					showConfirmButton: true,
-				});
-			} else {
+			if (!hassError) {
 				// Clear validation-error.
 				// $('.spaceForPromptTemplate, .storeFields, .spaceForButton').removeClass('validation-error');
 
@@ -718,35 +436,38 @@ jQuery.noConflict();
 			window.RsComAPI.showSpinner();
 			console.log($("#kintoneplugin-setting-code-master > tr:gt(0)"))
 			let allResponse = [];
-			for (let row of $("#kintoneplugin-setting-code-master > tr:gt(0)")) {
-				let appId = $(row).find('#app_id').val();
-				let apiToken = $(row).find('#api_token').val();
-				let body = { app: appId };
+			let codeMasterTable = $("#kintoneplugin-setting-code-master > tr:gt(0)");
+			let hasError = validateLoadData(codeMasterTable);
+			if (!hasError) {
+				for (let row of codeMasterTable) {
+					let appId = $(row).find('#app_id').val();
+					let apiToken = $(row).find('#api_token').val();
+					let body = { app: appId };
 
-				if (!appId) continue;  // Skip if appId is not present
+					if (!appId) continue;  // Skip if appId is not present
 
-				if (apiToken) body.token = apiToken;
+					if (apiToken) body.token = apiToken;
 
-				let checkData = allResponse.filter(item => item.appId == appId);
-				console.log('checkData', checkData);
+					let checkData = allResponse.filter(item => item.appId == appId);
+					console.log('checkData', checkData);
 
-				let response = [];
-				if (checkData.length <= 0) {
-					response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
-						app: appId
-					}).then(res => {return res.properties});
-					allResponse.push({ appId, response });
-				} else {
-					console.log('get old');
-					response = checkData[0].response;
-				}
-				console.log('response', response);
+					let response = [];
+					if (checkData.length <= 0) {
+						response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
+							app: appId
+						}).then(res => { return res.properties });
+						allResponse.push({ appId, response });
+					} else {
+						console.log('get old');
+						response = checkData[0].response;
+					}
+					console.log('response', response);
 
-				// $(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
-				$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
-				$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-				// for (const item of response) {
-				// 	console.log(item);
+					// $(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
+					$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+					$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+					// for (const item of response) {
+					// 	console.log(item);
 					// if (($(row).find('select#type_field option[value="' + item.type.value + '"]')).length <= 0) {
 					// 	$(row).find('select#type_field').append(
 					// 		$('<option>').attr("value", item.type.value).text(`${item.type.value}`)
@@ -758,210 +479,245 @@ jQuery.noConflict();
 					$(row).find('select#name_field').append(
 						$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
 					);
-				// }
-				// $(row).find('select#type_field').on('change', async (e) => {
-				// 	console.log(e.target.value);
-				// 	if (e.target.value !== '-----') {
-				// 		$(row).find('select#code_field').prop('disabled', false).parent().removeClass('disabled-select');
-				// 		$(row).find('select#name_field').prop('disabled', false).parent().removeClass('disabled-select');
-				// 		let selectedType = e.target.value;
-
-				// 		let filteredCode = response
-				// 			.filter(item => item.type.value === selectedType) // Keep items matching the selected type
-				// 			.map(item => item.code.value) // Map to code values
-				// 			.filter(code => code != null) // Filter out null and undefined values
-				// 			.map(Number) // Convert string values to numbers for accurate sorting
-				// 			.sort((a, b) => a - b); // Sort in ascending order
-				// 		console.log('filteredCode', filteredCode);
-				// 		$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
-				// 		for (const code of filteredCode) {
-				// 			$(row).find('select#code_field').append(
-				// 				$('<option>').attr("value", code).text(`${code}`)
-				// 			);
-				// 		}
-
-				// 		let filteredName = response
-				// 			.filter(item => item.type.value === selectedType) // Keep items matching the selected type
-				// 			.map(item => item.name.value) // Map to name values
-				// 			.filter(name => name != null) // Filter out null and undefined values
-				// 			.sort((a, b) => a.localeCompare(b)); // Sort in alphabetical order
-				// 		$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-				// 		for (const name of filteredName) {
-				// 			$(row).find('select#name_field').append(
-				// 				$('<option>').attr("value", name).text(`${name}`)
-				// 			);
-				// 		}
-				// 	} else {
-				// 		$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----")).prop('disabled', true).parent().addClass('disabled-select');
-				// 		$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----")).prop('disabled', true).parent().addClass('disabled-select');
-				// 		// $(row).find('select#code_field').prop('disabled', true).parent().addClass('disabled-select');
-				// 		// $(row).find('select#name_field').prop('disabled', true).parent().addClass('disabled-select');
-				// 	}
-				// })
-				console.log('response', response);
+					console.log('response', response);
+				}
 			}
 			window.RsComAPI.hideSpinner();
 		});
 
-		$("#recreate-button").click(async function (e) {
-			e.preventDefault();
+		$("button#recreate-button").on('click', async function () {
+			// e.preventDefault();
+			let currentRow = $(this).closest('tr');
+			let targetField = $(currentRow).find('select#search_target').val();
+			let groupName = $(currentRow).find('select#group_name_ref').val();
+			//check group name and target field
+			if (groupName == "-----" && targetField == "-----") {
+				$(currentRow).find('select#group_name_ref').parent().addClass('validation-error');
+				$(currentRow).find('select#search_target').parent().addClass('validation-error');
+				return Swal10.fire({
+					position: 'center',
+					icon: 'error',
+					text: "please select group name and target field",
+					showConfirmButton: true,
+				})
+			} else {
+				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
+				$(currentRow).find('select#search_target').parent().removeClass('validation-error');
+			}
+
+			//check group name 
+			if (groupName == "-----") {
+				$(currentRow).find('select#group_name_ref').parent().addClass('validation-error');
+				return Swal10.fire({
+					position: 'center',
+					icon: 'error',
+					text: "please select group name",
+					showConfirmButton: true,
+				})
+			} else {
+				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
+			}
+
+			//check target field
+			if (targetField == "-----") {
+				$(currentRow).find('select#search_target').parent().addClass('validation-error');
+				return Swal10.fire({
+					position: 'center',
+					icon: 'error',
+					text: "please select target field",
+					showConfirmButton: true,
+				})
+			} else {
+				$(currentRow).find('select#search_target').parent().removeClass('validation-error');
+			}
+
 			window.RsComAPI.showSpinner();
+			let fieldForSearch = $(currentRow).find('select#field_for_search').val();
 			let latestValue = await getData();
-			console.log('latestValue', latestValue);
 			let records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
-			console.log('records', records);
-			for (let row of $("#kintoneplugin-setting-prompt-template > tr:gt(0)")) {
-				let groupName = $(row).find('select#group_name_ref').val();
-				let targetField = $(row).find('select#search_target').val();
-				let fieldForSearch = $(row).find('select#field_for_search').val();
-				if (!fieldForSearch) continue;
-				let getGroupData = latestValue.groupSetting.filter(item => item.groupName == groupName);
-				console.log('groupSetting', getGroupData);
-				let updateRecords = [];
 
-				for (let record of records) {
-					let targetValue = record[targetField].value;
-					let convertedValue = "";
+			let getGroupData = latestValue.groupSetting.filter(item => item.groupName == groupName);
 
-					switch (getGroupData[0].searchType) {
-						case "text_initial":
-						case "multi_text_initial":
-							convertedValue = `_,${targetValue.split('').join(',')}`
-							console.log('convertedValue', convertedValue);
-							break;
+			let updateRecords = [];
+			for (let record of records) {
+				let targetValue = record[targetField].value;
+				let convertedValue = "";
 
-						case "text_patial":
-						case "multi_text_patial":
-							convertedValue = `${targetValue.split('').join(',')}`
-							break;
+				switch (getGroupData[0].searchType) {
+					case "text_initial":
+					case "multi_text_initial":
+						convertedValue = `_,${targetValue.split('').join(',')}`
+						console.log('convertedValue', convertedValue);
+						break;
 
-						case "text_exact":
-							convertedValue = `_,${targetValue.split('').join(',')},_`
-							break;
+					case "text_patial":
+					case "multi_text_patial":
+						convertedValue = `${targetValue.split('').join(',')}`
+						break;
 
-						default:
-							break;
-					}
-					// if (getGroupData[0].searchType == "text_initial") {
-					// 	convertedValue = `_,${targetValue.split('').join(',')}`
-					// 	console.log('convertedValue', convertedValue);
-					// }
-					record[fieldForSearch].value = convertedValue;
-					updateRecords.push({
-						id: record.$id.value,
-						record: {
-							[fieldForSearch]: {
-								value: convertedValue
-							}
+					case "text_exact":
+						convertedValue = `_,${targetValue.split('').join(',')},_`
+						break;
+
+					default:
+						break;
+				}
+
+				record[fieldForSearch].value = convertedValue;
+				updateRecords.push({
+					id: record.$id.value,
+					record: {
+						[fieldForSearch]: {
+							value: convertedValue
 						}
-					});
+					}
+				});
 
-				}
-				let body = {
-					app: kintone.app.getId(),
-					records: updateRecords
-				}
-				console.log('body', body);
-				try {
-					await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body);
-				} catch (error) {
-					console.log(error);
-				}
 
-				console.log('update records:', records);
-
+			}
+			let body = {
+				app: kintone.app.getId(),
+				records: updateRecords
+			}
+			try {
+				await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body);
+				Swal10.fire({
+					position: 'center',
+					icon: 'success',
+					text: 'プラグイン設定が更新されました。',
+					showConfirmButton: true,
+				});
+			} catch (error) {
+				console.log(error);
+				Swal10.fire({
+					position: 'center',
+					icon: 'error',
+					text: error.message,
+					showConfirmButton: true,
+				});
 			}
 			window.RsComAPI.hideSpinner();
 		});
+
+		//hide and show recreate button
+		$("select#field_for_search").on('change', (e) => {
+			let currentRow = $(e.target).closest('tr');
+			if (e.target.value == "-----") {
+				$(currentRow).find('button#recreate-button').hide();
+			} else {
+				$(currentRow).find('button#recreate-button').show();
+			}
+		})
 
 		$("#resourceName, #deploymentID, #apiVersion, #apiKey, #platForm, #maxToken").on("change", function () {
 			HASUPDATED = false;
 		});
 
 		// validate update function.
-		async function validationUpdate(setUpdate) {
+		async function validation(condition) {
 			let hasError = false;
+			let errorMessage = "";
 			//group setting table
-			$('#kintoneplugin-setting-tspace > tr:gt(0)').each(function () {
+			$('#kintoneplugin-setting-tspace > tr:gt(0)').each(function (index) {
 				let groupName = $(this).find('#group_name');
 				let searchType = $(this).find('#search_type');
-				if (searchType.val() == "-----"){
-					// errorTexts.push(`<div style='padding-left: 10px;'>「��索対象フィールド」が未選択です。</div>`);
-          $(searchType).parent().addClass('validation-error');
+				if (searchType.val() == "-----") {
+					errorMessage += `<p>Please select Search type on Group setting row: ${index + 1}</p>`;
+					$(searchType).parent().addClass('validation-error');
 					hasError = true;
-				}else {
+				} else {
 					$(searchType).parent().removeClass('validation-error');
-					hasError = false;
 				}
 
-				if (!groupName.val()){
-					// errorTexts.push(`<div style='padding-left: 10px;'>「��索対象フィールド」が未選択です。</div>`);
-          $(groupName).addClass('validation-error');
+				if (!groupName.val()) {
+					errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
+					$(groupName).addClass('validation-error');
 					hasError = true;
-				}else {
+				} else {
 					$(groupName).removeClass('validation-error');
-					hasError = false;
 				}
 			});
 
 			//code master table
-			$('#kintoneplugin-setting-code-master > tr:gt(0)').each(function () {
-				
-			});
-			$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function () {
+			$('#kintoneplugin-setting-code-master > tr:gt(0)').each(function (index) {
+				let appId = $(this).find('#app_id');
+				let masterId = $(this).find('#master_id');
+				if (!masterId.val()) {
+					errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
+					$(masterId).addClass('validation-error');
+					hasError = true;
+				} else {
+					$(masterId).removeClass('validation-error');
+				}
 
+				if (!appId.val()) {
+					errorMessage += `<p>Please enter App ID on Code master difinition row: ${index + 1}</p>`;
+					$(appId).addClass('validation-error');
+					hasError = true;
+				} else {
+					$(appId).removeClass('validation-error');
+				}
+			});
+			if (condition == "save") {
+				$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function (index) {
+					let groupName = $(this).find('#group_name_ref');
+					let searchName = $(this).find('#search_name');
+					let targetFields = $(this).find('#search_target');
+					if (!searchName.val()) {
+						errorMessage += `<p>Please enter Search type on Search content row: ${index + 1}</p>`;
+						$(searchName).addClass('validation-error');
+						hasError = true;
+					} else {
+						$(searchName).removeClass('validation-error');
+					}
+
+					if (groupName.val() == "-----") {
+						errorMessage += `<p>Please select Group name on Search content row: ${index + 1}</p>`;
+						$(groupName).parent().addClass('validation-error');
+						hasError = true;
+					} else {
+						$(groupName).parent().removeClass('validation-error');
+					}
+
+					if (targetFields.val() == "-----") {
+						errorMessage += `<p>Please select Search target field on Search content row: ${index + 1}</p>`;
+						$(targetFields).parent().addClass('validation-error');
+						hasError = true;
+					} else {
+						$(targetFields).parent().removeClass('validation-error');
+					}
+				});
+			}
+
+			if (hasError) Swal10.fire({
+				position: 'center',
+				icon: 'error',
+				html: errorMessage,
+				showConfirmButton: true,
 			});
 			return hasError;
 		}
 
 		// get version of chat gpt from api 
-		async function validateApiKey(apiKey, errorTexts) {
-			let url = 'https://api.openai.com/v1/models';
-			let headers = {
-				'Authorization': `Bearer ${apiKey}`
-			};
-			try {
-				let response = await fetch(url, { headers });
-				let data = await response.json();
-				if (data.error) {
-					errorTexts.push(`<div style='padding-left: 10px;'>無効なAPIキーです。</div>`);
-					$(`.apiKey`).addClass('validation-error');
-				} else {
-					let transformedModelIds = data.data.map(model => {
-						let parts = model.id.split('-');
-						if (parts.length > 2) {
-							return parts.slice(0, 2).join('-');
-						}
-						return model.id;
+		async function validateLoadData(codeMasterTable) {
+			let hasError = false;
+			for (let row of codeMasterTable) {
+				let appId = $(row).find('#app_id').val();
+				if (!appId) {
+					$(row).find('#app_id').addClass('validation-error');
+					Swal10.fire({
+						position: "center",
+						icon: "error",
+						text: "アプリIDが未入力です。",
+						showConfirmButton: true,
 					});
-					let filterGptModelIds = Array.from(new Set(transformedModelIds.filter(id => id.startsWith('gpt'))));
-					let valueFromFilter = Array.from(new Set(filterGptModelIds.filter(id => {
-						return id.localeCompare('gpt-4o', undefined, { numeric: true }) >= 0;
-					})));
-
-					if (valueFromFilter.length > 0) {
-						let selectedVersionChatGPT = $('select[name="field_dropdown_column_model_version_chatGPT"]').val();
-						$('select[name="field_dropdown_column_model_version_chatGPT"]').empty().append(
-							$('<option>').attr("value", "gpt-3.5-turbo").text("gpt-3.5-turbo"),
-							$('<option>').attr("value", "gpt-4").text("gpt-4")
-						);
-						GETVERSION = valueFromFilter;
-						valueFromFilter.forEach(modelVersion => {
-							$('select[name="field_dropdown_column_model_version_chatGPT"]').append(
-								$('<option>').attr("value", modelVersion).text(modelVersion)
-							);
-						});
-
-						if ($('select[name="field_dropdown_column_model_version_chatGPT"] option[value="' + selectedVersionChatGPT + '"]').length == 0) {
-							selectedVersionChatGPT = "-----";
-						}
-						$('select[name="field_dropdown_column_model_version_chatGPT"]').val(selectedVersionChatGPT);
-					}
+					hasError = true;
+				} else {
+					$(row).find('#app_id').removeClass('validation-error');
+					hasError = false;
 				}
-			} catch (error) {
-				errorTexts.push(`<div style='padding-left: 10px;'>${error}</div>`);
-				$(`.apiKey`).addClass('validation-error');
 			}
+			return hasError;
 		}
 
 		$(".cancel").on('click', async function () {
@@ -1038,159 +794,6 @@ jQuery.noConflict();
 			slideUp.call(this);
 		});
 
-		//check box
-		$(".status-setting").on('click', function () {
-			let elementCheckbox = $(this).find('input[type="checkbox"]');
-			let isChecked = elementCheckbox.prop("checked");
-			if (isChecked) {
-				elementCheckbox.prop("checked", false);
-				elementCheckbox.attr("value", "false");
-				elementCheckbox.closest('tr').find(".spacePromptTemplate").hide();
-				elementCheckbox.closest('tr').find(".space_Button").show();
-			} else {
-				elementCheckbox.prop("checked", true);
-				elementCheckbox.attr("value", "true");
-				elementCheckbox.closest('tr').find(".spacePromptTemplate").show();
-				elementCheckbox.closest('tr').find(".space_Button").hide();
-			}
-		});
-
-		// when spaceForPromptTemplate is has change it's will be disabled store field
-		$(".spaceForPromptTemplate").change(function () {
-			let valueChange = $(this).find('#spaceForPromptTemplate').val();
-			if (valueChange == "-----") {
-				$(this).closest('tr').find('select[name="field_dropdown_column_fieldResult"]').val('-----');
-				$(this).closest('tr').find("#storeFields").val('-----').prop("disabled", true);
-				$(this).closest('tr').find('.storeFields').removeClass('validation-error');
-
-			} else {
-				$(this).closest('tr').find("#storeFields").prop("disabled", false);
-			}
-		});
-
-		$(document).on('contextmenu', 'textarea.systemRole, textarea.promptContent', function (e) {
-			e.preventDefault();
-			let clickedTextarea = $(this);
-			const oldContextMenu = $('#custom-context-menu');
-			if (oldContextMenu.length) {
-				oldContextMenu.remove();
-			}
-
-			let customContextMenu = $('<div>').attr('id', 'custom-context-menu')
-				.css({
-					left: e.pageX + 'px',
-					top: e.pageY + 'px',
-				});
-
-			FIELDFROMAPP.forEach((field) => {
-				if (field.type == "SINGLE_LINE_TEXT" || field.type == "MULTI_LINE_TEXT") {
-					const hoverBtn = $('<button>')
-						.text(`${field.label}(${field.code})`)
-						.attr("value", field.code);
-					customContextMenu.append(hoverBtn);
-					hoverBtn.on('click', async function () {
-						let clickedValue = $(this).attr('value');
-						if (clickedTextarea.hasClass("systemRole") || clickedTextarea.hasClass("promptContent")) {
-							let currentRow = clickedTextarea.closest('tr');
-							currentRow.find('.promptContent').removeClass('validation-error');
-							currentRow.find('.systemRole').removeClass('validation-error');
-							let cursorPosition = clickedTextarea.prop("selectionStart");
-							let selectedValuePlaceholder = `{%${clickedValue}%}`;
-							let newValue = clickedTextarea.val().slice(0, cursorPosition) + selectedValuePlaceholder + clickedTextarea.val().slice(cursorPosition);
-							clickedTextarea.val(newValue);
-							let newCursorPosition = cursorPosition + selectedValuePlaceholder.length;
-							clickedTextarea.prop("selectionStart", newCursorPosition).prop("selectionEnd", newCursorPosition);
-						}
-					});
-				}
-			});
-			$('body').append(customContextMenu);
-
-			$(document).on('click.customContextMenu', function (elements) {
-				if (!customContextMenu.is(elements.target) && customContextMenu.has(elements.target).length === 0) {
-					customContextMenu.remove();
-					$(document).off('click.customContextMenu');
-				}
-			});
-			customContextMenu.on('mouseleave', function () {
-				customContextMenu.remove();
-			});
-		});
-
-		// control input box maxToken
-		$('.maxToken').on('input', function () {
-			this.value = this.value.replace(/[^0-9]/g, '');
-			if (this.value.startsWith('0') && this.value.length > 1) {
-				this.value = this.value.replace(/^0+/, '');
-			}
-		});
-
-		//toggle version(chat gpt or azure)
-		$(".platForm").change(function () {
-			let selectedValue = $(this).val();
-			if (selectedValue == "Chat_GPT") {
-				$('.modelVersion-ChatGPT').show();
-				$('.system-role').hide();
-				$('.azureComponent').hide();
-				$('.azureComponent input').val('');
-				$('.system-role textarea').val('');
-			} else {
-				$('.modelVersion-ChatGPT').hide();
-				$('.system-role').show();
-				$('.azureComponent').show();
-			}
-		});
-
-		//remove class validation-error from AI setting
-		$(".resourceName, .deploymentID, .apiVersion, .apiKey, .maxToken").change(function () {
-			$(this).removeClass('validation-error');
-		});
-
-		//remove class validation-error from space for prompt template and button
-		$(".spaceForPromptTemplate").change(function () {
-			$(this).closest('tr').find('.spaceForPromptTemplate').removeClass('validation-error');
-		}); $(".storeFields").change(function () {
-			$(this).closest('tr').find('.storeFields').removeClass('validation-error');
-		}); $(".spaceForButton").change(function () {
-			$(this).closest('tr').find('.spaceForButton').removeClass('validation-error');
-		}); $(".labelForPromptTemplate").change(function () {
-			$(this).closest('tr').find('.labelForPromptTemplate').removeClass('validation-error');
-		}); $(".labelForButton").change(function () {
-			$(this).closest('tr').find('.labelForButton').removeClass('validation-error');
-		});
-
-		//remove class validation-error from setting prompt template
-		$(".settingName").change(function () {
-			$(this).closest('tr').find('.settingName').removeClass('validation-error');
-		}); $(".spacePromptTemplate").change(function () {
-			$(this).closest('tr').find('.spacePromptTemplate').removeClass('validation-error');
-		}); $(".spaceButton").change(function () {
-			$(this).closest('tr').find('.spaceButton').removeClass('validation-error');
-		}); $(".fieldResult").change(function () {
-			$(this).closest('tr').find('.fieldResult').removeClass('validation-error');
-		}); $(".promptContent").change(function () {
-			$(this).closest('tr').find('.promptContent').removeClass('validation-error');
-		}); $(".systemRole").change(function () {
-			$(this).closest('tr').find('.systemRole').removeClass('validation-error');
-		});
-
-		// when storeFields has change
-		$(".storeFields").change(function () {
-			HASUPDATED = false;
-		});
-
-		// when spaceForPromptTemplate is has changed
-		$(".spaceForPromptTemplate").change(function () {
-			HASUPDATED = false;
-		});
-
-		$(".labelForPromptTemplate").change(function () {
-			HASUPDATED = false;
-		});
-
-		$(".labelForButton").change(function () {
-			HASUPDATED = false;
-		});
 
 		// Export function
 		$("#Export").on('click', async function () {

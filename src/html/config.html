@@ -105,14 +105,14 @@
             <td id="td-table-code-master">
               <div class="labelPrompt">
                 <div class="kintoneplugin-table-td-control">
-                  <label for="title-field">Master ID</label>
+                  <label for="title-field">Master ID<span class="kintoneplugin-require">*</span></label>
                   <div class="kintoneplugin-input-outer">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="master_id" />
                   </div>
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="title-field" style="font-size: 14px;">App ID</label>
+                  <label for="title-field" style="font-size: 14px;">App ID<span class="kintoneplugin-require">*</span></label>
                   <div class="kintoneplugin-input-outer">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="app_id" />
                   </div>
@@ -276,7 +276,7 @@
                   </div>
 
                   <div class="recreate-area" id="">
-                    <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="recreate-button">Recreate</button>
+                    <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="recreate-button" hidden>Recreate</button>
                   </div>
 
                 </div>
@@ -294,9 +294,9 @@
           </tr>
         </tbody>
       </table>
-      <div class="recreate-button">
+      <!-- <div class="recreate-button">
         <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="recreate-button">Recreate</button>
-      </div>
+      </div> -->
     </div>
     <p class="kintoneplugin-row" id="button-action">
       <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="button_save">保存</button>
