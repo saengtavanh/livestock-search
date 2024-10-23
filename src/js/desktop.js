@@ -1,4 +1,38 @@
-(async function (PLUGIN_ID) {
+jQuery.noConflict();
+(async function ($, Swal10, PLUGIN_ID) {
+
+  window.RsComAPI.getRecords({ app: 255 })
+    .then(dataFromMaster => {
+      sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
+      sessionStorage.setItem('dataspace', JSON.stringify([{
+        spc: 'spaceA',
+        kind: '品種',
+        code: '品種CD',
+        name: '品種',
+        required: true
+      },
+      {
+        spc: 'spaceB',
+        kind: '性別',
+        code: '性別CD',
+        name: '性別',
+        required: true
+      },
+      {
+        spc: 'spaceC',
+        kind: '產地',
+        code: '產地CD',
+        name: '產地',
+        required: true
+      },
+      {
+        spc: 'spaceD',
+        kind: '預託区分',
+        code: '預託区分CD',
+        name: '預託区分',
+        required: true
+      }]));
+    });
   const config = {
     search_displays: [
       // {
@@ -555,4 +589,211 @@
     $spaceEl.append($elementsAll);
   });
 
+  kintone.events.on(['app.record.index.show', 'app.record.edit.show'], async (event) => {
+    const record = event.record;
+    window.RsComAPI.getRecords({ app: 255 })
+      .then(dataFromMaster => {
+        sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
+        sessionStorage.setItem('dataspace', JSON.stringify([{
+          spc: 'spaceA',
+          kind: '品種',
+          code: '品種CD',
+          name: '品種',
+          required: true
+        },
+        {
+          spc: 'spaceB',
+          kind: '性別',
+          code: '性別CD',
+          name: '性別',
+          required: true
+        },
+        {
+          spc: 'spaceC',
+          kind: '產地',
+          code: '產地CD',
+          name: '產地',
+          required: true
+        },
+        {
+          spc: 'spaceD',
+          kind: '預託区分',
+          code: '預託区分CD',
+          name: '預託区分',
+          required: true
+        }]));
+      });
+
+    // Get space in App LiveStock
+    let GETSPACE = await kintone.api("/k/v1/preview/app/form/layout.json", "GET", {
+      app: kintone.app.getId()
+    });
+
+    let SPACE = GETSPACE.layout.reduce((setSpace, layoutFromApp) => {
+      if (layoutFromApp.type === "GROUP") {
+        layoutFromApp.layout.forEach(layoutItem => {
+          layoutItem.fields.forEach(field => {
+            if (field.type === "SPACER") {
+              setSpace.push({
+                type: "space",
+                value: field.elementId
+              });
+            }
+          });
+        });
+      } else {
+        layoutFromApp.fields.forEach(field => {
+          if (field.type === "SPACER") {
+            setSpace.push({
+              type: "space",
+              value: field.elementId
+            });
+          }
+        });
+      }
+      return setSpace;
+    }, []);
+
+    let sortedSpaces = SPACE.sort((a, b) => {
+      return a.value.localeCompare(b.value);
+    });
+
+    let storedRecords = JSON.parse(sessionStorage.getItem('kintoneRecords'));
+    let storedDataSpace = JSON.parse(sessionStorage.getItem('dataspace'));
+
+    if (storedDataSpace && storedDataSpace.length > 0) {
+      storedDataSpace.forEach(item => {
+        sortedSpaces.forEach(space => {
+          let selectElement;
+          if (item.spc === space.value) {
+            let filteredRecords = storedRecords.filter(rec => rec.Type.value == item.kind);
+            let blankElement = kintone.app.record.getSpaceElement(space.value);
+
+            if (blankElement) {
+              let label = $('<div>', {
+                class: 'kintoneplugin-title',
+                html: item.name + (item.required ? '<span class="kintoneplugin-require">*</span>' : '')
+              });
+              let divMain = $('<div>', { class: 'custom-main' });
+              let containerDiv = $('<div>', { class: 'custom-container' });
+              let inputBox = $('<input>', {
+                type: 'number',
+                class: 'modern-input-box kintoneplugin-input-text',
+                min: '0'
+              });
+              let dropdownOuter = $('<div>', { class: 'kintoneplugin-select-outer' });
+              let dropdown = $('<div>', { class: 'kintoneplugin-select' });
+              selectElement = $('<select>');
+              selectElement.append($('<option>').attr('value', '-----').text('-----'));
+
+              // Populate dropdown with stored records
+              if (filteredRecords.length > 0) {
+                filteredRecords.forEach(record => {
+                  selectElement.append($('<option>')
+                    .attr('value', record.name.value)
+                    .attr('code', record.code.value)
+                    .attr('types', record.Type.value)
+                    .text(record.name.value));
+                });
+              }
+              console.log(record);
+              inputBox.on('input', function () {
+                let inputValue = $(this).val().replace(/[^0-9]/g, ''); // Keep only numbers
+                if (inputValue.startsWith('0') && inputValue.length > 1) {
+                  inputValue = inputValue.replace(/^0+/, ''); // Remove leading zeros
+                }
+
+                if (filteredRecords.length > 0) {
+                  let matchFound = false;
+                  filteredRecords.forEach(record => {
+                    if (record.code.value === inputValue) {
+                      let existingOption = selectElement.find(`option[value="${record.name.value}"]`);
+                      let selectedType = existingOption.attr('types');
+                      let selectedCode = existingOption.attr('code');
+                      let selectedValue = existingOption.attr('value');
+                      if (existingOption.length > 0) {
+                        existingOption.prop('selected', true);
+                        setField(selectedCode, selectedValue, selectedType)
+                      } else {
+                        let newOption = $('<option>').attr('value', record.name.value).text(record.name.value);
+                        selectElement.append(newOption);
+                        newOption.prop('selected', true);
+                      }
+                      matchFound = true;
+                    }
+
+                  });
+
+                  if (!matchFound) {
+                    let defaultOption = selectElement.find('option[value="-----"]');
+                    if (defaultOption.length > 0) {
+                      defaultOption.prop('selected', true);
+                    } else {
+                      let newDefaultOption = $('<option>').attr('value', '-----').text('-----');
+                      selectElement.append(newDefaultOption);
+                      newDefaultOption.prop('selected', true);
+                    }
+                  }
+                }
+              });
+
+              selectElement.on('change', function (e) {
+                const selectedOption = $(e.target).find('option:selected');
+                let nearestInput = $(this).closest('.custom-container').find('.kintoneplugin-input-text');
+                nearestInput.val('');
+                const selectedCode = selectedOption.attr('code');
+                const selectedValue = selectedOption.attr('value');
+                const selectedType = selectedOption.attr('types');
+                nearestInput.val(selectedCode);
+                setField(selectedCode, selectedValue, selectedType)
+              });
+
+              function setField(selectedCode, selectedValue, selectedType) {
+                if (item.kind == selectedType) {
+                  const record = kintone.app.record.get();
+                  const fieldCode = item.name;
+                  const fieldCode2 = item.code;
+                  record.record[fieldCode].value = selectedValue;
+                  record.record[fieldCode2].value = selectedCode;
+                  kintone.app.record.set(record);
+                }
+              }
+              dropdown.append(selectElement);
+              dropdownOuter.append(dropdown);
+              containerDiv.append(inputBox).append(dropdownOuter);
+              divMain.append(label);
+              divMain.append(containerDiv);
+              $(blankElement).append(divMain);
+
+              selectElement.each(function (index, selectElement) {
+                $(selectElement).find('option').each(function (optionIndex, optionElement) {
+                  const codeValue = $(optionElement).attr('code');
+                  const typeValue = $(optionElement).attr('types');
+                  const optionValue = $(optionElement).val();
+                  $.each(record, function (fieldKey, fieldValue) {
+                    if (typeValue === fieldKey) {
+                      const fieldValueContent = fieldValue.value;
+                      if (fieldValueContent === optionValue) {
+                        $(optionElement).prop('selected', true);
+                        //setField(codeValue, optionValue, typeValue);
+                        const correspondingInputBox = inputBox.eq(index);
+                        console.log(correspondingInputBox);
+                        correspondingInputBox.val(codeValue);
+                        return false;
+                      }
+                    }
+                  });
+                });
+              });
+            }
+          }
+        });
+
+        // Hide fields by code and name
+        kintone.app.record.setFieldShown(item.code, false);
+        kintone.app.record.setFieldShown(item.name, false);
+      });
+    }
+    return event;
+  });
 })(kintone.$PLUGIN_ID);
