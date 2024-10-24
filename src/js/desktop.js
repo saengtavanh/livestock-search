@@ -1,236 +1,10 @@
 jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
-
-  window.RsComAPI.getRecords({ app: 262 })
-    .then(dataFromMaster => {
-      sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
-      sessionStorage.setItem('dataspace', JSON.stringify([{
-        spc: 'spaceA',
-        kind: '品種',
-        code: '品種CD',
-        name: '品種',
-        required: true
-      },
-      {
-        spc: 'spaceB',
-        kind: '性別',
-        code: '性別CD',
-        name: '性別',
-        required: true
-      },
-      {
-        spc: 'spaceC',
-        kind: '產地',
-        code: '產地CD',
-        name: '產地',
-        required: true
-      },
-      {
-        spc: 'spaceD',
-        kind: '預託区分',
-        code: '預託区分CD',
-        name: '預託区分',
-        required: true
-      }]));
-    });
-  // const config = {
-  //   search_displays: [
-  //     {
-  //       name_marker: "TextInitial",
-  //       group_name: "TextInitial",
-  //       search_length: "1rem 10px",
-  //       search_type: "text_initial"
-  //     },
-  //     {
-  //       name_marker: "textPartial",
-  //       group_name: "textPartial",
-  //       search_length: "1rem 10px",
-  //       search_type: "text_partial"
-  //     },
-  //     // {
-  //     //   name_marker: "textExact",
-  //     //   group_name: "textExact",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "text_exact"
-  //     // },
-  //     // {
-  //     //   name_marker: "MultiTextInitial",
-  //     //   group_name: "MultiTextInitial",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "MultiText_initial"
-  //     // },
-  //     // {
-  //     //   name_marker: "MultiTextPartial",
-  //     //   group_name: "MultiTextPartial",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "MultiText_Partial"
-  //     // },
-  //     // {
-  //     //   name_marker: "NumberExact",
-  //     //   group_name: "NumberExact",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "Number_Exact"
-  //     // },
-  //     // {
-  //     //   name_marker: "NumberRange",
-  //     //   group_name: "NumberRange",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "Number_Range"
-  //     // },
-  //     // {
-  //     //   name_marker: "DateExact",
-  //     //   group_name: "DateExact",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "Date_Exact"
-  //     // },
-  //     // {
-  //     //   name_marker: "DateRange",
-  //     //   group_name: "DateRange",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "Date_Range"
-  //     // },
-  //     {
-  //       name_marker: "DropdownExact",
-  //       group_name: "DropdownExact",
-  //       search_length: "1rem 10px",
-  //       search_type: "Dropdown_Exact"
-  //     },
-  //     {
-  //       name_marker: "",
-  //       group_name: "DropdownExactEmpy",
-  //       search_length: "1rem 10px",
-  //       search_type: "Dropdown_Exact"
-  //     },
-  //     {
-  //       name_marker: "DropdownExactTest",
-  //       group_name: "DropdownExactTest",
-  //       search_length: "1rem 10px",
-  //       search_type: "Dropdown_Exact"
-  //     },
-  //   ],
-  //   search_content: [
-  //     {
-  //       group_name: "TextInitial",
-  //       search_name: "food",
-  //       code_master_id: "",
-  //       target_field: "TextInitialCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "textPartial",
-  //       search_name: "food1",
-  //       code_master_id: "",
-  //       target_field: "textPartialCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "textExact",
-  //       search_name: "food12",
-  //       code_master_id: "",
-  //       target_field: "textExactCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "MultiTextInitial",
-  //       search_name: "food2134",
-  //       code_master_id: "",
-  //       target_field: "MultiTextInitialCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "MultiTextPartial",
-  //       search_name: "food000",
-  //       code_master_id: "",
-  //       target_field: "MultiTextPartialCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "NumberExact",
-  //       search_name: "food0033",
-  //       code_master_id: "",
-  //       target_field: "NumberExactCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "NumberRange",
-  //       search_name: "food0033",
-  //       code_master_id: "",
-  //       target_field: "NumberRangeCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "DateExact",
-  //       search_name: "food0033",
-  //       code_master_id: "",
-  //       target_field: "DateExactCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "DateRange",
-  //       search_name: "food0033",
-  //       code_master_id: "",
-  //       target_field: "DateRangeCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "DropdownExact",
-  //       search_name: "fark111",
-  //       code_master_id: "",
-  //       target_field: "TextInitialCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "DropdownExact",
-  //       search_name: "fark000",
-  //       code_master_id: "",
-  //       target_field: "DropdownExact",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "DropdownExactEmpy",
-  //       search_name: "fark999",
-  //       code_master_id: "",
-  //       target_field: "DropdownExact",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "DropdownExactEmpy",
-  //       search_name: "fark888",
-  //       code_master_id: "",
-  //       target_field: "NumberExactCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "DropdownExactTest",
-  //       search_name: "Test1",
-  //       code_master_id: "",
-  //       target_field: "DropdownExact",
-  //       field_for_search: "foodSearch"
-  //     },
-  //     {
-  //       group_name: "DropdownExactTest",
-  //       search_name: "Test2",
-  //       code_master_id: "",
-  //       target_field: "TextInitialCode",
-  //       field_for_search: "foodSearch"
-  //     },
-  //   ],
-  //   code_master: [
-  //     {
-  //       master_id: "12345678",
-  //       app_id: "",
-  //       api_token: "",
-  //       code_field: "",
-  //       name_field: "",
-  //       type: "",
-  //     }
-  //   ]
-  // };
-
+  const CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
+  console.log("config", CONFIG);
   kintone.events.on('app.record.index.show', async (event) => {
     // if (!CONFIG) return;
-    const CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
-    console.log("config", CONFIG);
+
     const records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
     console.log("records", records);
 
@@ -359,11 +133,11 @@ jQuery.noConflict();
         .css({ width: display.searchLength });
       $dropDown.append($("<option>").text('-----').val(''));
 
-      if (display.name_marker) {
+      if (display.nameMarker) {
         let filteredRecords = CONFIG.searchContent.filter(item => item.groupName === display.groupName);
         filteredRecords.forEach(item => {
-          if (!records || records[item.searchTarget].value === '') return;
           records.forEach(record => {
+            if (record[item.searchTarget].value === '') return;
             const $option = $("<option>")
               .text(record[item.searchTarget].value)
               .addClass('option')
@@ -456,12 +230,115 @@ jQuery.noConflict();
       // Redirect to the new URL
       window.location.href = QueryUrl;
     }
+    // =========================
+    //string input search
+   
 
+    //Rang number search
+    // var buildQueryForNumberValue = function (searchInfo, query, format, condiotionValue) {
+    //   let startValue = document.getElementById(searchInfo.fieldInfo.code + "_start").value;
+    //   let endValue = document.getElementById(searchInfo.fieldInfo.code + "_end").value;
+    //   let queryChild = "";
+
+    //   if (startValue && endValue == '') {
+    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + ">=" + ' "' + startValue + '"' + ")";
+    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+    //   } else if (endValue && startValue == '') {
+    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + "<=" + ' "' + endValue + '"' + ")";
+    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+    //   } else if (startValue && endValue) {
+    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + ">=" + ' "' + startValue + '"' + " and " + searchInfo.fieldInfo.code + ' ' + "<=" + ' "' + endValue + '"' + ")";
+    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+    //   }
+    //   return queryChild;
+    // };
+
+    // // =========================
+
+    // var searchProcess = async function (searchInfoList) {
+    //   var query = await getValueConditionAndBuildQuery(searchInfoList);
+    //   var queryEscape = encodeURIComponent(query);
+    //   var currentUrlBase = window.location.href.match(/\S+\//)[0];
+    //   var url = currentUrlBase + "?query=" + queryEscape;
+
+    //   return (window.location.href = url);
+    // };
+
+    // //check type to search
+    // var getValueConditionAndBuildQuery = function () {
+    //   var query = "";
+    //   CONFIG.groupSetting.forEach(searchItem => {
+    //     console.log("searchItem.searchType", searchItem.searchType);
+    //     switch (searchItem.searchType) {
+    //       case "text_initial":
+    //       case "text_partial":
+    //         // case "multi_text_initial":
+    //         // case "multi_text_patial":
+    //         // case "number_exact":
+    //         // case "number_range":
+    //         // case "date_exact":
+    //         // case "date_range":
+    //         let inputCondition = QueryTextInitialValue(searchInfo, query, condiotionValue);
+    //         query += inputCondition;
+
+    //         break;
+    //       case "number_exact":
+    //         let rangNumberCondition = buildQueryForNumberValue(searchInfo, query, "", condiotionValue);
+    //         query += rangNumberCondition;
+
+    //         break;
+    //       // case "DATE":
+    //       //   let dateCondition = buildQueryForRangDateValue(searchInfo, query, "YYYY-MM-DD", condiotionValue);
+    //       //   query += dateCondition;
+
+    //       //   break;
+    //       // case "DATETIME":
+    //       // case "CREATED_TIME":
+    //       // case "UPDATED_TIME":
+    //       //   let datetimeCondition = buildQueryForRangDateValue(searchInfo, query, "YYYY-MM-DDTHH:mm:ss", condiotionValue);
+    //       //   query += datetimeCondition;
+
+    //       //   break;
+    //       // case "TIME":
+    //       //   let timeCondition = buildQueryForRangTimeValue(searchInfo, query, "", condiotionValue);
+    //       //   query += timeCondition;
+
+    //       //   break;
+    //       // case "MULTI_SELECT":
+    //       // case "RADIO_BUTTON":
+    //       // case "CHECK_BOX":
+    //       // case "DROP_DOWN":
+    //       // case "STATUS":
+    //       //   let multiSelectItemList = document.getElementsByName(searchInfo.fieldInfo.code);
+    //       //   let multiSelectConditionChild = "";
+
+    //       //   for (let j = 0; j < multiSelectItemList.length; j++) {
+    //       //     let selectedItem = multiSelectItemList[j];
+    //       //     $(selectedItem).hasClass("dropdown-selected")
+    //       //       ? (multiSelectConditionChild +=
+    //       //         ' "' + $(selectedItem).data("option-value") + '", ')
+    //       //       : null;
+    //       //   }
+
+    //       //   let multiSelectCondition = buildQueryForMultiValue(searchInfo, multiSelectConditionChild, query, condiotionValue);
+    //       //   query += multiSelectCondition;
+
+    //       //   break;
+    //     }
+    //   })
+
+    //   return query;
+    // };
+    // ========================
+   
+    // ========================
 
     // Create input fields
     function createTextInput() {
       return $('<input type="text" class="kintoneplugin-input-text">').on('change', function () {
         console.log("Text Input:", $(this).val());
+        QueryTextInitialValue($(this).val());
       });
     }
 
@@ -480,6 +357,7 @@ jQuery.noConflict();
     function createNumberInput() {
       return $('<input type="number" class="kintoneplugin-input-text">').on('change', function () {
         console.log("Number Input:", $(this).val());
+        // buildQueryForNumberValue($(this).val());
       });
     }
 
@@ -565,20 +443,20 @@ jQuery.noConflict();
         case 'text_exact':
           inputElement = createTextInput();
           break;
-        case 'MultiText_initial':
-        case 'MultiText_Partial':
+        case 'multi_text_initial':
+        case 'multi_text_patial':
           inputElement = createTextArea();
           break;
-        case 'Number_Exact':
+        case 'number_exact':
           inputElement = createNumberInput();
           break;
-        case 'Number_Range':
+        case 'number_range':
           inputElement = createNumberRangeInput();
           break;
-        case 'Date_Exact':
+        case 'date_exact':
           inputElement = createDateInput();
           break;
-        case 'Date_Range':
+        case 'date_range':
           inputElement = createDateRangeInput();
           break;
         default:
@@ -594,213 +472,70 @@ jQuery.noConflict();
 
     $elementsAll.append($elementBtn);
     $spaceEl.append($elementsAll);
+
   });
+  kintone.events.on(['app.record.edit.show', 'app.record.create.submit'], async (event) => {
+    let record = event.record;
+    let updateRecord = {};
+    CONFIG.searchContent.forEach((searchItem) => {
+      CONFIG.groupSetting.forEach((item) => {
+        if (item.groupName === searchItem.groupName) {
+          if (
+            item.searchType === "text_initial" ||
+            item.searchType === "text_patial" ||
+            item.searchType === "text_exact" ||
+            item.searchType === "multi_text_initial" ||
+            item.searchType === "multi_text_patial"
 
-  kintone.events.on(['app.record.index.show', 'app.record.edit.show'], async (event) => {
-    const record = event.record;
-    window.RsComAPI.getRecords({ app: 262 })
-      .then(dataFromMaster => {
-        sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
-        sessionStorage.setItem('dataspace', JSON.stringify([{
-          spc: 'spaceA',
-          kind: '品種',
-          code: '品種CD',
-          name: '品種',
-          required: true
-        },
-        {
-          spc: 'spaceB',
-          kind: '性別',
-          code: '性別CD',
-          name: '性別',
-          required: true
-        },
-        {
-          spc: 'spaceC',
-          kind: '產地',
-          code: '產地CD',
-          name: '產地',
-          required: true
-        },
-        {
-          spc: 'spaceD',
-          kind: '預託区分',
-          code: '預託区分CD',
-          name: '預託区分',
-          required: true
-        }]));
-      });
+          ) {
+            let targetValue = record[searchItem.searchTarget].value;
+            console.log(targetValue);
 
-    // Get space in App LiveStock
-    let GETSPACE = await kintone.api("/k/v1/preview/app/form/layout.json", "GET", {
-      app: kintone.app.getId()
-    });
-
-    let SPACE = GETSPACE.layout.reduce((setSpace, layoutFromApp) => {
-      if (layoutFromApp.type === "GROUP") {
-        layoutFromApp.layout.forEach(layoutItem => {
-          layoutItem.fields.forEach(field => {
-            if (field.type === "SPACER") {
-              setSpace.push({
-                type: "space",
-                value: field.elementId
-              });
+            let convertedValue = "";
+            if (targetValue == "" || targetValue == undefined) {
+              convertedValue = ""
+            } else {
+              switch (item.searchType) {
+                case "text_initial":
+                case "multi_text_initial":
+                  convertedValue = `_,${targetValue.split('').join(',')}`;
+                  break;
+                case "text_patial":
+                case "multi_text_patial":
+                  convertedValue = `${targetValue.split('').join(',')}`;
+                  break;
+                case "text_exact":
+                  convertedValue = `_,${targetValue.split('').join(',')},_`;
+                  break;
+                default:
+                  break;
+              }
             }
-          });
-        });
-      } else {
-        layoutFromApp.fields.forEach(field => {
-          if (field.type === "SPACER") {
-            setSpace.push({
-              type: "space",
-              value: field.elementId
-            });
+            updateRecord[searchItem.fieldForSearch] = {
+              value: convertedValue
+            }
+            record[searchItem.fieldForSearch].value = convertedValue;
           }
-        });
+        }
+      });
+    });
+    if (event.type === 'app.record.create.submit') {
+      let body = {
+        app: kintone.app.getId(),
+        records: [
+          {
+            id: kintone.app.record.getId(),
+            record: updateRecord
+          }
+        ]
+      };
+      try {
+        await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
+      } catch (error) {
+        console.log(error);
       }
-      return setSpace;
-    }, []);
-
-    let sortedSpaces = SPACE.sort((a, b) => {
-      return a.value.localeCompare(b.value);
-    });
-
-    let storedRecords = JSON.parse(sessionStorage.getItem('kintoneRecords'));
-    let storedDataSpace = JSON.parse(sessionStorage.getItem('dataspace'));
-
-    if (storedDataSpace && storedDataSpace.length > 0) {
-      storedDataSpace.forEach(item => {
-        sortedSpaces.forEach(space => {
-          let selectElement;
-          if (item.spc === space.value) {
-            let filteredRecords = storedRecords.filter(rec => rec.Type.value == item.kind);
-            let blankElement = kintone.app.record.getSpaceElement(space.value);
-
-            if (blankElement) {
-              let label = $('<div>', {
-                class: 'kintoneplugin-title',
-                html: item.name + (item.required ? '<span class="kintoneplugin-require">*</span>' : '')
-              });
-              let divMain = $('<div>', { class: 'custom-main' });
-              let containerDiv = $('<div>', { class: 'custom-container' });
-              let inputBox = $('<input>', {
-                type: 'number',
-                class: 'modern-input-box kintoneplugin-input-text',
-                min: '0'
-              });
-              let dropdownOuter = $('<div>', { class: 'kintoneplugin-select-outer' });
-              let dropdown = $('<div>', { class: 'kintoneplugin-select' });
-              selectElement = $('<select>');
-              selectElement.append($('<option>').attr('value', '-----').text('-----'));
-
-              // Populate dropdown with stored records
-              if (filteredRecords.length > 0) {
-                filteredRecords.forEach(record => {
-                  selectElement.append($('<option>')
-                    .attr('value', record.name.value)
-                    .attr('code', record.code.value)
-                    .attr('types', record.Type.value)
-                    .text(record.name.value));
-                });
-              }
-              console.log(record);
-              inputBox.on('input', function () {
-                let inputValue = $(this).val().replace(/[^0-9]/g, ''); // Keep only numbers
-                if (inputValue.startsWith('0') && inputValue.length > 1) {
-                  inputValue = inputValue.replace(/^0+/, ''); // Remove leading zeros
-                }
-
-                if (filteredRecords.length > 0) {
-                  let matchFound = false;
-                  filteredRecords.forEach(record => {
-                    if (record.code.value === inputValue) {
-                      let existingOption = selectElement.find(`option[value="${record.name.value}"]`);
-                      let selectedType = existingOption.attr('types');
-                      let selectedCode = existingOption.attr('code');
-                      let selectedValue = existingOption.attr('value');
-                      if (existingOption.length > 0) {
-                        existingOption.prop('selected', true);
-                        setField(selectedCode, selectedValue, selectedType)
-                      } else {
-                        let newOption = $('<option>').attr('value', record.name.value).text(record.name.value);
-                        selectElement.append(newOption);
-                        newOption.prop('selected', true);
-                      }
-                      matchFound = true;
-                    }
-
-                  });
-
-                  if (!matchFound) {
-                    let defaultOption = selectElement.find('option[value="-----"]');
-                    if (defaultOption.length > 0) {
-                      defaultOption.prop('selected', true);
-                    } else {
-                      let newDefaultOption = $('<option>').attr('value', '-----').text('-----');
-                      selectElement.append(newDefaultOption);
-                      newDefaultOption.prop('selected', true);
-                    }
-                  }
-                }
-              });
-
-              selectElement.on('change', function (e) {
-                const selectedOption = $(e.target).find('option:selected');
-                let nearestInput = $(this).closest('.custom-container').find('.kintoneplugin-input-text');
-                nearestInput.val('');
-                const selectedCode = selectedOption.attr('code');
-                const selectedValue = selectedOption.attr('value');
-                const selectedType = selectedOption.attr('types');
-                nearestInput.val(selectedCode);
-                setField(selectedCode, selectedValue, selectedType)
-              });
-
-              function setField(selectedCode, selectedValue, selectedType) {
-                if (item.kind == selectedType) {
-                  const record = kintone.app.record.get();
-                  const fieldCode = item.name;
-                  const fieldCode2 = item.code;
-                  record.record[fieldCode].value = selectedValue;
-                  record.record[fieldCode2].value = selectedCode;
-                  kintone.app.record.set(record);
-                }
-              }
-              dropdown.append(selectElement);
-              dropdownOuter.append(dropdown);
-              containerDiv.append(inputBox).append(dropdownOuter);
-              divMain.append(label);
-              divMain.append(containerDiv);
-              $(blankElement).append(divMain);
-
-              selectElement.each(function (index, selectElement) {
-                $(selectElement).find('option').each(function (optionIndex, optionElement) {
-                  const codeValue = $(optionElement).attr('code');
-                  const typeValue = $(optionElement).attr('types');
-                  const optionValue = $(optionElement).val();
-                  $.each(record, function (fieldKey, fieldValue) {
-                    if (typeValue === fieldKey) {
-                      const fieldValueContent = fieldValue.value;
-                      if (fieldValueContent === optionValue) {
-                        $(optionElement).prop('selected', true);
-                        //setField(codeValue, optionValue, typeValue);
-                        const correspondingInputBox = inputBox.eq(index);
-                        console.log(correspondingInputBox);
-                        correspondingInputBox.val(codeValue);
-                        return false;
-                      }
-                    }
-                  });
-                });
-              });
-            }
-          }
-        });
-
-        // Hide fields by code and name
-        kintone.app.record.setFieldShown(item.code, false);
-        kintone.app.record.setFieldShown(item.name, false);
-      });
     }
     return event;
   });
+
 })(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
