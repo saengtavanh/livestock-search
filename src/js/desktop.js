@@ -1,71 +1,61 @@
 jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
-
-  window.RsComAPI.getRecords({ app: 234 })
-      .then(dataFromMaster => {
-        sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
-        sessionStorage.setItem('dataspace', JSON.stringify([{
-          spc: 'spaceA',
-          kind: '品種',
-          code: '品種CD',
-          name: '品種',
-          required: true
-        },
-        {
-          spc: 'spaceB',
-          kind: '性別',
-          code: '性別CD',
-          name: '性別',
-          required: true
-        },
-        {
-          spc: 'spaceC',
-          kind: '產地',
-          code: '產地CD',
-          name: '產地',
-          required: true
-        },
-        {
-          spc: 'spaceD',
-          kind: '預託区分',
-          code: '預託区分CD',
-          name: '預託区分',
-          required: true
-        }]));
-      });
-  const CONFIG = JSON.parse((kintone.plugin.app.getConfig(PLUGIN_ID)).config);
-
-  console.log(CONFIG);
-
-  // Kintone event to show records
+  const CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
+  console.log("config", CONFIG);
   kintone.events.on('app.record.index.show', async (event) => {
+    // if (!CONFIG) return;
+    console.log(window.location.href);
+    // Create a URL object
+    const urlObj = new URL(window.location.href);
+
+    // Get the bokTerms parameter
+    const bokTerms = urlObj.searchParams.get('bokTerms');
+
+    // Decode the bokTerms string
+    const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{{|}}/g, '');
+    console.log(decodedBokTerms);
+
+    const result = {};
+    decodedBokTerms.split(',').forEach(pair => {
+      const [key, value] = pair.split(':').map(item => item.trim().replace(/"/g, ''));
+      result[key] = value;
+    });
+
+    // Log the result
+    console.log(result);
+
     const records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
     console.log("records", records);
 
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
     if (!spaceEl) throw new Error('The header element is unavailable on this page.');
-
+    // Check if the custom element already exists to avoid duplicates
+    if ($(spaceEl).find('.custom-space-el').length > 0) {
+      console.log('Custom element already exists, skipping creation.');
+      return; // Stop if element already exists
+    }
     const $spaceEl = $(spaceEl)
     const $elementsAll = $('<div></div>').addClass('custom-space-el');
 
     // Create dropdowns based on the configuration
-    function createDropDowns(config) {
-      config.search_displays.forEach(display => {
-        if (display.search_type === "Dropdown_Exact") {
-          let relatedContent = config.search_content.filter(content => content.group_name === display.group_name);
+    function createDropDowns(CONFIG) {
+      CONFIG.groupSetting.forEach(display => {
+        console.log("4545", display);
+        if (display.searchType === "dropdown_exact") {
+          let relatedContent = CONFIG.searchContent.filter(content => content.groupName === display.groupName);
 
           // Only show content if `name_marker` is not empty
-          if (display.name_marker) {
-            relatedContent = relatedContent.filter(content => content.group_name === display.group_name);
+          if (display.nameMarker) {
+            relatedContent = relatedContent.filter(content => content.groupName === display.groupName);
           }
 
           if (relatedContent.length > 0) {
             const $dropDownTitle = $("<label>")
-              .text(display.name_marker ? display.group_name : relatedContent[0].search_name)
+              .text(display.nameMarker ? display.groupName : relatedContent[0].searchName)
               .addClass('custom-dropdownTitle')
-              .css({ cursor: display.name_marker ? "default" : "pointer" })
+              .css({ cursor: display.nameMarker ? "default" : "pointer" })
               .on("click", function () {
-                handleDropDownTitleClick(display, config, relatedContent, $dropDownTitle);
+                handleDropDownTitleClick(display, CONFIG, relatedContent, $dropDownTitle);
               });
             const $dropDown = createDropDown(display, records, relatedContent[0], $dropDownTitle);
             const $elementDropdown = $('<div></div>').addClass('search-item').append($dropDownTitle, $dropDown);
@@ -75,19 +65,19 @@ jQuery.noConflict();
       });
     }
 
-    function handleDropDownTitleClick(display, config, relatedContent, $dropDownTitle) {
-      if (display.name_marker === "") {
+    function handleDropDownTitleClick(display, CONFIG, relatedContent, $dropDownTitle) {
+      if (display.nameMarker === "") {
         $dropDownTitle.css({ cursor: "pointer" });
         // Check if the dropdown is already visible
         const existingMenu = $('.custom-context-menu');
         if (existingMenu.length > 0) {
           existingMenu.remove(); // Remove existing menu if it exists
-          return; // Exit if you are closing the menu
+          // return; // Exit if you are closing the menu
         }
 
         // Filter items based on the group name
-        const filteredItems = config.search_content.filter(content => content.group_name === display.group_name && !display.name_marker);
-        const itemsList = filteredItems.map(content => content.search_name);
+        const filteredItems = CONFIG.searchContent.filter(content => content.groupName === display.groupName && !display.nameMarker);
+        const itemsList = filteredItems.map(content => content.searchName);
 
         // Create a custom context menu or container for buttons
         const customContextMenu = $('<div></div>')
@@ -96,8 +86,8 @@ jQuery.noConflict();
             display: 'flex',
             'flex-direction': 'column',
             'align-items': 'center',
-            margin: '10px',
-            padding: '20px',
+            margin: '5px',
+            padding: '10px',
             'background-color': '#f0f0f0',
             position: 'absolute', // Make sure it appears above other elements
             zIndex: 1000 // Ensure it’s above other content
@@ -113,11 +103,12 @@ jQuery.noConflict();
         // Dynamically create buttons using Kuc.Button for each item in the list
         itemsList.forEach((item, index) => {
           const buttonLabel = item;
-          const targetField = filteredItems[index].field_for_search; // Assuming you need the target field
+          const targetField = filteredItems[index].fieldForSearch; // Assuming you need the target field
 
           const hoverBtn = new Kuc.Button({
             text: buttonLabel,
             type: 'normal',
+            className: 'class-btn',
             id: targetField
           });
           $(hoverBtn).css({
@@ -153,83 +144,52 @@ jQuery.noConflict();
         });
       }
     }
-
-    // Handle dropdown title click
-    // function handleDropDownTitleClick(display, config, relatedContent, $dropDownTitle) {
-    //   if (display.name_marker === "") {
-    //     $dropDownTitle.css({ cursor: "pointer" });
-    //     const filteredItems = config.search_content.filter(content => content.group_name === display.group_name && !display.name_marker);
-    //     const itemsList = filteredItems.map(content => content.search_name);
-
-    //     const buttonsHTML = itemsList.map((item, index) =>
-    //       `<button class="swal2-item-btn" data-index="${index}" style="display: flex; flex-direction: column; align-items: center; margin: 5px; background-color: #f0f0f0; border: none; padding: 10px;">${item}</button>`
-    //     ).join('');
-
-    //     Swal.fire({
-    //       html: `<div style="display: flex; flex-wrap: wrap; flex-direction: column;">${buttonsHTML}</div>`,
-    //       showConfirmButton: false,
-    //       didOpen: () => {
-    //         // Attach click event listeners to item buttons after the Swal is rendered
-    //         document.querySelectorAll('.swal2-item-btn').forEach(button => {
-    //           button.addEventListener('click', function () {
-    //             const index = this.getAttribute('data-index');
-    //             const selectedItem = itemsList[index]; // Get the selected item by index
-
-    //             // Close the Swal modal after selecting an item
-    //             Swal.close();
-
-    //             // Update the title with the selected item
-    //             $dropDownTitle.text(selectedItem);
-
-    //             // Call your function to update any other parts of the UI or state
-    //             updateDropDownOptions(selectedItem, filteredItems, records, $dropDownTitle);
-    //           });
-    //         });
-    //       }
-    //     })
-    //   }
-    // }
-
     // Create dropdown element
     function createDropDown(display, records, initialContent, $dropDownTitle) {
-      console.log(records);
       const $dropDown = $("<select>")
         .addClass("kintoneplugin-dropdown")
         .attr("name", "mySelect")
-        .css({ width: display.search_length });
+        .css({ width: display.searchLength });
       $dropDown.append($("<option>").text('-----').val(''));
 
-      if (display.name_marker) {
-        let filteredRecords = CONFIG.search_content.filter(item => item.group_name === display.group_name);
+      if (display.nameMarker) {
+        let filteredRecords = CONFIG.searchContent.filter(item => item.groupName === display.groupName);
         filteredRecords.forEach(item => {
           records.forEach(record => {
+            if (record[item.searchTarget].value === '') return;
             const $option = $("<option>")
-              .text(record[item.target_field].value)
+              .text(record[item.searchTarget].value)
               .addClass('option')
-              .attr('value', record[item.target_field].value);
+              .attr('value', record[item.searchTarget].value)
+              .attr('fieldCode', item.searchTarget);
             $dropDown.append($option);
           });
         });
         // $dropDown.trigger('change');
       } else {
-        $dropDownTitle.text(initialContent.search_name);
+        $dropDownTitle.text(initialContent.searchName);
         records.forEach(item => {
+          if (item[initialContent.searchTarget].value === '') return;
           const $initialOption = $("<option>")
-            .text(item[initialContent.target_field].value)
+            .text(item[initialContent.searchTarget].value)
             .addClass('option')
-            .attr('value', item[initialContent.target_field].value);
+            .attr('value', item[initialContent.searchTarget].value)
+            .attr('fieldCode', initialContent.searchTarget);
           $dropDown.append($initialOption);
         });
         $dropDown.trigger('change');
       }
       $dropDown.on('change', e => {
         const selectedValue = $dropDown.val();
-        console.log("Selected value:", selectedValue);
+        const selectedOption = $dropDown.find("option:selected");
+        const fieldCode = selectedOption.attr('fieldCode');
+        console.log(selectedValue);
+        console.log(fieldCode);
 
         // Call queryDropdown function with the selected value
-        queryDropdown(selectedValue);
+        queryDropdown(selectedValue, fieldCode);
+        // queryDropdownNotEmty(selectedValue, fieldCode);
       });
-
 
       return $dropDown;
     }
@@ -240,32 +200,164 @@ jQuery.noConflict();
       $dropDown.empty();
       $dropDown.append($("<option>").text('-----').val(''));
 
-      const selectedContent = filteredItems.find(content => content.search_name === selectedItem);
+      const selectedContent = filteredItems.find(content => content.searchName === selectedItem);
       records.forEach(record => {
+        if (!records || record[selectedContent.searchTarget].value === '') return;
         const $selectedOption = $("<option>")
-          .text(record[selectedContent.target_field].value)
+          .text(record[selectedContent.searchTarget].value)
           .addClass('option')
-          .attr('value', record[selectedContent.target_field].value);
+          .attr('value', record[selectedContent.searchTarget].value)
+          .attr('fieldCode', selectedContent.searchTarget);
         $dropDown.append($selectedOption);
       });
       $dropDown.trigger('change');
     }
 
     createDropDowns(CONFIG);
-
-    function queryDropdown(selectedValue) {
-      console.log("selectedValue", selectedValue);
-      let query = '';
-      if (selectedValue) {
-        query = `${selectedValue} in text_initial`;
-        console.log(query);
-      }
+    function createBokTermsObject(fieldCode, selectedValue) {
+      return { [fieldCode]: selectedValue };
     }
+
+    function queryDropdown(selectedValue, fieldCode) {
+      console.log("selectedValue", selectedValue);
+      console.log("fieldCode", fieldCode);
+      const currentUrlBase = window.location.href.match(/\S+\//)[0];
+      console.log("currentUrlBase:", currentUrlBase);
+
+      // Check if both selectedValue and fieldCode are present
+      if (!selectedValue || !fieldCode) {
+        console.log("Missing selectedValue or fieldCode. Redirection aborted.");
+        return;
+      }
+
+      // Encode the query string properly
+      const query = encodeURIComponent(`${fieldCode} = "${selectedValue}"`);
+      console.log("Query string:", query);
+
+      // Create the bokTermsObject using the helper function
+      const bokTermsObject = createBokTermsObject(fieldCode, selectedValue);
+      console.log("BokTerms object:", bokTermsObject);
+
+      // Convert bokTermsObject to a JSON string
+      const bokTermsString = JSON.stringify(bokTermsObject);
+      const bokTerms = encodeURIComponent(bokTermsString)
+
+      // Construct the full URL with the query
+      const QueryUrl = `${currentUrlBase}?query=${query}&bokTerms={${bokTerms}}`;
+      console.log("Full URL:", QueryUrl);
+
+      // Redirect to the new URL
+      window.location.href = QueryUrl;
+    }
+    // =========================
+    //string input search
+
+
+    //Rang number search
+    // var buildQueryForNumberValue = function (searchInfo, query, format, condiotionValue) {
+    //   let startValue = document.getElementById(searchInfo.fieldInfo.code + "_start").value;
+    //   let endValue = document.getElementById(searchInfo.fieldInfo.code + "_end").value;
+    //   let queryChild = "";
+
+    //   if (startValue && endValue == '') {
+    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + ">=" + ' "' + startValue + '"' + ")";
+    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+    //   } else if (endValue && startValue == '') {
+    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + "<=" + ' "' + endValue + '"' + ")";
+    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+    //   } else if (startValue && endValue) {
+    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + ">=" + ' "' + startValue + '"' + " and " + searchInfo.fieldInfo.code + ' ' + "<=" + ' "' + endValue + '"' + ")";
+    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+    //   }
+    //   return queryChild;
+    // };
+
+    // // =========================
+
+    // var searchProcess = async function (searchInfoList) {
+    //   var query = await getValueConditionAndBuildQuery(searchInfoList);
+    //   var queryEscape = encodeURIComponent(query);
+    //   var currentUrlBase = window.location.href.match(/\S+\//)[0];
+    //   var url = currentUrlBase + "?query=" + queryEscape;
+
+    //   return (window.location.href = url);
+    // };
+
+    // //check type to search
+    // var getValueConditionAndBuildQuery = function () {
+    //   var query = "";
+    //   CONFIG.groupSetting.forEach(searchItem => {
+    //     console.log("searchItem.searchType", searchItem.searchType);
+    //     switch (searchItem.searchType) {
+    //       case "text_initial":
+    //       case "text_partial":
+    //         // case "multi_text_initial":
+    //         // case "multi_text_patial":
+    //         // case "number_exact":
+    //         // case "number_range":
+    //         // case "date_exact":
+    //         // case "date_range":
+    //         let inputCondition = QueryTextInitialValue(searchInfo, query, condiotionValue);
+    //         query += inputCondition;
+
+    //         break;
+    //       case "number_exact":
+    //         let rangNumberCondition = buildQueryForNumberValue(searchInfo, query, "", condiotionValue);
+    //         query += rangNumberCondition;
+
+    //         break;
+    //       // case "DATE":
+    //       //   let dateCondition = buildQueryForRangDateValue(searchInfo, query, "YYYY-MM-DD", condiotionValue);
+    //       //   query += dateCondition;
+
+    //       //   break;
+    //       // case "DATETIME":
+    //       // case "CREATED_TIME":
+    //       // case "UPDATED_TIME":
+    //       //   let datetimeCondition = buildQueryForRangDateValue(searchInfo, query, "YYYY-MM-DDTHH:mm:ss", condiotionValue);
+    //       //   query += datetimeCondition;
+
+    //       //   break;
+    //       // case "TIME":
+    //       //   let timeCondition = buildQueryForRangTimeValue(searchInfo, query, "", condiotionValue);
+    //       //   query += timeCondition;
+
+    //       //   break;
+    //       // case "MULTI_SELECT":
+    //       // case "RADIO_BUTTON":
+    //       // case "CHECK_BOX":
+    //       // case "DROP_DOWN":
+    //       // case "STATUS":
+    //       //   let multiSelectItemList = document.getElementsByName(searchInfo.fieldInfo.code);
+    //       //   let multiSelectConditionChild = "";
+
+    //       //   for (let j = 0; j < multiSelectItemList.length; j++) {
+    //       //     let selectedItem = multiSelectItemList[j];
+    //       //     $(selectedItem).hasClass("dropdown-selected")
+    //       //       ? (multiSelectConditionChild +=
+    //       //         ' "' + $(selectedItem).data("option-value") + '", ')
+    //       //       : null;
+    //       //   }
+
+    //       //   let multiSelectCondition = buildQueryForMultiValue(searchInfo, multiSelectConditionChild, query, condiotionValue);
+    //       //   query += multiSelectCondition;
+
+    //       //   break;
+    //     }
+    //   })
+
+    //   return query;
+    // };
+    // ========================
+
+    // ========================
 
     // Create input fields
     function createTextInput() {
       return $('<input type="text" class="kintoneplugin-input-text">').on('change', function () {
         console.log("Text Input:", $(this).val());
+        QueryTextInitialValue($(this).val());
       });
     }
 
@@ -284,6 +376,7 @@ jQuery.noConflict();
     function createNumberInput() {
       return $('<input type="number" class="kintoneplugin-input-text">').on('change', function () {
         console.log("Number Input:", $(this).val());
+        // buildQueryForNumberValue($(this).val());
       });
     }
 
@@ -350,7 +443,7 @@ jQuery.noConflict();
 
     // Create action buttons
     function createButton(text, callback) {
-      return $('<button>').text(text).addClass('kintoneplugin-button-dialog-ok').css('font-size', '16px').on('click', callback);
+      return $('<button>').text(text).addClass('kintoneplugin-button-dialog-ok').css('font-size', '13px').on('click', callback);
     }
 
     const $searchButton = createButton('Search', () => alert('Search button clicked!'));
@@ -358,39 +451,39 @@ jQuery.noConflict();
 
     const $elementBtn = $('<div class="element-button"></div>').append($searchButton, $clearButton);
 
-    CONFIG.search_displays.forEach(searchItem => {
-      const { search_type, group_name } = searchItem;
+    CONFIG.groupSetting.forEach(searchItem => {
+      const { searchType, groupName } = searchItem;
       const $elementInput = $('<div></div>').addClass('search-item');
 
       let inputElement;
-      switch (search_type) {
+      switch (searchType) {
         case 'text_initial':
         case 'text_partial':
         case 'text_exact':
           inputElement = createTextInput();
           break;
-        case 'MultiText_initial':
-        case 'MultiText_Partial':
+        case 'multi_text_initial':
+        case 'multi_text_patial':
           inputElement = createTextArea();
           break;
-        case 'Number_Exact':
+        case 'number_exact':
           inputElement = createNumberInput();
           break;
-        case 'Number_Range':
+        case 'number_range':
           inputElement = createNumberRangeInput();
           break;
-        case 'Date_Exact':
+        case 'date_exact':
           inputElement = createDateInput();
           break;
-        case 'Date_Range':
+        case 'date_range':
           inputElement = createDateRangeInput();
           break;
         default:
           inputElement = null;
       }
       if (inputElement) {
-        $(inputElement).css('width', searchItem.search_length);
-        const $label = $('<label>').text(group_name).addClass('label');
+        $(inputElement).css('width', searchItem.searchLength);
+        const $label = $('<label>').text(groupName).addClass('label');
         $elementInput.append($label, inputElement);
         $elementsAll.append($elementInput);
       }
@@ -398,213 +491,70 @@ jQuery.noConflict();
 
     $elementsAll.append($elementBtn);
     $spaceEl.append($elementsAll);
+
   });
+  kintone.events.on(['app.record.edit.show', 'app.record.create.submit'], async (event) => {
+    let record = event.record;
+    let updateRecord = {};
+    CONFIG.searchContent.forEach((searchItem) => {
+      CONFIG.groupSetting.forEach((item) => {
+        if (item.groupName === searchItem.groupName) {
+          if (
+            item.searchType === "text_initial" ||
+            item.searchType === "text_patial" ||
+            item.searchType === "text_exact" ||
+            item.searchType === "multi_text_initial" ||
+            item.searchType === "multi_text_patial"
 
-  kintone.events.on(['app.record.index.show', 'app.record.edit.show'], async (event) => {
-    const record = event.record;
-    window.RsComAPI.getRecords({ app: 255 })
-      .then(dataFromMaster => {
-        sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
-        sessionStorage.setItem('dataspace', JSON.stringify([{
-          spc: 'spaceA',
-          kind: '品種',
-          code: '品種CD',
-          name: '品種',
-          required: true
-        },
-        {
-          spc: 'spaceB',
-          kind: '性別',
-          code: '性別CD',
-          name: '性別',
-          required: true
-        },
-        {
-          spc: 'spaceC',
-          kind: '產地',
-          code: '產地CD',
-          name: '產地',
-          required: true
-        },
-        {
-          spc: 'spaceD',
-          kind: '預託区分',
-          code: '預託区分CD',
-          name: '預託区分',
-          required: true
-        }]));
-      });
+          ) {
+            let targetValue = record[searchItem.searchTarget].value;
+            console.log(targetValue);
 
-    // Get space in App LiveStock
-    let GETSPACE = await kintone.api("/k/v1/preview/app/form/layout.json", "GET", {
-      app: kintone.app.getId()
-    });
-
-    let SPACE = GETSPACE.layout.reduce((setSpace, layoutFromApp) => {
-      if (layoutFromApp.type === "GROUP") {
-        layoutFromApp.layout.forEach(layoutItem => {
-          layoutItem.fields.forEach(field => {
-            if (field.type === "SPACER") {
-              setSpace.push({
-                type: "space",
-                value: field.elementId
-              });
+            let convertedValue = "";
+            if (targetValue == "" || targetValue == undefined) {
+              convertedValue = ""
+            } else {
+              switch (item.searchType) {
+                case "text_initial":
+                case "multi_text_initial":
+                  convertedValue = `_,${targetValue.split('').join(',')}`;
+                  break;
+                case "text_patial":
+                case "multi_text_patial":
+                  convertedValue = `${targetValue.split('').join(',')}`;
+                  break;
+                case "text_exact":
+                  convertedValue = `_,${targetValue.split('').join(',')},_`;
+                  break;
+                default:
+                  break;
+              }
             }
-          });
-        });
-      } else {
-        layoutFromApp.fields.forEach(field => {
-          if (field.type === "SPACER") {
-            setSpace.push({
-              type: "space",
-              value: field.elementId
-            });
+            updateRecord[searchItem.fieldForSearch] = {
+              value: convertedValue
+            }
+            record[searchItem.fieldForSearch].value = convertedValue;
           }
-        });
+        }
+      });
+    });
+    if (event.type === 'app.record.create.submit') {
+      let body = {
+        app: kintone.app.getId(),
+        records: [
+          {
+            id: kintone.app.record.getId(),
+            record: updateRecord
+          }
+        ]
+      };
+      try {
+        await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
+      } catch (error) {
+        console.log(error);
       }
-      return setSpace;
-    }, []);
-
-    let sortedSpaces = SPACE.sort((a, b) => {
-      return a.value.localeCompare(b.value);
-    });
-
-    let storedRecords = JSON.parse(sessionStorage.getItem('kintoneRecords'));
-    let storedDataSpace = JSON.parse(sessionStorage.getItem('dataspace'));
-
-    if (storedDataSpace && storedDataSpace.length > 0) {
-      storedDataSpace.forEach(item => {
-        sortedSpaces.forEach(space => {
-          let selectElement;
-          if (item.spc === space.value) {
-            let filteredRecords = storedRecords.filter(rec => rec.Type.value == item.kind);
-            let blankElement = kintone.app.record.getSpaceElement(space.value);
-
-            if (blankElement) {
-              let label = $('<div>', {
-                class: 'kintoneplugin-title',
-                html: item.name + (item.required ? '<span class="kintoneplugin-require">*</span>' : '')
-              });
-              let divMain = $('<div>', { class: 'custom-main' });
-              let containerDiv = $('<div>', { class: 'custom-container' });
-              let inputBox = $('<input>', {
-                type: 'number',
-                class: 'modern-input-box kintoneplugin-input-text',
-                min: '0'
-              });
-              let dropdownOuter = $('<div>', { class: 'kintoneplugin-select-outer' });
-              let dropdown = $('<div>', { class: 'kintoneplugin-select' });
-              selectElement = $('<select>');
-              selectElement.append($('<option>').attr('value', '-----').text('-----'));
-
-              // Populate dropdown with stored records
-              if (filteredRecords.length > 0) {
-                filteredRecords.forEach(record => {
-                  selectElement.append($('<option>')
-                    .attr('value', record.name.value)
-                    .attr('code', record.code.value)
-                    .attr('types', record.Type.value)
-                    .text(record.name.value));
-                });
-              }
-              console.log(record);
-              inputBox.on('input', function () {
-                let inputValue = $(this).val().replace(/[^0-9]/g, ''); // Keep only numbers
-                if (inputValue.startsWith('0') && inputValue.length > 1) {
-                  inputValue = inputValue.replace(/^0+/, ''); // Remove leading zeros
-                }
-
-                if (filteredRecords.length > 0) {
-                  let matchFound = false;
-                  filteredRecords.forEach(record => {
-                    if (record.code.value === inputValue) {
-                      let existingOption = selectElement.find(`option[value="${record.name.value}"]`);
-                      let selectedType = existingOption.attr('types');
-                      let selectedCode = existingOption.attr('code');
-                      let selectedValue = existingOption.attr('value');
-                      if (existingOption.length > 0) {
-                        existingOption.prop('selected', true);
-                        setField(selectedCode, selectedValue, selectedType)
-                      } else {
-                        let newOption = $('<option>').attr('value', record.name.value).text(record.name.value);
-                        selectElement.append(newOption);
-                        newOption.prop('selected', true);
-                      }
-                      matchFound = true;
-                    }
-
-                  });
-
-                  if (!matchFound) {
-                    let defaultOption = selectElement.find('option[value="-----"]');
-                    if (defaultOption.length > 0) {
-                      defaultOption.prop('selected', true);
-                    } else {
-                      let newDefaultOption = $('<option>').attr('value', '-----').text('-----');
-                      selectElement.append(newDefaultOption);
-                      newDefaultOption.prop('selected', true);
-                    }
-                  }
-                }
-              });
-
-              selectElement.on('change', function (e) {
-                const selectedOption = $(e.target).find('option:selected');
-                let nearestInput = $(this).closest('.custom-container').find('.kintoneplugin-input-text');
-                nearestInput.val('');
-                const selectedCode = selectedOption.attr('code');
-                const selectedValue = selectedOption.attr('value');
-                const selectedType = selectedOption.attr('types');
-                nearestInput.val(selectedCode);
-                setField(selectedCode, selectedValue, selectedType)
-              });
-
-              function setField(selectedCode, selectedValue, selectedType) {
-                if (item.kind == selectedType) {
-                  const record = kintone.app.record.get();
-                  const fieldCode = item.name;
-                  const fieldCode2 = item.code;
-                  record.record[fieldCode].value = selectedValue;
-                  record.record[fieldCode2].value = selectedCode;
-                  kintone.app.record.set(record);
-                }
-              }
-              dropdown.append(selectElement);
-              dropdownOuter.append(dropdown);
-              containerDiv.append(inputBox).append(dropdownOuter);
-              divMain.append(label);
-              divMain.append(containerDiv);
-              $(blankElement).append(divMain);
-
-              selectElement.each(function (index, selectElement) {
-                $(selectElement).find('option').each(function (optionIndex, optionElement) {
-                  const codeValue = $(optionElement).attr('code');
-                  const typeValue = $(optionElement).attr('types');
-                  const optionValue = $(optionElement).val();
-                  $.each(record, function (fieldKey, fieldValue) {
-                    if (typeValue === fieldKey) {
-                      const fieldValueContent = fieldValue.value;
-                      if (fieldValueContent === optionValue) {
-                        $(optionElement).prop('selected', true);
-                        //setField(codeValue, optionValue, typeValue);
-                        const correspondingInputBox = inputBox.eq(index);
-                        console.log(correspondingInputBox);
-                        correspondingInputBox.val(codeValue);
-                        return false;
-                      }
-                    }
-                  });
-                });
-              });
-            }
-          }
-        });
-
-        // Hide fields by code and name
-        kintone.app.record.setFieldShown(item.code, false);
-        kintone.app.record.setFieldShown(item.name, false);
-      });
     }
     return event;
   });
-})(jQuery, Sweetalert2_10.noConflict(true),kintone.$PLUGIN_ID);
+
+})(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);

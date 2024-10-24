@@ -75,7 +75,7 @@ table td:first-child {
 
 #button-action {
   display: flex;
-  margin-left: 6.9rem;
+  margin-left: 5%;
   margin-top: 35px;
   gap: 2.3%;
 }
