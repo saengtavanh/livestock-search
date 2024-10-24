@@ -135,3 +135,10 @@
 .searchButton {
   font-size: 15px;
 }
+
+.class-btn .kuc-button-1-18-0__button {
+  font-size: 13px;
+  width: 20px;
+  height: 35px;
+  min-width: 100px;
+}

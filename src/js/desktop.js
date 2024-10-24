@@ -1,7 +1,7 @@
 jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
 
-  window.RsComAPI.getRecords({ app: 255 })
+  window.RsComAPI.getRecords({ app: 262 })
     .then(dataFromMaster => {
       sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
       sessionStorage.setItem('dataspace', JSON.stringify([{
@@ -35,18 +35,18 @@ jQuery.noConflict();
     });
   // const config = {
   //   search_displays: [
-  //     // {
-  //     //   name_marker: "TextInitial",
-  //     //   group_name: "TextInitial",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "text_initial"
-  //     // },
-  //     // {
-  //     //   name_marker: "textPartial",
-  //     //   group_name: "textPartial",
-  //     //   search_length: "1rem 10px",
-  //     //   search_type: "text_partial"
-  //     // },
+  //     {
+  //       name_marker: "TextInitial",
+  //       group_name: "TextInitial",
+  //       search_length: "1rem 10px",
+  //       search_type: "text_initial"
+  //     },
+  //     {
+  //       name_marker: "textPartial",
+  //       group_name: "textPartial",
+  //       search_length: "1rem 10px",
+  //       search_type: "text_partial"
+  //     },
   //     // {
   //     //   name_marker: "textExact",
   //     //   group_name: "textExact",
@@ -227,37 +227,42 @@ jQuery.noConflict();
   //   ]
   // };
 
-  // Kintone event to show records
   kintone.events.on('app.record.index.show', async (event) => {
-    config = kintone.plugin.app.getConfig(PLUGIN_ID);
-    pluginId = PLUGIN_ID;
+    // if (!CONFIG) return;
+    const CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
+    console.log("config", CONFIG);
     const records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
     console.log("records", records);
 
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
     if (!spaceEl) throw new Error('The header element is unavailable on this page.');
-
+    // Check if the custom element already exists to avoid duplicates
+    if ($(spaceEl).find('.custom-space-el').length > 0) {
+      console.log('Custom element already exists, skipping creation.');
+      return; // Stop if element already exists
+    }
     const $spaceEl = $(spaceEl)
     const $elementsAll = $('<div></div>').addClass('custom-space-el');
 
     // Create dropdowns based on the configuration
-    function createDropDowns(config) {
-      config.search_displays.forEach(display => {
-        if (display.search_type === "Dropdown_Exact") {
-          let relatedContent = config.search_content.filter(content => content.group_name === display.group_name);
+    function createDropDowns(CONFIG) {
+      CONFIG.groupSetting.forEach(display => {
+        console.log("4545", display);
+        if (display.searchType === "dropdown_exact") {
+          let relatedContent = CONFIG.searchContent.filter(content => content.groupName === display.groupName);
 
           // Only show content if `name_marker` is not empty
-          if (display.name_marker) {
-            relatedContent = relatedContent.filter(content => content.group_name === display.group_name);
+          if (display.nameMarker) {
+            relatedContent = relatedContent.filter(content => content.groupName === display.groupName);
           }
 
           if (relatedContent.length > 0) {
             const $dropDownTitle = $("<label>")
-              .text(display.name_marker ? display.group_name : relatedContent[0].search_name)
+              .text(display.nameMarker ? display.groupName : relatedContent[0].searchName)
               .addClass('custom-dropdownTitle')
-              .css({ cursor: display.name_marker ? "default" : "pointer" })
+              .css({ cursor: display.nameMarker ? "default" : "pointer" })
               .on("click", function () {
-                handleDropDownTitleClick(display, config, relatedContent, $dropDownTitle);
+                handleDropDownTitleClick(display, CONFIG, relatedContent, $dropDownTitle);
               });
             const $dropDown = createDropDown(display, records, relatedContent[0], $dropDownTitle);
             const $elementDropdown = $('<div></div>').addClass('search-item').append($dropDownTitle, $dropDown);
@@ -267,19 +272,19 @@ jQuery.noConflict();
       });
     }
 
-    function handleDropDownTitleClick(display, config, relatedContent, $dropDownTitle) {
-      if (display.name_marker === "") {
+    function handleDropDownTitleClick(display, CONFIG, relatedContent, $dropDownTitle) {
+      if (display.nameMarker === "") {
         $dropDownTitle.css({ cursor: "pointer" });
         // Check if the dropdown is already visible
         const existingMenu = $('.custom-context-menu');
         if (existingMenu.length > 0) {
           existingMenu.remove(); // Remove existing menu if it exists
-          return; // Exit if you are closing the menu
+          // return; // Exit if you are closing the menu
         }
 
         // Filter items based on the group name
-        const filteredItems = config.search_content.filter(content => content.group_name === display.group_name && !display.name_marker);
-        const itemsList = filteredItems.map(content => content.search_name);
+        const filteredItems = CONFIG.searchContent.filter(content => content.groupName === display.groupName && !display.nameMarker);
+        const itemsList = filteredItems.map(content => content.searchName);
 
         // Create a custom context menu or container for buttons
         const customContextMenu = $('<div></div>')
@@ -288,8 +293,8 @@ jQuery.noConflict();
             display: 'flex',
             'flex-direction': 'column',
             'align-items': 'center',
-            margin: '10px',
-            padding: '20px',
+            margin: '5px',
+            padding: '10px',
             'background-color': '#f0f0f0',
             position: 'absolute', // Make sure it appears above other elements
             zIndex: 1000 // Ensure it’s above other content
@@ -305,11 +310,12 @@ jQuery.noConflict();
         // Dynamically create buttons using Kuc.Button for each item in the list
         itemsList.forEach((item, index) => {
           const buttonLabel = item;
-          const targetField = filteredItems[index].field_for_search; // Assuming you need the target field
+          const targetField = filteredItems[index].fieldForSearch; // Assuming you need the target field
 
           const hoverBtn = new Kuc.Button({
             text: buttonLabel,
             type: 'normal',
+            className: 'class-btn',
             id: targetField
           });
           $(hoverBtn).css({
@@ -345,82 +351,52 @@ jQuery.noConflict();
         });
       }
     }
-
-    // Handle dropdown title click
-    // function handleDropDownTitleClick(display, config, relatedContent, $dropDownTitle) {
-    //   if (display.name_marker === "") {
-    //     $dropDownTitle.css({ cursor: "pointer" });
-    //     const filteredItems = config.search_content.filter(content => content.group_name === display.group_name && !display.name_marker);
-    //     const itemsList = filteredItems.map(content => content.search_name);
-
-    //     const buttonsHTML = itemsList.map((item, index) =>
-    //       `<button class="swal2-item-btn" data-index="${index}" style="display: flex; flex-direction: column; align-items: center; margin: 5px; background-color: #f0f0f0; border: none; padding: 10px;">${item}</button>`
-    //     ).join('');
-
-    //     Swal.fire({
-    //       html: `<div style="display: flex; flex-wrap: wrap; flex-direction: column;">${buttonsHTML}</div>`,
-    //       showConfirmButton: false,
-    //       didOpen: () => {
-    //         // Attach click event listeners to item buttons after the Swal is rendered
-    //         document.querySelectorAll('.swal2-item-btn').forEach(button => {
-    //           button.addEventListener('click', function () {
-    //             const index = this.getAttribute('data-index');
-    //             const selectedItem = itemsList[index]; // Get the selected item by index
-
-    //             // Close the Swal modal after selecting an item
-    //             Swal.close();
-
-    //             // Update the title with the selected item
-    //             $dropDownTitle.text(selectedItem);
-
-    //             // Call your function to update any other parts of the UI or state
-    //             updateDropDownOptions(selectedItem, filteredItems, records, $dropDownTitle);
-    //           });
-    //         });
-    //       }
-    //     })
-    //   }
-    // }
-
     // Create dropdown element
     function createDropDown(display, records, initialContent, $dropDownTitle) {
       const $dropDown = $("<select>")
         .addClass("kintoneplugin-dropdown")
         .attr("name", "mySelect")
-        .css({ width: display.search_length });
+        .css({ width: display.searchLength });
       $dropDown.append($("<option>").text('-----').val(''));
 
       if (display.name_marker) {
-        let filteredRecords = config.search_content.filter(item => item.group_name === display.group_name);
+        let filteredRecords = CONFIG.searchContent.filter(item => item.groupName === display.groupName);
         filteredRecords.forEach(item => {
+          if (!records || records[item.searchTarget].value === '') return;
           records.forEach(record => {
             const $option = $("<option>")
-              .text(record[item.target_field].value)
+              .text(record[item.searchTarget].value)
               .addClass('option')
-              .attr('value', record[item.target_field].value);
+              .attr('value', record[item.searchTarget].value)
+              .attr('fieldCode', item.searchTarget);
             $dropDown.append($option);
           });
         });
         // $dropDown.trigger('change');
       } else {
-        $dropDownTitle.text(initialContent.search_name);
+        $dropDownTitle.text(initialContent.searchName);
         records.forEach(item => {
+          if (item[initialContent.searchTarget].value === '') return;
           const $initialOption = $("<option>")
-            .text(item[initialContent.target_field].value)
+            .text(item[initialContent.searchTarget].value)
             .addClass('option')
-            .attr('value', item[initialContent.target_field].value);
+            .attr('value', item[initialContent.searchTarget].value)
+            .attr('fieldCode', initialContent.searchTarget);
           $dropDown.append($initialOption);
         });
         $dropDown.trigger('change');
       }
       $dropDown.on('change', e => {
         const selectedValue = $dropDown.val();
-        console.log("Selected value:", selectedValue);
+        const selectedOption = $dropDown.find("option:selected");
+        const fieldCode = selectedOption.attr('fieldCode');
+        console.log(selectedValue);
+        console.log(fieldCode);
 
         // Call queryDropdown function with the selected value
-        queryDropdown(selectedValue);
+        queryDropdown(selectedValue, fieldCode);
+        // queryDropdownNotEmty(selectedValue, fieldCode);
       });
-
 
       return $dropDown;
     }
@@ -431,27 +407,56 @@ jQuery.noConflict();
       $dropDown.empty();
       $dropDown.append($("<option>").text('-----').val(''));
 
-      const selectedContent = filteredItems.find(content => content.search_name === selectedItem);
+      const selectedContent = filteredItems.find(content => content.searchName === selectedItem);
       records.forEach(record => {
+        if (!records || record[selectedContent.searchTarget].value === '') return;
         const $selectedOption = $("<option>")
-          .text(record[selectedContent.target_field].value)
+          .text(record[selectedContent.searchTarget].value)
           .addClass('option')
-          .attr('value', record[selectedContent.target_field].value);
+          .attr('value', record[selectedContent.searchTarget].value)
+          .attr('fieldCode', selectedContent.searchTarget);
         $dropDown.append($selectedOption);
       });
       $dropDown.trigger('change');
     }
 
-    createDropDowns(config);
-
-    function queryDropdown(selectedValue) {
-      console.log("selectedValue", selectedValue);
-      let query = '';
-      if (selectedValue) {
-        query = `${selectedValue} in text_initial`;
-        console.log(query);
-      }
+    createDropDowns(CONFIG);
+    function createBokTermsObject(fieldCode, selectedValue) {
+      return { [fieldCode]: selectedValue };
     }
+
+    function queryDropdown(selectedValue, fieldCode) {
+      console.log("selectedValue", selectedValue);
+      console.log("fieldCode", fieldCode);
+      const currentUrlBase = window.location.href.match(/\S+\//)[0];
+      console.log("currentUrlBase:", currentUrlBase);
+
+      // Check if both selectedValue and fieldCode are present
+      if (!selectedValue || !fieldCode) {
+        console.log("Missing selectedValue or fieldCode. Redirection aborted.");
+        return;
+      }
+
+      // Encode the query string properly
+      const query = encodeURIComponent(`${fieldCode} = "${selectedValue}"`);
+      console.log("Query string:", query);
+
+      // Create the bokTermsObject using the helper function
+      const bokTermsObject = createBokTermsObject(fieldCode, selectedValue);
+      console.log("BokTerms object:", bokTermsObject);
+
+      // Convert bokTermsObject to a JSON string
+      const bokTermsString = JSON.stringify(bokTermsObject);
+      const bokTerms = encodeURIComponent(bokTermsString)
+
+      // Construct the full URL with the query
+      const QueryUrl = `${currentUrlBase}?query=${query}&bokTerms={${bokTerms}}`;
+      console.log("Full URL:", QueryUrl);
+
+      // Redirect to the new URL
+      window.location.href = QueryUrl;
+    }
+
 
     // Create input fields
     function createTextInput() {
@@ -541,7 +546,7 @@ jQuery.noConflict();
 
     // Create action buttons
     function createButton(text, callback) {
-      return $('<button>').text(text).addClass('kintoneplugin-button-dialog-ok').css('font-size', '16px').on('click', callback);
+      return $('<button>').text(text).addClass('kintoneplugin-button-dialog-ok').css('font-size', '13px').on('click', callback);
     }
 
     const $searchButton = createButton('Search', () => alert('Search button clicked!'));
@@ -549,12 +554,12 @@ jQuery.noConflict();
 
     const $elementBtn = $('<div class="element-button"></div>').append($searchButton, $clearButton);
 
-    config.search_displays.forEach(searchItem => {
-      const { search_type, group_name } = searchItem;
+    CONFIG.groupSetting.forEach(searchItem => {
+      const { searchType, groupName } = searchItem;
       const $elementInput = $('<div></div>').addClass('search-item');
 
       let inputElement;
-      switch (search_type) {
+      switch (searchType) {
         case 'text_initial':
         case 'text_partial':
         case 'text_exact':
@@ -580,8 +585,8 @@ jQuery.noConflict();
           inputElement = null;
       }
       if (inputElement) {
-        $(inputElement).css('width', searchItem.search_length);
-        const $label = $('<label>').text(group_name).addClass('label');
+        $(inputElement).css('width', searchItem.searchLength);
+        const $label = $('<label>').text(groupName).addClass('label');
         $elementInput.append($label, inputElement);
         $elementsAll.append($elementInput);
       }
@@ -593,7 +598,7 @@ jQuery.noConflict();
 
   kintone.events.on(['app.record.index.show', 'app.record.edit.show'], async (event) => {
     const record = event.record;
-    window.RsComAPI.getRecords({ app: 255 })
+    window.RsComAPI.getRecords({ app: 262 })
       .then(dataFromMaster => {
         sessionStorage.setItem('kintoneRecords', JSON.stringify(dataFromMaster));
         sessionStorage.setItem('dataspace', JSON.stringify([{
@@ -798,4 +803,4 @@ jQuery.noConflict();
     }
     return event;
   });
-})(kintone.$PLUGIN_ID);
+})(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
