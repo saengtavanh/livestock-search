@@ -1,6 +1,5 @@
 .kintoneplugin-input-text {
   align-items: center;
-  width: 220px;
 }
 
 table td:first-child {
@@ -307,7 +306,8 @@ tbody tr {
 }
 
 .kintoneplugin-select {
-  width: 220px;
+  /* width: 220px; */
+  margin: 0 !important;
 }
 
 #label-token {
@@ -317,7 +317,6 @@ tbody tr {
 .labelPrompt {
   display: flex;
   margin: 8px;
-  gap: 25px;
 }
 
 .labelPrompt>div {
@@ -331,17 +330,35 @@ tbody tr {
 }
 
 
-#kintoneplugin-setting-body {
-  min-width: 850px;
+#kintoneplugin-setting-body,
+#kintoneplugin-code-master,
+#kintoneplugin-setting-space {
+  min-width: 85rem;
   /* max-width: 850px; */
+  margin: 0 !important;
 }
 
-#kintoneplugin-setting-body #td-setting-prompt-template {
-  min-width: 750px;
+#kintoneplugin-setting-body th:first-child,
+#kintoneplugin-code-master th:first-child,
+#kintoneplugin-setting-space th:first-child {
+  width: 5rem;
 }
 
-#kintoneplugin-setting-body .kintoneplugin-table-td-operation.operation-column {
-  min-width: 100px;
+
+#kintoneplugin-setting-body #td-setting-prompt-template,
+#kintoneplugin-code-master #td-table-code-master,
+#kintoneplugin-setting-space #td-table-space-prompt-template-button {
+  min-width: 75rem;
+}
+
+#kintoneplugin-setting-body .kintoneplugin-table-td-operation.operation-column,
+#kintoneplugin-code-master .kintoneplugin-table-td-operation.operation-column,
+#kintoneplugin-setting-space .kintoneplugin-table-td-operation.operation-column {
+  min-width: 5rem;
+}
+
+#container-table-settingPromptTemplate {
+  margin-top: -1.5rem !important;
 }
 
 .drag-icon {
@@ -393,3 +410,8 @@ select:disabled {
 .swal2-content p{
   margin: 0 !important;
 }
+
+.kintoneplugin-input-outer #app_id {
+  width: 3rem !important;
+}
+

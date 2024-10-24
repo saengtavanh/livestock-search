@@ -470,6 +470,7 @@ jQuery.noConflict();
 					console.log('response', response);
 				}
 			}
+			HASLOADDATA = true;
 			window.RsComAPI.hideSpinner();
 		});
 
@@ -529,6 +530,7 @@ jQuery.noConflict();
 			let updateRecords = [];
 			for (let record of records) {
 				let targetValue = record[targetField].value;
+				if (targetValue == "" || targetField == undefined) continue;
 				let convertedValue = "";
 
 				switch (getGroupData[0].searchType) {
@@ -572,7 +574,7 @@ jQuery.noConflict();
 				Swal10.fire({
 					position: 'center',
 					icon: 'success',
-					text: 'プラグイン設定が更新されました。',
+					text: 'Recreate successfully',
 					showConfirmButton: true,
 				});
 			} catch (error) {
@@ -701,6 +703,7 @@ jQuery.noConflict();
 			// Insert the cloned row after the current clicked row
 			$(this).closest("tr").after(clonedRow);
 			checkRow();
+			checkRecreateButton();
 		});
 
 		//remove row function
