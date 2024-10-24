@@ -3,6 +3,7 @@ jQuery.noConflict();
 	"use strict";
 	let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID);
 	let HASUPDATED = true;
+	let HASLOADDATA = true;
 	let GETVERSION = [];
 
 	// get field from kintone app.
@@ -10,45 +11,9 @@ jQuery.noConflict();
 		app: kintone.app.getId()
 	});
 
-	// get layout for get space from kintone app.
-	let GETSPACE = await kintone.api("/k/v1/preview/app/form/layout.json", "GET", {
-		app: kintone.app.getId()
-	});
-
 	// sort field.
 	let FIELDFROMAPP = Object.values(GETFIELD.properties).sort((a, b) => {
 		return a.code.localeCompare(b.code);
-	});
-
-	// get space.
-	let SPACE = GETSPACE.layout.reduce((setSpace, layoutFromApp) => {
-		if (layoutFromApp.type === "GROUP") {
-			layoutFromApp.layout.forEach(layoutItem => {
-				layoutItem.fields.forEach(field => {
-					if (field.type === "SPACER") {
-						setSpace.push({
-							type: "space",
-							value: field.elementId
-						});
-					}
-				});
-			});
-		} else {
-			layoutFromApp.fields.forEach(field => {
-				if (field.type === "SPACER") {
-					setSpace.push({
-						type: "space",
-						value: field.elementId
-					});
-				}
-			});
-		}
-		return setSpace;
-	}, []);
-
-	// sort space
-	let SORTSPACE = SPACE.sort((a, b) => {
-		return a.value.localeCompare(b.value);
 	});
 
 	//function set value to config setting.
@@ -148,7 +113,7 @@ jQuery.noConflict();
 					rowForClone.find("#group_name").val(item.groupName);
 					rowForClone.find("#search_length").val(item.searchLength);
 					rowForClone.find("#search_type").val(item.searchType);
-					
+
 				})
 
 				getConfig.codeMasterSetting.forEach((item) => {
@@ -160,7 +125,7 @@ jQuery.noConflict();
 					rowForClone.find("#type_field").val(item.typeField);
 					rowForClone.find("#code_field").val(item.codeField);
 					rowForClone.find("#name_field").val(item.nameField);
-					
+
 				})
 				await updateData("initial");
 
@@ -172,22 +137,65 @@ jQuery.noConflict();
 					rowForClone.find("#api_master_id_ref").val(item.masterId);
 					rowForClone.find("#search_target").val(item.searchTarget);
 					rowForClone.find("#field_for_search").val(item.fieldForSearch);
-					
+
 				})
 			}
 		} else {
 			// Clear all rows except the first row of table space for prompt template and button and table setting prompt template.
 			$("#kintoneplugin-setting-tspace > tr:not(:first)").remove();
+			$("#kintoneplugin-setting-code-master > tr:not(:first)").remove();
 			$("#kintoneplugin-setting-prompt-template > tr:not(:first)").remove();
-			$("#spaceButtons").empty().append($('<option>').text('-----').val('-----'));
-			$("#spacePromptTemplate").empty().append($('<option>').text('-----').val('-----'));
 			HASUPDATED = false;
 			getConfig = setInitial;
+
+			getConfig.groupSetting.forEach((item) => {
+				let rowForClone = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
+				$("#kintoneplugin-setting-tspace tr:last-child").after(rowForClone);
+				rowForClone.find("#name_marker").val(item.nameMarker);
+				rowForClone.find("#group_name").val(item.groupName);
+				rowForClone.find("#search_length").val(item.searchLength);
+				rowForClone.find("#search_type").val(item.searchType);
+			})
+
+			getConfig.codeMasterSetting.forEach((item) => {
+				let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
+				$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
+				rowForClone.find("#master_id").val(item.masterId);
+				rowForClone.find("#app_id").val(item.appId);
+				rowForClone.find("#api_token").val(item.apiToken);
+				rowForClone.find("#type_field").val(item.typeField);
+				rowForClone.find("#code_field").val(item.codeField);
+				rowForClone.find("#name_field").val(item.nameField);
+			})
+			await updateData("initial");
+
+			getConfig.searchContent.forEach((item) => {
+				let rowForClone = $("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden");
+				$("#kintoneplugin-setting-prompt-template tr:last-child").after(rowForClone);
+				rowForClone.find("#group_name_ref").val(item.groupName);
+				rowForClone.find("#search_name").val(item.searchName);
+				rowForClone.find("#api_master_id_ref").val(item.masterId);
+				rowForClone.find("#search_target").val(item.searchTarget);
+				rowForClone.find("#field_for_search").val(item.fieldForSearch);
+			})
 		}
 
 
-		
+
 		checkRow();
+		checkRecreateButton();
+	}
+
+	//check recreate button function
+	function checkRecreateButton(){
+		$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function (index) {
+			let fieldForSearch = $(this).find('#field_for_search');
+			if (fieldForSearch.val() == "-----") {
+				$(this).find('#recreate-button').hide();
+			} else {
+				$(this).find('#recreate-button').show();
+			}
+		});
 	}
 
 	// check row function.
@@ -208,87 +216,93 @@ jQuery.noConflict();
 	}
 
 	async function updateData(condition) {
+		if (HASLOADDATA === false) return Swal10.fire({
+			position: 'center',
+			icon: 'warning',
+			text: "please click load data button",
+			showConfirmButton: true,
+		})
 		let getValueUpdated = await getData();
-			console.log(getValueUpdated);
-			let hassError = await validation("update");
-			// let valueValidation = true;
-			let dataLost = false;
-			if (!hassError) {
-				// Clear validation-error.
-				// $('.spaceForPromptTemplate, .storeFields, .spaceForButton').removeClass('validation-error');
+		console.log(getValueUpdated);
+		let hassError = await validation("update");
+		// let valueValidation = true;
+		let dataLost = false;
+		if (!hassError) {
+			// Clear validation-error.
+			// $('.spaceForPromptTemplate, .storeFields, .spaceForButton').removeClass('validation-error');
 
-				// Clear value in row 0 of table space for prompt template and button and set to default value.
-				let firstRow = $('#kintoneplugin-setting-prompt-template tr:eq(0)');
-				firstRow.find(`select#group_name_ref`).empty().append($('<option>').text('-----').val('-----'));
-				firstRow.find('select#master_id_ref').empty().append($('<option>').text('-----').val('-----'));
+			// Clear value in row 0 of table space for prompt template and button and set to default value.
+			let firstRow = $('#kintoneplugin-setting-prompt-template tr:eq(0)');
+			firstRow.find(`select#group_name_ref`).empty().append($('<option>').text('-----').val('-----'));
+			firstRow.find('select#master_id_ref').empty().append($('<option>').text('-----').val('-----'));
 
-				// set data to row 0 of table space for prompt template and button.
+			// set data to row 0 of table space for prompt template and button.
+			getValueUpdated.groupSetting.forEach((item) => {
+				if (item.spaceForPromptTemplate !== "-----") {
+					firstRow.find('select#group_name_ref').append(
+						$('<option>').attr("value", item.spaceForPromptTemplate).text(`${item.spaceForPromptTemplate} (${item.spaceForPromptTemplate})`)
+					);
+				}
+
+				firstRow.find('select#master_id_ref').append(
+					$('<option>').attr("value", item.spaceForButton).text(`${item.spaceForButton} (${item.spaceForButton})`)
+				);
+			});
+
+			// Select all table rows except the first one.
+			$('#kintoneplugin-setting-prompt-template > tr').each(function () {
+				let row = $(this); // Store the current row in a jQuery object.
+
+				// Get the selected values from the dropdowns space for button and space for prompt template.
+				let selectedGroupName = row.find('select#group_name_ref').val();
+				let selectedMasterId = row.find('select#master_id_ref').val();
+
+				// Clear the value and set to default value.
+				row.find('select#group_name_ref').empty().append($('<option>').val('-----').text("-----"));
+				row.find('select#master_id_ref').empty().append($('<option>').val('-----').text("-----"));
+				let appendedValues = new Set();
 				getValueUpdated.groupSetting.forEach((item) => {
-					if (item.spaceForPromptTemplate !== "-----") {
-						firstRow.find('select#group_name_ref').append(
-							$('<option>').attr("value", item.spaceForPromptTemplate).text(`${item.spaceForPromptTemplate} (${item.spaceForPromptTemplate})`)
+					if (item.groupName) {
+						row.find('select#group_name_ref').append(
+							$('<option>').attr("value", item.groupName).text(`${item.groupName}`)
 						);
 					}
 
-					firstRow.find('select#master_id_ref').append(
-						$('<option>').attr("value", item.spaceForButton).text(`${item.spaceForButton} (${item.spaceForButton})`)
-					);
 				});
 
-				// Select all table rows except the first one.
-				$('#kintoneplugin-setting-prompt-template > tr').each(function () {
-					let row = $(this); // Store the current row in a jQuery object.
-
-					// Get the selected values from the dropdowns space for button and space for prompt template.
-					let selectedGroupName = row.find('select#group_name_ref').val();
-					let selectedMasterId = row.find('select#master_id_ref').val();
-
-					// Clear the value and set to default value.
-					row.find('select#group_name_ref').empty().append($('<option>').val('-----').text("-----"));
-					row.find('select#master_id_ref').empty().append($('<option>').val('-----').text("-----"));
-					let appendedValues = new Set();
-					getValueUpdated.groupSetting.forEach((item) => {
-						if (item.groupName) {
-							row.find('select#group_name_ref').append(
-								$('<option>').attr("value", item.groupName).text(`${item.groupName}`)
-							);
-						}
-
-					});
-
-					getValueUpdated.codeMasterSetting.forEach((item) => {
-						if (item.masterId) {
-							row.find('select#master_id_ref').append(
-								$('<option>').attr("value", item.masterId).text(`${item.masterId}`)
-							);
-						}
-
-					});
-
-					// Check to see if not same value is set "-----".
-					if (row.find('select#group_name_ref option[value="' + selectedGroupName + '"]').length == 0) {
-						selectedGroupName = "-----";
-						dataLost = true;
-					}
-					if (row.find('select#master_id_ref option[value="' + selectedMasterId + '"]').length == 0) {
-						selectedMasterId = "-----";
-						dataLost = true;
+				getValueUpdated.codeMasterSetting.forEach((item) => {
+					if (item.masterId) {
+						row.find('select#master_id_ref').append(
+							$('<option>').attr("value", item.masterId).text(`${item.masterId}`)
+						);
 					}
 
-					// Set to the value selected.
-					row.find('select#group_name_ref').val(selectedGroupName);
-					row.find('select#master_id_ref').val(selectedMasterId);
 				});
-				HASUPDATED = true;
-				if (condition == "initial" || condition == "import") return;
-				Swal10.fire({
-					position: 'center',
-					icon: 'success',
-					text: 'プラグイン設定が更新されました。',
-					showConfirmButton: true,
-				});
-				
-			}
+
+				// Check to see if not same value is set "-----".
+				if (row.find('select#group_name_ref option[value="' + selectedGroupName + '"]').length == 0) {
+					selectedGroupName = "-----";
+					dataLost = true;
+				}
+				if (row.find('select#master_id_ref option[value="' + selectedMasterId + '"]').length == 0) {
+					selectedMasterId = "-----";
+					dataLost = true;
+				}
+
+				// Set to the value selected.
+				row.find('select#group_name_ref').val(selectedGroupName);
+				row.find('select#master_id_ref').val(selectedMasterId);
+			});
+			HASUPDATED = true;
+			if (condition == "initial" || condition == "import") return;
+			Swal10.fire({
+				position: 'center',
+				icon: 'success',
+				text: 'プラグイン設定が更新されました。',
+				showConfirmButton: true,
+			});
+
+		}
 	}
 
 	// validate update function.
@@ -336,7 +350,7 @@ jQuery.noConflict();
 				$(appId).removeClass('validation-error');
 			}
 		});
-		if (condition == "save") {
+		if (condition == "save" || condition == "export") {
 			$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function (index) {
 				let groupName = $(this).find('#group_name_ref');
 				let searchName = $(this).find('#search_name');
@@ -393,6 +407,12 @@ jQuery.noConflict();
 
 		// button save.
 		$('#button_save').on('click', async function () {
+			if (HASUPDATED === false) return Swal10.fire({
+				position: 'center',
+				icon: 'warning',
+				text: "please click update button",
+				showConfirmButton: true,
+			})
 			let hasError = await validation("save");
 			if (hasError) return;
 			let createConfig = await getData();
@@ -403,7 +423,7 @@ jQuery.noConflict();
 		});
 
 		// button-update.
-		$("#button-update").click(async ()=> {await updateData()});
+		$("#button-update").click(async () => { await updateData() });
 
 		// button-load data.
 		$("#load_data").click(async function () {
@@ -441,13 +461,6 @@ jQuery.noConflict();
 					// $(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
 					$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
 					$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-					// for (const item of response) {
-					// 	console.log(item);
-					// if (($(row).find('select#type_field option[value="' + item.type.value + '"]')).length <= 0) {
-					// 	$(row).find('select#type_field').append(
-					// 		$('<option>').attr("value", item.type.value).text(`${item.type.value}`)
-					// 	);
-					// }
 					$(row).find('select#code_field').append(
 						$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
 					);
@@ -584,11 +597,35 @@ jQuery.noConflict();
 			}
 		})
 
-		$("#resourceName, #deploymentID, #apiVersion, #apiKey, #platForm, #maxToken").on("change", function () {
+		//hide and show recreate button
+		$("select#group_name_ref").on('change',async (e) => {
+			let data = await getData();
+			let currentRow = $(e.target).closest('tr');
+			let currentGroup = data.groupSetting.filter(item =>item.groupName == e.target.value);
+			console.log('currentGroup: ' , currentGroup);
+			// if (e.target.value == "-----") {
+			// 	$(currentRow).find('button#recreate-button').hide();
+			// } else {
+			// 	$(currentRow).find('button#recreate-button').show();
+			// }
+		})
+
+
+
+		$("#name_marker, #group_name, #search_length, #search_type, #master_id, #app_id").on("input", function () {
 			HASUPDATED = false;
 		});
 
-		
+		$("#search_type").on("change", function () {
+			HASUPDATED = false;
+		});
+
+		$("input#app_id").on("input", function () {
+			console.log('bhjn');
+			HASLOADDATA = false;
+		}); 
+
+
 
 		// get version of chat gpt from api 
 		async function validateLoadData(codeMasterTable) {
@@ -701,10 +738,12 @@ jQuery.noConflict();
 				cancelButtonColor: "#f7f9fa",
 				confirmButtonText: "はい",
 				cancelButtonText: "いいえ",
-			}).then((result) => {
+			}).then(async (result) => {
 				if (result.isConfirmed) {
-					let dataImport = getData();
-					let blob = new Blob([JSON.stringify(dataImport)], { type: 'application/json' });
+					let hasError = await validation("export");
+					if (hasError) return;
+					let data = await getData();
+					let blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
 					let url = URL.createObjectURL(blob);
 					let date = new Date();
 					let year = date.getFullYear();
@@ -781,36 +820,34 @@ jQuery.noConflict();
 		async function compareConfigStructures(dataImport) {
 			let errorTexts = [];
 			let configStructure = {
-				platForm: 'string',
-				modelVersion: 'string',
-				apiKey: 'string',
-				resourceName: 'string',
-				deploymentID: 'string',
-				apiVersion: 'string',
-				maxToken: 'string',
-				versionFromAI: 'array',
-				spaceSetting: [
+				groupSetting: [
 					{
-						spaceForPromptTemplate: 'string',
-						spaceForButton: 'string',
-						storeField: 'string',
-						labelForPromptTemplate: 'string',
-						labelForButton: 'string',
+						nameMarker: "string",
+						groupName: "string",
+						searchLength: "string",
+						searchType: "string"
 					}
 				],
-				settingPromptTemplate: [
+				codeMasterSetting: [
 					{
-						status: 'boolean',
-						settingName: 'string',
-						fieldResult: 'string',
-						slide: 'string',
-						spacePromptTemplate: 'string',
-						spaceButton: 'string',
-						systemInstruction: 'string',
-						prompt: 'string'
+						masterId: "string",
+						appId: "string",
+						apiToken: "string",
+						codeField: "string",
+						nameField: "string",
+						typeField: "string"
+					}
+				],
+				searchContent: [
+					{
+						groupName: "string",
+						searchName: "string",
+						masterId: "string",
+						searchTarget: "string",
+						fieldForSearch: "string"
 					}
 				]
-			};
+			}
 
 			function checkType(configStructure, dataImport) {
 				if (Array.isArray(configStructure)) {
@@ -851,29 +888,29 @@ jQuery.noConflict();
 				return true;
 			}
 
-			function checkRequiredFields(dataImport) {
-				let settingPromptTemplateFields = ['status', 'settingName', 'fieldResult', 'slide', 'spacePromptTemplate', 'systemInstruction', 'prompt'];
+			// function checkRequiredFields(dataImport) {
+			// 	let settingPromptTemplateFields = ['status', 'settingName', 'fieldResult', 'slide', 'spacePromptTemplate', 'systemInstruction', 'prompt'];
 
-				if (dataImport.spaceSetting.length === 0) {
-					errorTexts.push(" spaceSettingが未入力です。");
-					return false;
-				}
+			// 	if (dataImport.spaceSetting.length === 0) {
+			// 		errorTexts.push(" spaceSettingが未入力です。");
+			// 		return false;
+			// 	}
 
-				if (dataImport.settingPromptTemplate.length === 0) {
-					errorTexts.push(" settingPromptTemplateが未入力です。");
-					return false;
-				}
+			// 	if (dataImport.settingPromptTemplate.length === 0) {
+			// 		errorTexts.push(" settingPromptTemplateが未入力です。");
+			// 		return false;
+			// 	}
 
-				for (let template of dataImport.settingPromptTemplate) {
-					for (let field of settingPromptTemplateFields) {
-						if (field === 'status' && typeof template[field] !== 'boolean') {
-							errorTexts.push(`settingPromptTemplateのstatusはブール型であるべきです。`);
-							return false;
-						}
-					}
-				}
-				return true;
-			}
+			// 	for (let template of dataImport.settingPromptTemplate) {
+			// 		for (let field of settingPromptTemplateFields) {
+			// 			if (field === 'status' && typeof template[field] !== 'boolean') {
+			// 				errorTexts.push(`settingPromptTemplateのstatusはブール型であるべきです。`);
+			// 				return false;
+			// 			}
+			// 		}
+			// 	}
+			// 	return true;
+			// }
 
 			function checkAllCases(dataImport) {
 				// Check if the object is empty
@@ -888,9 +925,9 @@ jQuery.noConflict();
 				}
 
 				// Specific checks for required fields and non-empty arrays/objects
-				if (!checkRequiredFields(dataImport)) {
-					return false;
-				}
+				// if (!checkRequiredFields(dataImport)) {
+				// 	return false;
+				// }
 				return true;
 			}
 
@@ -915,6 +952,8 @@ jQuery.noConflict();
 			}
 			return true;
 		}
+
+		
 	});
 })(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
 
