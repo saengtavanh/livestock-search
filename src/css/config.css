@@ -173,10 +173,12 @@ tbody tr {
   margin-right: 15px;
   cursor: pointer;
 }
-
-.slice-down {
-  margin-right: 15px;
+.slide-up i,
+.slide-down i {
+  margin-right: 0;
 }
+
+
 
 #div-space_ptompt_template_button {
   display: flex;
@@ -218,7 +220,7 @@ tbody tr {
 #td-setting-prompt-template {
   border: 1px solid #3333;
   height: 70px;
-  min-width: 500px;
+  /* min-width: 500px; */
 }
 
 .button-add-remove-row-promptSetting {
@@ -338,7 +340,7 @@ tbody tr {
 #kintoneplugin-setting-body,
 #kintoneplugin-code-master,
 #kintoneplugin-setting-space {
-  min-width: 85%;
+  width: 90%;
   /* max-width: 850px; */
   margin: 0 !important;
 }
@@ -353,13 +355,13 @@ tbody tr {
 #kintoneplugin-setting-body #td-setting-prompt-template,
 #kintoneplugin-code-master #td-table-code-master,
 #kintoneplugin-setting-space #td-table-space-prompt-template-button {
-  min-width: 75%;
+  width: 85%;
 }
 
 #kintoneplugin-setting-body .kintoneplugin-table-td-operation.operation-column,
 #kintoneplugin-code-master .kintoneplugin-table-td-operation.operation-column,
 #kintoneplugin-setting-space .kintoneplugin-table-td-operation.operation-column {
-  min-width: 5%;
+  width: 100px !important;
 }
 
 #container-table-settingPromptTemplate {
