@@ -70,6 +70,7 @@ jQuery.noConflict();
             margin: '5px',
             padding: '10px',
             'background-color': '#f0f0f0',
+            color: '#000',
             position: 'absolute', // Make sure it appears above other elements
             zIndex: 1000 // Ensure it’s above other content
           });
@@ -78,7 +79,7 @@ jQuery.noConflict();
         console.log(offset);
         customContextMenu.css({
           top: offset.top + $dropDownTitle.outerHeight() - 250, // Position below the dropdown title
-          left: offset.left - customContextMenu.outerWidth() + 115 // Position to the left with a gap of 10px
+          left: offset.left - customContextMenu.outerWidth() + 90 // Position to the left with a gap of 10px
         });
 
         // Dynamically create buttons using Kuc.Button for each item in the list
@@ -231,193 +232,296 @@ jQuery.noConflict();
       window.location.href = QueryUrl;
     }
     // =========================
-    //string input search
-   
 
-    //Rang number search
-    // var buildQueryForNumberValue = function (searchInfo, query, format, condiotionValue) {
-    //   let startValue = document.getElementById(searchInfo.fieldInfo.code + "_start").value;
-    //   let endValue = document.getElementById(searchInfo.fieldInfo.code + "_end").value;
-    //   let queryChild = "";
+    var searchProcess = async function (searchInfoList) {
+      var query = await getValueConditionAndBuildQuery(searchInfoList, query);
+      var queryEscape = encodeURIComponent(query);
+      console.log("queryEscape", queryEscape);
+      var currentUrlBase = window.location.href.match(/\S+\//)[0];
+      var url = currentUrlBase + "?query=" + queryEscape;
+      window.location.href = url;
+    };
+    var getValueConditionAndBuildQuery = function (searchInfoList) {
+      console.log("searchInfoList::::", searchInfoList);
 
-    //   if (startValue && endValue == '') {
-    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + ">=" + ' "' + startValue + '"' + ")";
-    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
-    //   } else if (endValue && startValue == '') {
-    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + "<=" + ' "' + endValue + '"' + ")";
-    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
-    //   } else if (startValue && endValue) {
-    //     queryChild = `${query ? " " + condiotionValue + " " : ""}` + "(" + searchInfo.fieldInfo.code + ' ' + ">=" + ' "' + startValue + '"' + " and " + searchInfo.fieldInfo.code + ' ' + "<=" + ' "' + endValue + '"' + ")";
-    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
-    //     sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
-    //   }
-    //   return queryChild;
-    // };
-
-    // // =========================
-
-    // var searchProcess = async function (searchInfoList) {
-    //   var query = await getValueConditionAndBuildQuery(searchInfoList);
-    //   var queryEscape = encodeURIComponent(query);
-    //   var currentUrlBase = window.location.href.match(/\S+\//)[0];
-    //   var url = currentUrlBase + "?query=" + queryEscape;
-
-    //   return (window.location.href = url);
-    // };
-
-    // //check type to search
-    // var getValueConditionAndBuildQuery = function () {
-    //   var query = "";
-    //   CONFIG.groupSetting.forEach(searchItem => {
-    //     console.log("searchItem.searchType", searchItem.searchType);
-    //     switch (searchItem.searchType) {
-    //       case "text_initial":
-    //       case "text_partial":
-    //         // case "multi_text_initial":
-    //         // case "multi_text_patial":
-    //         // case "number_exact":
-    //         // case "number_range":
-    //         // case "date_exact":
-    //         // case "date_range":
-    //         let inputCondition = QueryTextInitialValue(searchInfo, query, condiotionValue);
-    //         query += inputCondition;
-
-    //         break;
-    //       case "number_exact":
-    //         let rangNumberCondition = buildQueryForNumberValue(searchInfo, query, "", condiotionValue);
-    //         query += rangNumberCondition;
-
-    //         break;
-    //       // case "DATE":
-    //       //   let dateCondition = buildQueryForRangDateValue(searchInfo, query, "YYYY-MM-DD", condiotionValue);
-    //       //   query += dateCondition;
-
-    //       //   break;
-    //       // case "DATETIME":
-    //       // case "CREATED_TIME":
-    //       // case "UPDATED_TIME":
-    //       //   let datetimeCondition = buildQueryForRangDateValue(searchInfo, query, "YYYY-MM-DDTHH:mm:ss", condiotionValue);
-    //       //   query += datetimeCondition;
-
-    //       //   break;
-    //       // case "TIME":
-    //       //   let timeCondition = buildQueryForRangTimeValue(searchInfo, query, "", condiotionValue);
-    //       //   query += timeCondition;
-
-    //       //   break;
-    //       // case "MULTI_SELECT":
-    //       // case "RADIO_BUTTON":
-    //       // case "CHECK_BOX":
-    //       // case "DROP_DOWN":
-    //       // case "STATUS":
-    //       //   let multiSelectItemList = document.getElementsByName(searchInfo.fieldInfo.code);
-    //       //   let multiSelectConditionChild = "";
-
-    //       //   for (let j = 0; j < multiSelectItemList.length; j++) {
-    //       //     let selectedItem = multiSelectItemList[j];
-    //       //     $(selectedItem).hasClass("dropdown-selected")
-    //       //       ? (multiSelectConditionChild +=
-    //       //         ' "' + $(selectedItem).data("option-value") + '", ')
-    //       //       : null;
-    //       //   }
-
-    //       //   let multiSelectCondition = buildQueryForMultiValue(searchInfo, multiSelectConditionChild, query, condiotionValue);
-    //       //   query += multiSelectCondition;
-
-    //       //   break;
-    //     }
-    //   })
-
-    //   return query;
-    // };
-    // ========================
-   
-    // ========================
-
-    // Create input fields
-    function createTextInput() {
-      return $('<input type="text" class="kintoneplugin-input-text">').on('change', function () {
-        console.log("Text Input:", $(this).val());
-        QueryTextInitialValue($(this).val());
+      var query = "";
+      searchInfoList.forEach((searchInfo) => {
+        switch (searchInfo.searchType) {
+          case 'text_initial':
+            query += buildTextInitialQuery(searchInfo, query);
+            break;
+          case 'text_patial':
+            query += buildTextPartialQuery(searchInfo, query);
+            break;
+          case 'text_exact':
+            query += buildTextExactQuery(searchInfo, query);
+            break;
+          case 'multi_text_initial':
+            query += buildMultieinitialQuery(searchInfo, query);
+            break;
+          case 'multi_text_patial':
+            query += buildMultiePatialQuery(searchInfo, query);
+            break;
+          case 'number_exact':
+            query += buildNumberExactQuery(searchInfo, query);
+            break;
+          case 'number_range':
+            query += buildNumberRangeQuery(searchInfo, query);
+            break;
+          default:
+            break;
+        }
       });
-    }
 
-    function createTextArea() {
+      console.log("query", query);
+      return query;
+    };
+
+
+    var buildTextInitialQuery = function (searchInfo, query) {
+      console.log("GGG");
+      console.log("searchInfo", searchInfo);
+      let replacedText = searchInfo.groupName;
+
+      if ($(`#${replacedText}`).length) {
+        console.log("have");
+
+        var searchValue = $(`#${replacedText}`).val();
+        console.log("bla", searchValue);
+      }
+
+      if (searchValue) {
+        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
+        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
+        return queryChild;
+      }
+      return '';
+    };
+
+    var buildTextPartialQuery = function (searchInfo, query) {
+      console.log("fff");
+      console.log("searchInfo", searchInfo);
+      let replacedText = searchInfo.groupName;
+      if ($(`#${replacedText}`).length) {
+        console.log("have");
+
+        var bla = $(`#${replacedText}`).val();
+        console.log("bla", bla);
+      }
+
+      if (bla) {
+        let queryChild = `${query ? " AND " : ""}(${searchInfo.target_field} like "${bla}")`;
+        return queryChild;
+      }
+      return '';
+    };
+    var buildTextExactQuery = function (searchInfo, query) {
+      console.log("fff");
+      console.log("searchInfo", searchInfo);
+      let replacedText = searchInfo.groupName;
+
+      if ($(`#${replacedText}`).length) {
+        console.log("have");
+
+        var bla = $(`#${replacedText}`).val();
+        console.log("bla", bla);
+      }
+
+      if (bla) {
+        let queryChild = `${query ? " AND " : ""}(${searchInfo.target_field} like "${bla}")`;
+        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
+        return queryChild;
+      }
+      return '';
+    };
+    var buildMultieinitialQuery = function (searchInfo, query) {
+      console.log("fff");
+      console.log("searchInfo", searchInfo);
+      let replacedText = searchInfo.groupName;
+
+      if ($(`#${replacedText}`).length) {
+        console.log("have");
+
+        var bla = $(`#${replacedText}`).val();
+        console.log("bla", bla);
+      }
+
+      if (bla) {
+        let queryChild = `${query ? " AND " : ""}(${searchInfo.target_field} like "${bla}")`;
+        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
+        return queryChild;
+      }
+      return '';
+    };
+    var buildMultiePatialQuery = function (searchInfo, query) {
+      console.log("fff");
+      console.log("searchInfo", searchInfo);
+      let replacedText = searchInfo.groupName;
+
+      if ($(`#${replacedText}`).length) {
+        console.log("have");
+
+        var bla = $(`#${replacedText}`).val();
+        console.log("bla", bla);
+      }
+
+      if (bla) {
+        let queryChild = `${query ? " AND " : ""}(${searchInfo.target_field} like "${bla}")`;
+        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
+        return queryChild;
+      }
+      return '';
+    };
+    var buildNumberExactQuery = function (searchInfo, query) {
+      console.log("fff");
+      console.log("searchInfo", searchInfo);
+      let replacedText = searchInfo.groupName;
+
+      if ($(`#${replacedText}`).length) {
+        console.log("have");
+
+        var bla = $(`#${replacedText}`).val();
+        console.log("bla", bla);
+      }
+
+      if (bla) {
+        let queryChild = `${query ? " AND " : ""}(${searchInfo.target_field} like "${bla}")`;
+        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
+        return queryChild;
+      }
+      return '';
+    };
+    var buildNumberRangeQuery = function (searchInfo, query) {
+      console.log("fff");
+      console.log("searchInfo", searchInfo);
+      let replacedText = searchInfo.groupName;
+
+      if ($(`#${replacedText}`).length) {
+        console.log("have");
+
+        var bla = $(`#${replacedText}`).val();
+        console.log("bla", bla);
+      }
+
+      if (bla) {
+        let queryChild = `${query ? " AND " : ""}(${searchInfo.target_field} like "${bla}")`;
+        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
+        return queryChild;
+      }
+      return '';
+    };
+
+
+    // ========================
+    function createTextInput(searchType, groupName) {
+      console.log("type +++", searchType);
+      console.log("groupName +++", groupName);
+      let initialText = groupName;
+      const inputElement = $('<input>', {
+        type: searchType,
+        class: 'kintoneplugin-input-text',
+        'data-serach-type': searchType,
+        'id': initialText
+      });
+
+      // Return the input element for further use
+      console.log(inputElement.val());
+      return inputElement;
+    }
+    function createTextArea(searchType, groupName) {
+      console.log("000000000000");
+      let inputTeatArae = groupName;
       const textarea = new Kuc.TextArea({
         requiredIcon: true,
         className: 'options-class',
-        id: 'options-id',
+        id: inputTeatArae,
         visible: true,
         disabled: false
       });
+      textarea.setAttribute('data-search-type', searchType);
+      // textarea.setAttribute('id', inputTeatArae);
       textarea.addEventListener('change', event => console.log("TextArea:", event.detail.value));
       return textarea;
     }
 
-    function createNumberInput() {
-      return $('<input type="number" class="kintoneplugin-input-text">').on('change', function () {
-        console.log("Number Input:", $(this).val());
-        // buildQueryForNumberValue($(this).val());
-      });
+    function createTextNumberInput(searchType, groupName) {
+      let initialNumber = groupName;
+      const InputNumber = $('<input>', {
+        type: 'number',
+        class: 'kintoneplugin-input-text',
+        'data-search-type': searchType,
+        'id': initialNumber
+      })
+      return InputNumber;
     }
 
-    function createNumberRangeInput() {
+    function createNumberRangeInput(searchType, groupName) {
+      let NumberRange = groupName;
       const $wrapper = $('<div class="wrapperd-number"></div>');
-      const $rangeMin = $('<input type="number" class="kintoneplugin-input-text">').on('change', function () {
-        console.log("Range Min:", $(this).val());
+      const $start = $('<input>', {
+        type: 'number',
+        class: 'kintoneplugin-input-text',
+        'data-search-type': searchType,
+        id: NumberRange
       });
-      const $rangeMax = $('<input type="number" class="kintoneplugin-input-text">').on('change', function () {
-        console.log("Range Max:", $(this).val());
+      const $end = $('<input>', {
+        type: 'number',
+        class: 'kintoneplugin-input-text',
+        'data-search-type': searchType,
+        id: NumberRange
       });
       const $separator = $('<span>⁓</span>').addClass('separatornumber');
 
-      return $wrapper.append($rangeMin, $separator, $rangeMax);
+      return $wrapper.append($start, $separator, $end);
     }
 
-    function createDateInput() {
+    function createDateInput(searchType, groupName) {
+      let dateInput = groupName;
       const datePicker = new Kuc.DatePicker({
         requiredIcon: true,
         language: 'auto',
         className: 'options-class',
-        id: 'options-id',
+        id: dateInput,
         visible: true,
         disabled: false
       });
+      datePicker.setAttribute('data-search-type', searchType);
       datePicker.addEventListener('change', event => console.log("DatePicker", event.detail.value));
       return datePicker;
     }
 
-    function createDateRangeInput() {
-      const datePickerFirst = new Kuc.DatePicker({
+    function createDateRangeInput(searchType, groupName) {
+      let dateRange = groupName;
+      const datePickerSatrt = new Kuc.DatePicker({
         requiredIcon: true,
         language: 'auto',
         className: 'options-class',
-        id: 'start-date-picker',
+        id: dateRange,
         visible: true,
         disabled: false
       });
-
-      datePickerFirst.addEventListener('change', event => {
+      datePickerSatrt.setAttribute('data-search-type', searchType);
+      datePickerSatrt.addEventListener('change', event => {
         console.log("Start Date", event.detail.value);
       });
 
-      const datePickerFinally = new Kuc.DatePicker({
+      const datePickerEnd = new Kuc.DatePicker({
         requiredIcon: true,
         language: 'auto',
         className: 'options-class',
-        id: 'end-date-picker',
+        id: dateRange,
         visible: true,
         disabled: false
       });
-
-      datePickerFinally.addEventListener('change', event => {
+      datePickerEnd.setAttribute('data-search-type', searchType);
+      datePickerEnd.addEventListener('change', event => {
         console.log("End Date", event.detail.value);
       });
 
       const $separator = $('<span>⁓</span>').addClass('separator-datepicker');
 
       const $wrapper = $('<div></div>').addClass('wrapper-datepiker')
-      $wrapper.append(datePickerFirst).append($separator).append(datePickerFinally);
+      $wrapper.append(datePickerSatrt).append($separator).append(datePickerEnd);
 
       return $wrapper;
     }
@@ -427,7 +531,10 @@ jQuery.noConflict();
       return $('<button>').text(text).addClass('kintoneplugin-button-dialog-ok').css('font-size', '13px').on('click', callback);
     }
 
-    const $searchButton = createButton('Search', () => alert('Search button clicked!'));
+    const $searchButton = createButton('Search', () => {
+      var searchInfoList = CONFIG.groupSetting;
+      searchProcess(searchInfoList);
+    });
     const $clearButton = createButton('C', () => alert('Clear button clicked!'));
 
     const $elementBtn = $('<div class="element-button"></div>').append($searchButton, $clearButton);
@@ -435,29 +542,41 @@ jQuery.noConflict();
     CONFIG.groupSetting.forEach(searchItem => {
       const { searchType, groupName } = searchItem;
       const $elementInput = $('<div></div>').addClass('search-item');
+      let afterFilter;
+      afterFilter = CONFIG.searchContent.filter((item) => item.groupName == groupName);
+      if (afterFilter.length > 0) {
+        searchItem["target_field"] = afterFilter[0].searchTarget;
+      }
+
 
       let inputElement;
       switch (searchType) {
         case 'text_initial':
-        case 'text_partial':
+          inputElement = createTextInput(searchType, groupName);
+          break;
+        case 'text_patial':
+          inputElement = createTextInput(searchType, groupName);
+          break;
         case 'text_exact':
-          inputElement = createTextInput();
+          inputElement = createTextInput(searchType, groupName);
           break;
         case 'multi_text_initial':
+          inputElement = createTextArea(searchType, groupName);
+          break;
         case 'multi_text_patial':
-          inputElement = createTextArea();
+          inputElement = createTextArea(searchType, groupName);
           break;
         case 'number_exact':
-          inputElement = createNumberInput();
+          inputElement = createTextNumberInput(searchType, groupName);
           break;
         case 'number_range':
-          inputElement = createNumberRangeInput();
+          inputElement = createNumberRangeInput(searchType, groupName);
           break;
         case 'date_exact':
-          inputElement = createDateInput();
+          inputElement = createDateInput(searchType, groupName);
           break;
         case 'date_range':
-          inputElement = createDateRangeInput();
+          inputElement = createDateRangeInput(searchType, groupName);
           break;
         default:
           inputElement = null;
@@ -474,6 +593,7 @@ jQuery.noConflict();
     $spaceEl.append($elementsAll);
 
   });
+
   kintone.events.on(['app.record.edit.show', 'app.record.create.submit'], async (event) => {
     let record = event.record;
     let updateRecord = {};

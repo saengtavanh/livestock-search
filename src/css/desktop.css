@@ -71,8 +71,8 @@
 .kintoneplugin-button-dialog-ok {
   background-color: #4CAF50;
   font-size: 15px;
-  min-Width: 80px;
-  margin-Left: 10px;
+  min-Width: 20px;
+  margin-Left: 1px;
   color: white;
   border: none;
   cursor: pointer;
@@ -81,6 +81,17 @@
 
 .kintoneplugin-button-dialog-ok:hover {
   background-color: #5eb461;
+}
+
+.btnClear {
+  background-color: #4CAF50;
+  font-size: 15px;
+  min-Width: 15px;
+  /* margin-Left: 10px; */
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
 }
 
 
@@ -105,7 +116,10 @@
 }
 
 .element-button {
-  margin-left: -10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: none;
+  /* margin-left: -10px; */
 }
 
 .options-class .kuc-date-picker-1-18-0__group input[type="text"].kuc-base-date-1-18-0__input {
@@ -141,4 +155,5 @@
   width: 20px;
   height: 35px;
   min-width: 100px;
+  color: black;
 }
