@@ -128,9 +128,11 @@ jQuery.noConflict();
     }
     // Create dropdown element
     function createDropDown(display, records, initialContent, $dropDownTitle) {
+      const NameDropdown = display.groupName;
+      NameDropdown.replace(/\s+/g, "_");
       const $dropDown = $("<select>")
         .addClass("kintoneplugin-dropdown")
-        .attr("name", "mySelect")
+        .attr("id", `${NameDropdown}`)
         .css({ width: display.searchLength });
       $dropDown.append($("<option>").text('-----').val(''));
 
@@ -241,7 +243,7 @@ jQuery.noConflict();
       console.log("queryEscape", queryEscape);
       var currentUrlBase = window.location.href.match(/\S+\//)[0];
       var url = currentUrlBase + "?query=" + queryEscape;
-      // window.location.href = url;
+      window.location.href = url;
     };
     var getValueConditionAndBuildQuery = function (searchInfoList) {
       console.log("searchInfoList::::", searchInfoList);
@@ -380,10 +382,9 @@ jQuery.noConflict();
       return '';
     };
     var buildNumberExactQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
+      let queryChild = "";
       let replacedText = searchInfo.groupName;
-
+      const startValue = $(`#${replacedText}`).length && $(`#${replacedText}_start`).val();
       if ($(`#${replacedText}`).length) {
         console.log("have");
 
@@ -391,86 +392,79 @@ jQuery.noConflict();
         console.log("bla", bla);
       }
 
-      if (bla) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${bla}")`;
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
-        return queryChild;
-      }
-      return '';
+      // if (startValue && endValue == '') {
+      //   queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+      //   // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+      // } else if (endValue && startValue == '') {
+      //   queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+      //   // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+      // } else if (startValue && endValue) {
+      //   queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + " and " + searchInfo.target_field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+      //   // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+      //   // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+      // }
+      return queryChild;
     };
     var buildNumberRangeQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
+      let queryChild = "";
       let replacedText = searchInfo.groupName;
-      if ($(`#${replacedText}_start`).length) {
-        console.log("have");
-
-        var start = $(`#${replacedText}_start`).val();
-        console.log("bla", start);
+      const startValue = $(`#${replacedText}_start`).length && $(`#${replacedText}_start`).val();
+      const endValue = $(`#${replacedText}_end`).length && $(`#${replacedText}_end`).val();
+      if (startValue && endValue == '') {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+      } else if (endValue && startValue == '') {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+      } else if (startValue && endValue) {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + " and " + searchInfo.target_field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+        // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
       }
-      if ($(`#${replacedText}_end`).length) {
-        console.log("have");
-
-        var end = $(`#${replacedText}_end`).val();
-        console.log("bla", end);
-      }
-      if (start && end) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${start}" and "${end}")`;
-        return queryChild;
-      }
-      return '';
+      return queryChild;
     };
     var buildDateExactQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
+      let queryChild = "";
       let replacedText = searchInfo.groupName;
-      console.log($(`#${replacedText}`));
-      if ($(`#${replacedText}`).length) {
-        console.log("have");
-
-        var date = $(`#${replacedText}`).val();
-        console.log("bla", date);
+      const dateStartValue = $(`#${replacedText}`).length && $(`#${replacedText}`).val();
+      if (dateStartValue == '') {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + dateStartValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.target_field}_start`, dateStartValue);
+        // } else if (dateEndValue == '') {
+        //   queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + "<=" + ' "' + dateEndValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.target_field}_end`, dateEndValue);
+      } else if (dateStartValue) {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + dateStartValue + '"' + ")";
+        // queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + dateStartValue + '"' + " and " + searchInfo.target_field + ' ' + "<=" + ' "' + dateEndValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.target_field}_start`, dateStartValue);
+        // sessionStorage.setItem(`${searchInfo.target_field}_end`, dateEndValue);
       }
-
-      if (date) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${date}")`;
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
-        return queryChild;
-      }
-      return '';
+      return queryChild;
     };
     var buildDateRangeQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
+      let queryChild = "";
       let replacedText = searchInfo.groupName;
-      console.log($(`#${replacedText}_start`));
-      if ($(`#${replacedText}_start`).length) {
-        console.log("have");
-
-        var start = $(`#${replacedText}_start`).val();
-        console.log("bla", start);
+      const startValue = $(`#${replacedText}_start`).length && $(`#${replacedText}_start`).val();
+      const endValue = $(`#${replacedText}_end`).length && $(`#${replacedText}_end`).val();
+      if (startValue && endValue == '') {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+      } else if (endValue && startValue == '') {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+      } else if (startValue && endValue) {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + " and " + searchInfo.target_field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+        // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
+        // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
       }
-      if ($(`#${replacedText}_end`).length) {
-        console.log("have");
-
-        var end = $(`#${replacedText}_end`).val();
-        console.log("bla", end);
-      }
-
-      if (start && end) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${start}" and "${end}")`;
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
-        return queryChild;
-      }
-      return '';
+      return queryChild;
     };
-
 
     // ========================
     function createTextInput(searchType, groupName) {
       console.log("type +++11", searchType);
       console.log("groupName +++111", groupName);
-      let initialText = groupName;
+      let initialText = groupName.replace(/\s+/g, "_");
       const inputElement = $('<input>', {
         type: searchType,
         class: 'kintoneplugin-input-text',
@@ -485,7 +479,7 @@ jQuery.noConflict();
     function createTextArea(searchType, groupName) {
       console.log("type +++22", searchType);
       console.log("groupName +++22", groupName);
-      let inputTeatArae = groupName;
+      let inputTeatArae = groupName.replace(/\s+/g, "_");
       const textarea = new Kuc.TextArea({
         requiredIcon: true,
         className: 'options-class',
@@ -500,7 +494,7 @@ jQuery.noConflict();
     }
 
     function createTextNumberInput(searchType, groupName) {
-      let initialNumber = groupName;
+      let initialNumber = groupName.replace(/\s+/g, "_");
       const InputNumber = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
@@ -511,7 +505,7 @@ jQuery.noConflict();
     }
 
     function createNumberRangeInput(searchType, groupName) {
-      let NumberRange = groupName;
+      let NumberRange = groupName.replace(/\s+/g, "_");
       const $wrapper = $('<div class="wrapperd-number"></div>');
       const $start = $('<input>', {
         type: 'number',
@@ -531,7 +525,7 @@ jQuery.noConflict();
     }
 
     function createDateInput(searchType, groupName) {
-      let dateInput = groupName;
+      let dateInput = groupName.replace(/\s+/g, "_");
       const datePicker = new Kuc.DatePicker({
         requiredIcon: true,
         language: 'auto',
@@ -546,7 +540,7 @@ jQuery.noConflict();
     }
 
     function createDateRangeInput(searchType, groupName) {
-      let dateRange = groupName;
+      let dateRange = groupName.replace(/\s+/g, "_");
       const datePickerSatrt = new Kuc.DatePicker({
         requiredIcon: true,
         language: 'auto',
@@ -598,13 +592,16 @@ jQuery.noConflict();
       const { searchType, groupName } = searchItem;
       const $elementInput = $('<div></div>').addClass('search-item');
       let afterFilter = CONFIG.searchContent.filter((item) => item.groupName == groupName);
-      console.log(object);
+      console.log('5', afterFilter);
+      const Titlename = searchItem.nameMarker ? searchItem.groupName : afterFilter[0].searchName;
+      // console.log(object);
       if (afterFilter.length > 0) {
         searchItem["target_field"] = afterFilter[0].searchTarget;
       }
       console.log("afterFilte", afterFilter);
       console.log("afterFilte", afterFilter[0].fieldForSearch);
       let inputElement;
+      console.log("++++", groupName);
       switch (searchType) {
         case 'text_initial':
           inputElement = createTextInput(searchType, groupName);
@@ -619,7 +616,7 @@ jQuery.noConflict();
           inputElement = createTextArea(searchType, groupName);
           break;
         case 'multi_text_patial':
-          
+
           inputElement = createTextArea(searchType, groupName);
           break;
         case 'number_exact':
@@ -639,7 +636,8 @@ jQuery.noConflict();
       }
       if (inputElement) {
         $(inputElement).css('width', searchItem.searchLength);
-        const $label = $('<label>').text(groupName).addClass('label');
+        console.log("object----------", groupName);
+        const $label = $('<label>').text(Titlename).addClass('label');
         $elementInput.append($label, inputElement);
         $elementsAll.append($elementInput);
       }
