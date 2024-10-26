@@ -327,7 +327,15 @@ jQuery.noConflict();
 				} else {
 					$(searchType).parent().removeClass('validation-error');
 				}
-	
+
+				if (!groupName.val()) {
+					errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
+					$(groupName).addClass('validation-error');
+					hasError = true;
+				} else {
+					$(groupName).removeClass('validation-error');
+				}
+
 				if (!groupNameArray.includes(groupName.val().trim())) {
 					$(groupName).removeClass('validation-error');
 					groupNameArray.push(groupName.val());
@@ -336,14 +344,6 @@ jQuery.noConflict();
 					$(groupName).addClass('validation-error');
 					errorMessage += `<p>The group "${groupName.val()}" already exists.</p>`;
 					hasError = true;
-				}
-
-				if (!groupName.val()) {
-					errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
-					$(groupName).addClass('validation-error');
-					hasError = true;
-				} else {
-					$(groupName).removeClass('validation-error');
 				}
 				
 				
