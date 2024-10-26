@@ -18,34 +18,22 @@ jQuery.noConflict();
 
 	//function set value to config setting.
 	async function setValueConfig() {
-		const fieldType = ["SINGLE_LINE_TEXT", "MULTI_LINE_TEXT", "NUMBER", "CALC", "CHECK_BOX", "RADIO_BUTTON", "DROP_DOWN", "DATE", "DATETIME"];
-		console.log('FIELDFROMAPP', FIELDFROMAPP);
-		FIELDFROMAPP.forEach((items) => {
-			if (fieldType.includes(items.type)) {
-				$("select#search_target").append(
-					$("<option>").attr("value", items.code).attr("type", items.type).text(`${items.label}(${items.code}) `)
-				);
-				if (items.type == "SINGLE_LINE_TEXT" || items.type == "MULTI_LINE_TEXT") {
-					$("select#field_for_search").append(
-						$("<option>").attr("value", items.code).text(`${items.label}(${items.code})  `)
+		return new Promise((resolve) => {
+			const fieldType = ["SINGLE_LINE_TEXT", "MULTI_LINE_TEXT", "NUMBER", "CALC", "CHECK_BOX", "RADIO_BUTTON", "DROP_DOWN", "DATE", "DATETIME"];
+			FIELDFROMAPP.forEach((items) => {
+				if (fieldType.includes(items.type)) {
+					$("select#search_target").append(
+						$("<option>").attr("value", items.code).attr("type", items.type).text(`${items.label}(${items.code}) `)
 					);
+					if (items.type === "SINGLE_LINE_TEXT" || items.type === "MULTI_LINE_TEXT") {
+						$("select#field_for_search").append(
+							$("<option>").attr("value", items.code).text(`${items.label}(${items.code}) `)
+						);
+					}
 				}
-			}
-			// $("select#search_target").on('change', (e) => {
-			// 	console.log(e.target.type);
-			// })
-
+			});
+			resolve();
 		});
-
-		//set space to dropdown spaceForPromptTemplate and spaceForButton.
-		// SORTSPACE.forEach(spacer => {
-		// 	$("select[name=\"field_dropdown_column_spaceForPromptTemplate\"]").append(
-		// 		$("<option>").attr("value", spacer.value).text(`${spacer.value} (${spacer.value})`)
-		// 	);
-		// 	$("select[name=\"field_dropdown_column_spaceButton\"]").append(
-		// 		$("<option>").attr("value", spacer.value).text(`${spacer.value} (${spacer.value})`)
-		// 	);
-		// });
 	}
 
 	// function get data from table.
@@ -154,7 +142,7 @@ jQuery.noConflict();
 				rowForClone.find("#name_marker").val(item.nameMarker);
 				rowForClone.find("#group_name").val(item.groupName);
 				rowForClone.find("#search_length").val(item.searchLength);
-				rowForClone.find("#search_type").val(item.searchType || item.searchType != null || item.searchType != undefined ? item.searchType :"-----");
+				rowForClone.find("#search_type").val(item.searchType || item.searchType != null || item.searchType != undefined ? item.searchType : "-----");
 			})
 
 			getConfig.codeMasterSetting.forEach((item) => {
@@ -187,7 +175,7 @@ jQuery.noConflict();
 	}
 
 	//check recreate button function
-	function checkRecreateButton(){
+	function checkRecreateButton() {
 		$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function (index) {
 			let fieldForSearch = $(this).find('#field_for_search');
 			if (fieldForSearch.val() == "-----") {
@@ -224,7 +212,7 @@ jQuery.noConflict();
 		})
 		let getValueUpdated = await getData();
 		console.log(getValueUpdated);
-		let hassError = await validation("update");
+		let hassError = await validation("update", getValueUpdated);
 		// let valueValidation = true;
 		let dataLost = false;
 		if (!hassError) {
@@ -307,53 +295,50 @@ jQuery.noConflict();
 
 	// validate update function.
 	async function validation(condition, data) {
-		console.log('ujyhdgfbv', $('#kintoneplugin-setting-tspace tr').eq(1));
 		let hasError = false;
 		let errorMessage = "";
 		//group setting table
 		let groupSettingTable = $('#kintoneplugin-setting-tspace > tr:gt(0)').toArray();
 		let groupNameArray = [];
-		for (const [index,element] of groupSettingTable.entries()) {
-			// console.log(index, element);
-			// $('#kintoneplugin-setting-tspace > tr:gt(0)').each(function (index) {
-			console.log('index', index);
-				let groupName = $(element).find('#group_name');
-				// console.log('groupName', groupName);
-				let searchType = $(element).find('#search_type');
-				if (searchType.val() == "-----") {
-					errorMessage += `<p>Please select Search type on Group setting row: ${index + 1}</p>`;
-					$(searchType).parent().addClass('validation-error');
-					hasError = true;
-				} else {
-					$(searchType).parent().removeClass('validation-error');
-				}
+		let masterIdArray = [];
+		for (const [index, element] of groupSettingTable.entries()) {
+			let groupName = $(element).find('#group_name');
+			// console.log('groupName', groupName);
+			let searchType = $(element).find('#search_type');
+			if (searchType.val() == "-----") {
+				errorMessage += `<p>Please select Search type on Group setting row: ${index + 1}</p>`;
+				$(searchType).parent().addClass('validation-error');
+				hasError = true;
+			} else {
+				$(searchType).parent().removeClass('validation-error');
+			}
 
-				if (!groupName.val()) {
-					errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
-					$(groupName).addClass('validation-error');
-					hasError = true;
-				} else {
-					$(groupName).removeClass('validation-error');
-				}
+			if (!groupName.val()) {
+				errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
+				$(groupName).addClass('validation-error');
+				hasError = true;
+			} else {
+				$(groupName).removeClass('validation-error');
+			}
 
-				if (!groupNameArray.includes(groupName.val().trim())) {
-					$(groupName).removeClass('validation-error');
-					groupNameArray.push(groupName.val());
-				}else {
-					// $('#kintoneplugin-setting-tspace > tr').eq(index)
-					$(groupName).addClass('validation-error');
-					errorMessage += `<p>The group "${groupName.val()}" already exists.</p>`;
-					hasError = true;
-				}
-				
-				
-			// });
+			if (!groupNameArray.includes(groupName.val().trim())) {
+				$(groupName).removeClass('validation-error');
+				groupNameArray.push(groupName.val());
+			} else {
+				$(groupName).addClass('validation-error');
+				errorMessage += `<p>The group "${groupName.val()}" already exists.</p>`;
+				hasError = true;
+			}
+
+
 		}
 
+		const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
+		console.log(codeMasterTable);
 		//code master table
-		$('#kintoneplugin-setting-code-master > tr:gt(0)').each(function (index) {
-			let appId = $(this).find('#app_id');
-			let masterId = $(this).find('#master_id');
+		for (const [index, element] of codeMasterTable.entries()) {
+			let appId = $(element).find('#app_id');
+			let masterId = $(element).find('#master_id');
 			if (!masterId.val()) {
 				errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
 				$(masterId).addClass('validation-error');
@@ -369,7 +354,17 @@ jQuery.noConflict();
 			} else {
 				$(appId).removeClass('validation-error');
 			}
-		});
+
+			if (!masterIdArray.includes(masterId.val().trim())) {
+				$(masterId).removeClass('validation-error');
+				masterIdArray.push(masterId.val());
+			} else {
+				$(masterId).addClass('validation-error');
+				errorMessage += `<p>Master ID "${masterId.val()}" already exists.</p>`;
+				hasError = true;
+			}
+
+		}
 		if (condition == "save" || condition == "export") {
 			$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function (index) {
 				let groupName = $(this).find('#group_name_ref');
@@ -377,7 +372,7 @@ jQuery.noConflict();
 				let targetFields = $(this).find('#search_target');
 				let fieldForSearch = $(this).find('#field_for_search');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
-				console.log('currentGroup: ' , currentGroup);
+				console.log('currentGroup: ', currentGroup);
 				if (!searchName.val()) {
 					errorMessage += `<p>Please enter Search type on Search content row: ${index + 1}</p>`;
 					$(searchName).addClass('validation-error');
@@ -402,7 +397,7 @@ jQuery.noConflict();
 					$(targetFields).parent().removeClass('validation-error');
 				}
 
-				if(fieldForSearch.val() != "-----"){
+				if (fieldForSearch.val() != "-----") {
 					switch (currentGroup[0].searchType) {
 						case "number_exact":
 						case "number_range":
@@ -412,18 +407,18 @@ jQuery.noConflict();
 							$(fieldForSearch).parent().addClass('validation-error');
 							hasError = true;
 							errorMessage += `<p>Search type "${currentGroup[0].searchType} is can not select field for search"</p>`;
-							
+
 							break;
-					
+
 						default:
 							$(fieldForSearch).parent().removeClass('validation-error');
 							break;
 					}
 				} else {
-					if (currentGroup[0].searchType == "text_initial"){
+					if (currentGroup[0].searchType == "text_initial") {
 						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
-            $(fieldForSearch).parent().addClass('validation-error');
-            hasError = true;
+						$(fieldForSearch).parent().addClass('validation-error');
+						hasError = true;
 					}
 				}
 			});
@@ -439,11 +434,13 @@ jQuery.noConflict();
 	}
 
 	//function start when open the plugin.
-	$(document).ready(async function () {
+	$(document).ready(function () {
 		window.RsComAPI.showSpinner();
-		await setValueConfig();
-		await setInitialValue('setInitial');
-		window.RsComAPI.hideSpinner();
+		setValueConfig().then(() => {
+			return setInitialValue('setInitial');
+		}).then(() => {
+			window.RsComAPI.hideSpinner();
+		});
 
 		$('#kintoneplugin-setting-body tbody, #kintoneplugin-setting-code-master, #kintoneplugin-setting-tspace').sortable({
 			handle: '.drag-icon',  // Restrict dragging to the drag icon (bars)
@@ -462,7 +459,7 @@ jQuery.noConflict();
 				showConfirmButton: true,
 			})
 			let createConfig = await getData();
-			let hasError = await validation("save",createConfig);
+			let hasError = await validation("save", createConfig);
 			if (hasError) return;
 			let config = JSON.stringify(createConfig);
 			kintone.plugin.app.setConfig({ config }, () => {
@@ -487,14 +484,14 @@ jQuery.noConflict();
 						let appId = $(row).find('#app_id').val();
 						let apiToken = $(row).find('#api_token').val();
 						let body = { app: appId };
-	
+
 						if (!appId) continue;  // Skip if appId is not present
-	
+
 						if (apiToken) body.token = apiToken;
-	
+
 						let checkData = allResponse.filter(item => item.appId == appId);
 						console.log('checkData', checkData);
-	
+
 						let response = [];
 						try {
 							if (checkData.length <= 0) {
@@ -507,7 +504,7 @@ jQuery.noConflict();
 								response = checkData[0].response;
 							}
 							console.log('response', response);
-		
+
 							// $(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
 							$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
 							$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
@@ -522,8 +519,14 @@ jQuery.noConflict();
 							throw new Error("Cannot find code master app");
 						}
 
-						
+
 					}
+					Swal10.fire({
+						position: 'center',
+						icon: 'success',
+						text: "Load data successfully",
+						showConfirmButton: true,
+					})
 					HASLOADDATA = true;
 				} catch (error) {
 					HASLOADDATA = false;
@@ -536,7 +539,7 @@ jQuery.noConflict();
 					})
 				}
 			}
-			
+
 			window.RsComAPI.hideSpinner();
 		});
 
@@ -689,9 +692,14 @@ jQuery.noConflict();
 		});
 
 		$("input#app_id").on("input", function () {
-			console.log('bhjn');
-			HASLOADDATA = false;
-		}); 
+			console.log($(this).val());
+			$(this).val($(this).val().replace(/[^0-9]/g, ''));
+		});
+
+		$("input#group_name").on("input", function () {
+			console.log($(this).val());
+			$(this).val($(this).val().replace(/[^a-zA-Z0-9\s]/g, ''));
+		});
 
 
 
@@ -809,7 +817,7 @@ jQuery.noConflict();
 				cancelButtonText: "いいえ",
 			}).then(async (result) => {
 				if (result.isConfirmed) {
-					let hasError = await validation("export");
+					let hasError = await validation("export", await getData());
 					if (hasError) return;
 					let data = await getData();
 					let blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
@@ -1022,7 +1030,7 @@ jQuery.noConflict();
 			return true;
 		}
 
-		
+
 	});
 })(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
 

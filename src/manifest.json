@@ -22,7 +22,7 @@
   "config": {
     "html": "html/config.html",
     "js": [
-      "https://js.cybozu.com/jquery/3.3.1/jquery.min.js",
+      "js/jquery-2.2.4.min.js",
       "js/jquery-ui.js",
       "js/sweetalert2.all.js",
       "common/RsComAPI.js",
