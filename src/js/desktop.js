@@ -3,6 +3,12 @@ jQuery.noConflict();
   const CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
   console.log("config", CONFIG);
   kintone.events.on('app.record.index.show', async (event) => {
+
+    let elements = document.querySelectorAll('.recordlist-edit-gaia');
+    console.log(elements);
+    elements.forEach(element => {
+      element.style.display = 'none';
+    });
     // if (!CONFIG) return;
     console.log(window.location.href);
     // Create a URL object
@@ -147,9 +153,11 @@ jQuery.noConflict();
     }
     // Create dropdown element
     function createDropDown(display, records, initialContent, $dropDownTitle) {
+      const NameDropdown = display.groupName;
+      NameDropdown.replace(/\s+/g, "_");
       const $dropDown = $("<select>")
         .addClass("kintoneplugin-dropdown")
-        .attr("name", "mySelect")
+        .attr("id", `${NameDropdown}`)
         .css({ width: display.searchLength });
       $dropDown.append($("<option>").text('-----').val(''));
 
@@ -253,14 +261,15 @@ jQuery.noConflict();
       window.location.href = QueryUrl;
     }
     // =========================
-
+//TODO: FunctionSearch-------------------------------------------------
     var searchProcess = async function (searchInfoList) {
       var query = await getValueConditionAndBuildQuery(searchInfoList, query);
       var queryEscape = encodeURIComponent(query);
       console.log("queryEscape", queryEscape);
       var currentUrlBase = window.location.href.match(/\S+\//)[0];
       var url = currentUrlBase + "?query=" + queryEscape;
-      // window.location.href = url;
+
+      window.location.href = url;
     };
     var getValueConditionAndBuildQuery = function (searchInfoList) {
       console.log("searchInfoList::::", searchInfoList);
@@ -274,7 +283,7 @@ jQuery.noConflict();
           case 'text_patial':
             query += buildTextPartialQuery(searchInfo, query);
             break;
-          case 'text_exact':
+          case "text_exact":
             query += buildTextExactQuery(searchInfo, query);
             break;
           case 'multi_text_initial':
@@ -303,21 +312,51 @@ jQuery.noConflict();
       console.log("query", query);
       return query;
     };
-
+//TODO:InitailQuery------------------------------------------------
     var buildTextInitialQuery = function (searchInfo, query) {
       console.log("GGG");
       console.log("searchInfo", searchInfo);
-      let replacedText = searchInfo.groupName;
+      let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
+      let queryChild;
+
+      function transformString(input) {
+        // Split the input string into an array of characters
+        let characters = input.split('');
+    
+        // Join the characters with commas and add the leading underscore
+        let transformed = '_, ' + characters.join(',');
+    
+        return transformed;
+      }
 
       if ($(`#${replacedText}`).length) {
         console.log("have");
-
-        var searchValue = $(`#${replacedText}`).val();
-        console.log("bla", searchValue);
+        if ( $(`#${replacedText}`).val()) {
+          var searchValue = transformString($(`#${replacedText}`).val());
+          console.log("bla", searchValue);
+        }
       }
 
       if (searchValue) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
+        if (searchInfo.target_field.length > 1) {
+          console.log("searchInfo.target_field++++++", searchInfo.target_field);
+          searchInfo.target_field.forEach((field, index) => {
+
+            const isLastIndex = index === searchInfo.target_field.length - 1;
+          
+            if (queryChild) {
+              if (isLastIndex) {
+                queryChild += `or (${field} like "${searchValue}"))`;
+              } else {
+                queryChild += `or (${field} like "${searchValue}") `;
+              }
+            } else {
+              queryChild = `${query ? " and " : ""}((${field} like "${searchValue}") `;
+            }
+          });
+        } else if ((searchInfo.target_field.length = 1)) {
+          queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
+        }
         // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
         return queryChild;
       }
@@ -327,34 +366,83 @@ jQuery.noConflict();
     var buildTextPartialQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
-      let replacedText = searchInfo.groupName;
-      if ($(`#${replacedText}`).length) {
-        console.log("have");
+      let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
+      let queryChild;
 
-        var bla = $(`#${replacedText}`).val();
-        console.log("bla", bla);
+      function transformString(input) {
+        // Split the input string into an array of characters
+        let characters = input.split('');
+    
+        // Join the characters with commas and add the leading underscore
+        let transformed = characters.join(',');
+    
+        return transformed;
       }
 
-      if (bla) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${bla}")`;
+      if ($(`#${replacedText}`).length) {
+        console.log("have");
+        if ( $(`#${replacedText}`).val()) {
+          var searchValue = transformString($(`#${replacedText}`).val());
+          console.log("bla", searchValue);
+        }
+      }
+
+      if (searchValue) {
+        if (searchInfo.target_field.length > 1) {
+          console.log("searchInfo.target_field++++++", searchInfo.target_field);
+          searchInfo.target_field.forEach((field) => {
+            if (queryChild) {
+              queryChild += `or (${field} like "${searchValue}")`
+            } else {
+              queryChild = `${query ? " and " : ""}(${field} like "${searchValue}") `;
+            }
+          })
+        } else if ((searchInfo.target_field.length = 1)) {
+          queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
+        }
+        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
         return queryChild;
       }
       return '';
     };
+
     var buildTextExactQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
-      let replacedText = searchInfo.groupName;
+      let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
+
+      function transformString(input) {
+        // Split the input string into an array of characters
+        let characters = input.split('');
+    
+        // Join the characters with commas and add the leading underscore
+        let transformed = '_, ' + characters.join(',') + ',_';
+    
+        return transformed;
+      }
 
       if ($(`#${replacedText}`).length) {
         console.log("have");
-
-        var bla = $(`#${replacedText}`).val();
-        console.log("bla", bla);
+        var searchValue = $(`#${replacedText}`).val();
+        if ( $(`#${replacedText}`).val()) {
+          var searchValue = transformString($(`#${replacedText}`).val());
+          console.log("bla", searchValue);
+        }
       }
 
-      if (bla) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${bla}")`;
+      if (searchValue) {
+        if (searchInfo.target_field.length > 1) {
+          console.log("searchInfo.target_field++++++", searchInfo.target_field);
+          searchInfo.target_field.forEach((field) => {
+            if (queryChild) {
+              queryChild += `or (${field} like "${searchValue}")`
+            } else {
+              queryChild = `${query ? " and " : ""}(${field} like "${searchValue}") `;
+            }
+          })
+        } else if ((searchInfo.target_field.length = 1)) {
+          queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
+        }
         // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
         return queryChild;
       }
@@ -484,12 +572,12 @@ jQuery.noConflict();
       return '';
     };
 
-
+//TODO: CreateElement
     // ========================
     function createTextInput(searchType, groupName) {
       console.log("type +++11", searchType);
       console.log("groupName +++111", groupName);
-      let initialText = groupName;
+      let initialText = groupName.replace(/\s+/g, "_");
       const inputElement = $('<input>', {
         type: searchType,
         class: 'kintoneplugin-input-text',
@@ -504,7 +592,7 @@ jQuery.noConflict();
     function createTextArea(searchType, groupName) {
       console.log("type +++22", searchType);
       console.log("groupName +++22", groupName);
-      let inputTeatArae = groupName;
+      let inputTeatArae = groupName.replace(/\s+/g, "_");
       const textarea = new Kuc.TextArea({
         requiredIcon: true,
         className: 'options-class',
@@ -519,7 +607,7 @@ jQuery.noConflict();
     }
 
     function createTextNumberInput(searchType, groupName) {
-      let initialNumber = groupName;
+      let initialNumber = groupName.replace(/\s+/g, "_");
       const InputNumber = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
@@ -530,7 +618,7 @@ jQuery.noConflict();
     }
 
     function createNumberRangeInput(searchType, groupName) {
-      let NumberRange = groupName;
+      let NumberRange = groupName.replace(/\s+/g, "_");
       const $wrapper = $('<div class="wrapperd-number"></div>');
       const $start = $('<input>', {
         type: 'number',
@@ -550,7 +638,7 @@ jQuery.noConflict();
     }
 
     function createDateInput(searchType, groupName) {
-      let dateInput = groupName;
+      let dateInput = groupName.replace(/\s+/g, "_");
       const datePicker = new Kuc.DatePicker({
         requiredIcon: true,
         language: 'auto',
@@ -565,7 +653,7 @@ jQuery.noConflict();
     }
 
     function createDateRangeInput(searchType, groupName) {
-      let dateRange = groupName;
+      let dateRange = groupName.replace(/\s+/g, "_");
       const datePickerSatrt = new Kuc.DatePicker({
         requiredIcon: true,
         language: 'auto',
@@ -613,61 +701,77 @@ jQuery.noConflict();
 
     const $elementBtn = $('<div class="element-button"></div>').append($searchButton, $clearButton);
 
+
+    //TODO: Create Function-------------------------------------------------------------------------
+    
+    let setSearchForfile = [];
     CONFIG.groupSetting.forEach(searchItem => {
-      const { searchType, groupName } = searchItem;
-      const $elementInput = $('<div></div>').addClass('search-item');
-      let afterFilter = CONFIG.searchContent.filter((item) => item.groupName == groupName);
-      console.log(object);
-      if (afterFilter.length > 0) {
-        searchItem["target_field"] = afterFilter[0].searchTarget;
-      }
-      console.log("afterFilte", afterFilter);
-      console.log("afterFilte", afterFilter[0].fieldForSearch);
-      let inputElement;
-      switch (searchType) {
-        case 'text_initial':
-          inputElement = createTextInput(searchType, groupName);
-          break;
-        case 'text_patial':
-          inputElement = createTextInput(searchType, groupName);
-          break;
-        case 'text_exact':
-          inputElement = createTextInput(searchType, groupName);
-          break;
-        case 'multi_text_initial':
-          inputElement = createTextArea(searchType, groupName);
-          break;
-        case 'multi_text_patial':
-          
-          inputElement = createTextArea(searchType, groupName);
-          break;
-        case 'number_exact':
-          inputElement = createTextNumberInput(searchType, groupName);
-          break;
-        case 'number_range':
-          inputElement = createNumberRangeInput(searchType, groupName);
-          break;
-        case 'date_exact':
-          inputElement = createDateInput(searchType, groupName);
-          break;
-        case 'date_range':
-          inputElement = createDateRangeInput(searchType, groupName);
-          break;
-        default:
-          inputElement = null;
-      }
-      if (inputElement) {
-        $(inputElement).css('width', searchItem.searchLength);
-        const $label = $('<label>').text(groupName).addClass('label');
-        $elementInput.append($label, inputElement);
-        $elementsAll.append($elementInput);
-      }
+      const { searchType, groupName, nameMarker } = searchItem;
+      let setSearchTarget = [];
+      let Titlename;
+      let afterFilter = CONFIG.searchContent.filter((searchItem) => searchItem.groupName == groupName);
+        console.log("🚀 ~ kintone.events.on ~ afterFilter:", afterFilter);
+        afterFilter.forEach(searchItemTarget => {
+          console.log("searchItemTarget", searchItemTarget);
+          Titlename = nameMarker ? searchItemTarget.groupName : searchItemTarget.searchName;
+          setSearchTarget.push(searchItemTarget.fieldForSearch);
+        });
+
+        console.log("setSearchTarget::", setSearchTarget);
+        
+
+        if (afterFilter.length >= 1) {
+          searchItem["target_field"] = setSearchTarget;
+          const $elementInput = $('<div></div>').addClass('search-item');
+          let inputElement;
+          switch (searchType) {
+            case 'text_initial':
+              inputElement = createTextInput(searchType, groupName);
+              break;
+            case 'text_patial':
+              inputElement = createTextInput(searchType, groupName);
+              break;
+            case 'text_exact':
+              inputElement = createTextInput(searchType, groupName);
+              break;
+            case 'multi_text_initial':
+              inputElement = createTextArea(searchType, groupName);
+              break;
+            case 'multi_text_patial':
+              
+              inputElement = createTextArea(searchType, groupName);
+              break;
+            case 'number_exact':
+              inputElement = createTextNumberInput(searchType, groupName);
+              break;
+            case 'number_range':
+              inputElement = createNumberRangeInput(searchType, groupName);
+              break;
+            case 'date_exact':
+              inputElement = createDateInput(searchType, groupName);
+              break;
+            case 'date_range':
+              inputElement = createDateRangeInput(searchType, groupName);
+              break;
+            default:
+              inputElement = null;
+          }
+          if (inputElement) {
+            $(inputElement).css('width', searchItem.searchLength);
+            const $label = $('<label>').text(Titlename).addClass('label');
+            $elementInput.append($label, inputElement);
+            $elementsAll.append($elementInput);
+          }
+        }
+      
     });
 
     $elementsAll.append($elementBtn);
     $spaceEl.append($elementsAll);
 
   });
+        // console.log("🚀 ~ kintone.events.on ~ searchItem:", searchItem)
+        // console.log("🚀 ~ buildTextInitialQuery ~ value:", value)
 
   kintone.events.on(['app.record.edit.show', 'app.record.create.submit'], async (event) => {
     let record = event.record;
@@ -732,27 +836,27 @@ jQuery.noConflict();
     }
     return event;
   });
-  kintone.events.on(['app.record.edit.show', 'app.record.create.show', 'app.record.create.submit', 'app.record.edit.submit.success'], async (event) => {
-    let record = event.record;
-    let updateRecord = {};
-    console.log(CONFIG);
-    
-    CONFIG.searchContent.forEach((searchItem) => {
-      CONFIG.groupSetting.forEach((item) => {
-        if (item.groupName === searchItem.groupName) {
-          if (
-            item.searchType === "text_initial" ||
-            item.searchType === "text_patial" ||
-            item.searchType === "text_exact" ||
-            item.searchType === "multi_text_initial" ||
-            item.searchType === "multi_text_patial"
-          ) {
-            if (event.type === 'app.record.create.show') {
-              record[searchItem.fieldForSearch].disabled = true;
-            } else {
+   kintone.events.on([
+    'app.record.edit.show',
+    'app.record.create.show',
+    'app.record.create.submit',
+    'app.record.edit.submit.success',
+    'app.record.detail.show'], async (event) => {
+      let record = event.record;
+      let updateRecord = {};
+      console.log("hello", CONFIG);
+      CONFIG.searchContent.forEach((searchItem) => {
+        CONFIG.groupSetting.forEach((item) => {
+          if (item.groupName === searchItem.groupName) {
+            if (
+              item.searchType === "text_initial" ||
+              item.searchType === "text_patial" ||
+              item.searchType === "text_exact" ||
+              item.searchType === "multi_text_initial" ||
+              item.searchType === "multi_text_patial"
+            ) {
+              kintone.app.record.setFieldShown(searchItem.fieldForSearch, false)
               let targetValue = record[searchItem.searchTarget].value;
-              record[searchItem.fieldForSearch].disabled = true;
-              console.log(targetValue);
               let convertedValue = "";
               if (targetValue == "" || targetValue == undefined) {
                 convertedValue = ""
@@ -779,26 +883,25 @@ jQuery.noConflict();
               record[searchItem.fieldForSearch].value = convertedValue;
             }
           }
-        }
+        });
       });
-    });
-    if (event.type == 'app.record.create.submit' || event.type == 'app.record.edit.submit.success') {
-      let body = {
-        app: kintone.app.getId(),
-        records: [
-          {
-            id: kintone.app.record.getId(),
-            record: updateRecord
-          }
-        ]
-      };
-      try {
-        await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
-      } catch (error) {
-        console.log(error);
+      if (event.type == 'app.record.create.submit' || event.type == 'app.record.edit.submit.success') {
+        let body = {
+          app: kintone.app.getId(),
+          records: [
+            {
+              id: kintone.app.record.getId(),
+              record: updateRecord
+            }
+          ]
+        };
+        try {
+          await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
+        } catch (error) {
+          console.log(error);
+        }
       }
-    }
-    return event;
-  });
+      return event;
+    }); 
 
 })(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
