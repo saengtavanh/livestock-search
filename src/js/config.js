@@ -524,6 +524,7 @@ jQuery.noConflict();
 
 						
 					}
+					HASLOADDATA = true;
 				} catch (error) {
 					HASLOADDATA = false;
 					window.RsComAPI.hideSpinner();
@@ -535,6 +536,7 @@ jQuery.noConflict();
 					})
 				}
 			}
+			
 			window.RsComAPI.hideSpinner();
 		});
 
