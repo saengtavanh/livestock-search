@@ -154,7 +154,7 @@ jQuery.noConflict();
 				rowForClone.find("#name_marker").val(item.nameMarker);
 				rowForClone.find("#group_name").val(item.groupName);
 				rowForClone.find("#search_length").val(item.searchLength);
-				rowForClone.find("#search_type").val(item.searchType);
+				rowForClone.find("#search_type").val(item.searchType || item.searchType != null || item.searchType != undefined ? item.searchType :"-----");
 			})
 
 			getConfig.codeMasterSetting.forEach((item) => {
@@ -306,29 +306,49 @@ jQuery.noConflict();
 	}
 
 	// validate update function.
-	async function validation(condition) {
+	async function validation(condition, data) {
+		console.log('ujyhdgfbv', $('#kintoneplugin-setting-tspace tr').eq(1));
 		let hasError = false;
 		let errorMessage = "";
 		//group setting table
-		$('#kintoneplugin-setting-tspace > tr:gt(0)').each(function (index) {
-			let groupName = $(this).find('#group_name');
-			let searchType = $(this).find('#search_type');
-			if (searchType.val() == "-----") {
-				errorMessage += `<p>Please select Search type on Group setting row: ${index + 1}</p>`;
-				$(searchType).parent().addClass('validation-error');
-				hasError = true;
-			} else {
-				$(searchType).parent().removeClass('validation-error');
-			}
+		let groupSettingTable = $('#kintoneplugin-setting-tspace > tr:gt(0)').toArray();
+		let groupNameArray = [];
+		for (const [index,element] of groupSettingTable.entries()) {
+			// console.log(index, element);
+			// $('#kintoneplugin-setting-tspace > tr:gt(0)').each(function (index) {
+			console.log('index', index);
+				let groupName = $(element).find('#group_name');
+				// console.log('groupName', groupName);
+				let searchType = $(element).find('#search_type');
+				if (searchType.val() == "-----") {
+					errorMessage += `<p>Please select Search type on Group setting row: ${index + 1}</p>`;
+					$(searchType).parent().addClass('validation-error');
+					hasError = true;
+				} else {
+					$(searchType).parent().removeClass('validation-error');
+				}
+	
+				if (!groupNameArray.includes(groupName.val().trim())) {
+					$(groupName).removeClass('validation-error');
+					groupNameArray.push(groupName.val());
+				}else {
+					// $('#kintoneplugin-setting-tspace > tr').eq(index)
+					$(groupName).addClass('validation-error');
+					errorMessage += `<p>The group "${groupName.val()}" already exists.</p>`;
+					hasError = true;
+				}
 
-			if (!groupName.val()) {
-				errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
-				$(groupName).addClass('validation-error');
-				hasError = true;
-			} else {
-				$(groupName).removeClass('validation-error');
-			}
-		});
+				if (!groupName.val()) {
+					errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
+					$(groupName).addClass('validation-error');
+					hasError = true;
+				} else {
+					$(groupName).removeClass('validation-error');
+				}
+				
+				
+			// });
+		}
 
 		//code master table
 		$('#kintoneplugin-setting-code-master > tr:gt(0)').each(function (index) {
@@ -355,6 +375,9 @@ jQuery.noConflict();
 				let groupName = $(this).find('#group_name_ref');
 				let searchName = $(this).find('#search_name');
 				let targetFields = $(this).find('#search_target');
+				let fieldForSearch = $(this).find('#field_for_search');
+				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
+				console.log('currentGroup: ' , currentGroup);
 				if (!searchName.val()) {
 					errorMessage += `<p>Please enter Search type on Search content row: ${index + 1}</p>`;
 					$(searchName).addClass('validation-error');
@@ -377,6 +400,31 @@ jQuery.noConflict();
 					hasError = true;
 				} else {
 					$(targetFields).parent().removeClass('validation-error');
+				}
+
+				if(fieldForSearch.val() != "-----"){
+					switch (currentGroup[0].searchType) {
+						case "number_exact":
+						case "number_range":
+						case "date_exact":
+						case "date_range":
+						case "dropdown_exact":
+							$(fieldForSearch).parent().addClass('validation-error');
+							hasError = true;
+							errorMessage += `<p>Search type "${currentGroup[0].searchType} is can not select field for search"</p>`;
+							
+							break;
+					
+						default:
+							$(fieldForSearch).parent().removeClass('validation-error');
+							break;
+					}
+				} else {
+					if (currentGroup[0].searchType == "text_initial"){
+						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
+            $(fieldForSearch).parent().addClass('validation-error');
+            hasError = true;
+					}
 				}
 			});
 		}
@@ -413,9 +461,9 @@ jQuery.noConflict();
 				text: "please click update button",
 				showConfirmButton: true,
 			})
-			let hasError = await validation("save");
-			if (hasError) return;
 			let createConfig = await getData();
+			let hasError = await validation("save",createConfig);
+			if (hasError) return;
 			let config = JSON.stringify(createConfig);
 			kintone.plugin.app.setConfig({ config }, () => {
 				window.location.href = `../../flow?app=${kintone.app.getId()}#section=settings`;
@@ -434,40 +482,57 @@ jQuery.noConflict();
 			let hasError = await validateLoadData(codeMasterTable);
 			console.log('hasError', hasError);
 			if (!hasError) {
-				for (let row of codeMasterTable) {
-					let appId = $(row).find('#app_id').val();
-					let apiToken = $(row).find('#api_token').val();
-					let body = { app: appId };
+				try {
+					for (let row of codeMasterTable) {
+						let appId = $(row).find('#app_id').val();
+						let apiToken = $(row).find('#api_token').val();
+						let body = { app: appId };
+	
+						if (!appId) continue;  // Skip if appId is not present
+	
+						if (apiToken) body.token = apiToken;
+	
+						let checkData = allResponse.filter(item => item.appId == appId);
+						console.log('checkData', checkData);
+	
+						let response = [];
+						try {
+							if (checkData.length <= 0) {
+								response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
+									app: appId
+								}).then(res => { return res.properties });
+								allResponse.push({ appId, response });
+							} else {
+								console.log('get old');
+								response = checkData[0].response;
+							}
+							console.log('response', response);
+		
+							// $(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
+							$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+							$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+							$(row).find('select#code_field').append(
+								$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
+							);
+							$(row).find('select#name_field').append(
+								$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
+							);
+							console.log('response', response);
+						} catch (error) {
+							throw new Error("Cannot find code master app");
+						}
 
-					if (!appId) continue;  // Skip if appId is not present
-
-					if (apiToken) body.token = apiToken;
-
-					let checkData = allResponse.filter(item => item.appId == appId);
-					console.log('checkData', checkData);
-
-					let response = [];
-					if (checkData.length <= 0) {
-						response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
-							app: appId
-						}).then(res => { return res.properties });
-						allResponse.push({ appId, response });
-					} else {
-						console.log('get old');
-						response = checkData[0].response;
+						
 					}
-					console.log('response', response);
-
-					// $(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
-					$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
-					$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-					$(row).find('select#code_field').append(
-						$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
-					);
-					$(row).find('select#name_field').append(
-						$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
-					);
-					console.log('response', response);
+				} catch (error) {
+					HASLOADDATA = false;
+					window.RsComAPI.hideSpinner();
+					Swal10.fire({
+						position: 'center',
+						icon: 'error',
+						text: error,
+						showConfirmButton: true,
+					})
 				}
 			}
 			window.RsComAPI.hideSpinner();
@@ -529,6 +594,7 @@ jQuery.noConflict();
 			let updateRecords = [];
 			for (let record of records) {
 				let targetValue = record[targetField].value;
+				if (targetValue == "" || targetField == undefined) continue;
 				let convertedValue = "";
 
 				switch (getGroupData[0].searchType) {
@@ -572,7 +638,7 @@ jQuery.noConflict();
 				Swal10.fire({
 					position: 'center',
 					icon: 'success',
-					text: 'プラグイン設定が更新されました。',
+					text: 'Recreate successfully',
 					showConfirmButton: true,
 				});
 			} catch (error) {
@@ -598,21 +664,21 @@ jQuery.noConflict();
 		})
 
 		//hide and show recreate button
-		$("select#group_name_ref").on('change',async (e) => {
-			let data = await getData();
-			let currentRow = $(e.target).closest('tr');
-			let currentGroup = data.groupSetting.filter(item =>item.groupName == e.target.value);
-			console.log('currentGroup: ' , currentGroup);
-			// if (e.target.value == "-----") {
-			// 	$(currentRow).find('button#recreate-button').hide();
-			// } else {
-			// 	$(currentRow).find('button#recreate-button').show();
-			// }
-		})
+		// $("select#group_name_ref").on('change',async (e) => {
+		// 	let data = await getData();
+		// 	let currentRow = $(e.target).closest('tr');
+		// 	let currentGroup = data.groupSetting.filter(item =>item.groupName == e.target.value);
+		// 	console.log('currentGroup: ' , currentGroup);
+		// 	// if (e.target.value == "-----") {
+		// 	// 	$(currentRow).find('button#recreate-button').hide();
+		// 	// } else {
+		// 	// 	$(currentRow).find('button#recreate-button').show();
+		// 	// }
+		// })
 
 
 
-		$("#name_marker, #group_name, #search_length, #search_type, #master_id, #app_id").on("input", function () {
+		$("#name_marker, #group_name, #search_length, #master_id, #app_id").on("input", function () {
 			HASUPDATED = false;
 		});
 
@@ -701,6 +767,7 @@ jQuery.noConflict();
 			// Insert the cloned row after the current clicked row
 			$(this).closest("tr").after(clonedRow);
 			checkRow();
+			checkRecreateButton();
 		});
 
 		//remove row function

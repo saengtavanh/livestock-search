@@ -4,6 +4,25 @@ jQuery.noConflict();
   console.log("config", CONFIG);
   kintone.events.on('app.record.index.show', async (event) => {
     // if (!CONFIG) return;
+    console.log(window.location.href);
+    // Create a URL object
+    const urlObj = new URL(window.location.href);
+
+    // Get the bokTerms parameter
+    const bokTerms = urlObj.searchParams.get('bokTerms');
+
+    // Decode the bokTerms string
+    const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{{|}}/g, '');
+    console.log(decodedBokTerms);
+
+    const result = {};
+    decodedBokTerms.split(',').forEach(pair => {
+      const [key, value] = pair.split(':').map(item => item.trim().replace(/"/g, ''));
+      result[key] = value;
+    });
+
+    // Log the result
+    console.log(result);
 
     const records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
     console.log("records", records);
@@ -696,6 +715,74 @@ jQuery.noConflict();
       });
     });
     if (event.type === 'app.record.create.submit') {
+      let body = {
+        app: kintone.app.getId(),
+        records: [
+          {
+            id: kintone.app.record.getId(),
+            record: updateRecord
+          }
+        ]
+      };
+      try {
+        await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    return event;
+  });
+  kintone.events.on(['app.record.edit.show', 'app.record.create.show', 'app.record.create.submit', 'app.record.edit.submit.success'], async (event) => {
+    let record = event.record;
+    let updateRecord = {};
+    console.log(CONFIG);
+    
+    CONFIG.searchContent.forEach((searchItem) => {
+      CONFIG.groupSetting.forEach((item) => {
+        if (item.groupName === searchItem.groupName) {
+          if (
+            item.searchType === "text_initial" ||
+            item.searchType === "text_patial" ||
+            item.searchType === "text_exact" ||
+            item.searchType === "multi_text_initial" ||
+            item.searchType === "multi_text_patial"
+          ) {
+            if (event.type === 'app.record.create.show') {
+              record[searchItem.fieldForSearch].disabled = true;
+            } else {
+              let targetValue = record[searchItem.searchTarget].value;
+              record[searchItem.fieldForSearch].disabled = true;
+              console.log(targetValue);
+              let convertedValue = "";
+              if (targetValue == "" || targetValue == undefined) {
+                convertedValue = ""
+              } else {
+                switch (item.searchType) {
+                  case "text_initial":
+                  case "multi_text_initial":
+                    convertedValue = `_,${targetValue.split('').join(',')}`;
+                    break;
+                  case "text_patial":
+                  case "multi_text_patial":
+                    convertedValue = `${targetValue.split('').join(',')}`;
+                    break;
+                  case "text_exact":
+                    convertedValue = `_,${targetValue.split('').join(',')},_`;
+                    break;
+                  default:
+                    break;
+                }
+              }
+              updateRecord[searchItem.fieldForSearch] = {
+                value: convertedValue
+              }
+              record[searchItem.fieldForSearch].value = convertedValue;
+            }
+          }
+        }
+      });
+    });
+    if (event.type == 'app.record.create.submit' || event.type == 'app.record.edit.submit.success') {
       let body = {
         app: kintone.app.getId(),
         records: [

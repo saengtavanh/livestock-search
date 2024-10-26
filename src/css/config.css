@@ -1,6 +1,10 @@
 .kintoneplugin-input-text {
   align-items: center;
-  width: 220px;
+}
+
+.container {
+  width: 100%;
+  min-width: 100%;
 }
 
 table td:first-child {
@@ -71,14 +75,14 @@ table td:first-child {
 
 #button-action {
   display: flex;
-  margin-left: 6.9rem;
+  margin-left: 5%;
   margin-top: 35px;
   gap: 2.3%;
 }
 
-#container-table-setting-prompt-template {
+/* #container-table-setting-prompt-template {
   margin-left: 35px;
-}
+} */
 
 .button-insert {
   margin-top: 25px;
@@ -169,10 +173,12 @@ tbody tr {
   margin-right: 15px;
   cursor: pointer;
 }
-
-.slice-down {
-  margin-right: 15px;
+.slide-up i,
+.slide-down i {
+  margin-right: 0;
 }
+
+
 
 #div-space_ptompt_template_button {
   display: flex;
@@ -207,14 +213,14 @@ tbody tr {
   margin-left: 50px;
 }
 
-#table-code-master {
+/* #table-code-master {
   margin-left: 35px;
-}
+} */
 
 #td-setting-prompt-template {
   border: 1px solid #3333;
   height: 70px;
-  min-width: 500px;
+  /* min-width: 500px; */
 }
 
 .button-add-remove-row-promptSetting {
@@ -307,7 +313,8 @@ tbody tr {
 }
 
 .kintoneplugin-select {
-  width: 220px;
+  /* width: 220px; */
+  margin: 0 !important;
 }
 
 #label-token {
@@ -317,7 +324,6 @@ tbody tr {
 .labelPrompt {
   display: flex;
   margin: 8px;
-  gap: 25px;
 }
 
 .labelPrompt>div {
@@ -331,17 +337,35 @@ tbody tr {
 }
 
 
-#kintoneplugin-setting-body {
-  min-width: 850px;
+#kintoneplugin-setting-body,
+#kintoneplugin-code-master,
+#kintoneplugin-setting-space {
+  width: 90%;
   /* max-width: 850px; */
+  margin: 0 !important;
 }
 
-#kintoneplugin-setting-body #td-setting-prompt-template {
-  min-width: 750px;
+#kintoneplugin-setting-body th:first-child,
+#kintoneplugin-code-master th:first-child,
+#kintoneplugin-setting-space th:first-child {
+  width: 5%;
 }
 
-#kintoneplugin-setting-body .kintoneplugin-table-td-operation.operation-column {
-  min-width: 100px;
+
+#kintoneplugin-setting-body #td-setting-prompt-template,
+#kintoneplugin-code-master #td-table-code-master,
+#kintoneplugin-setting-space #td-table-space-prompt-template-button {
+  width: 85%;
+}
+
+#kintoneplugin-setting-body .kintoneplugin-table-td-operation.operation-column,
+#kintoneplugin-code-master .kintoneplugin-table-td-operation.operation-column,
+#kintoneplugin-setting-space .kintoneplugin-table-td-operation.operation-column {
+  width: 100px !important;
+}
+
+#container-table-settingPromptTemplate {
+  margin-top: -1.5rem !important;
 }
 
 .drag-icon {
@@ -393,3 +417,8 @@ select:disabled {
 .swal2-content p{
   margin: 0 !important;
 }
+
+.kintoneplugin-input-outer #app_id {
+  width: 3rem !important;
+}
+
