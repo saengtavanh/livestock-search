@@ -4,7 +4,84 @@ jQuery.noConflict();
 	let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID);
 	let HASUPDATED = true;
 	let HASLOADDATA = true;
-	let GETVERSION = [];
+
+	// Color picker dialog function
+	const defaultColorPickerConfig = {
+		opacity: false,
+		doRender: false,
+		buildCallback: function ($elm) {
+			$elm.addClass('kintone-ui');
+
+			const colorInstance = this.color;
+			const colorPicker = this;
+
+			$elm.prepend('<div class="cp-panel">' +
+				'<div><label>R</label> <input type="number" max="255" min="0" class="cp-r" /></div>' +
+				'<div><label>G</label> <input type="number" max="255" min="0" class="cp-g" /></div>' +
+				'<div><label>B</label> <input type="number" max="255" min="0" class="cp-b" /></div>' +
+				'<hr>' +
+				'<div><label>H</label> <input type="number" max="360" min="0" class="cp-h" /></div>' +
+				'<div><label>S</label> <input type="number" max="100" min="0" class="cp-s" /></div>' +
+				'<div><label>V</label> <input type="number" max="100" min="0" class="cp-v" /></div>' +
+				'</div>').on('change', 'input', function (e) {
+					const value = this.value,
+						className = this.className,
+						type = className.split('-')[1],
+						color = {};
+
+					color[type] = value;
+					colorInstance.setColor(type === 'HEX' ? value : color,
+						type === 'HEX' ? 'HEX' : /(?:r|g|b)/.test(type) ? 'rgb' : 'hsv');
+					colorPicker.render();
+				});
+
+			const buttons = $elm.append('<div class="cp-disp">' +
+				'<button type="button" id="cp-submit">OK</button>' +
+				'<button type="button" id="cp-cancel">Cancel</button>' +
+				'</div>');
+
+			buttons.on('click', '#cp-submit', (e) => {
+				const colorCode = '#' + colorPicker.color.colors.HEX;
+
+				$elm.css('border-bottom-color', colorCode);
+				$elm.attr('value', colorCode);
+
+				const $el = colorPicker.$trigger.parent('div').find('input[type="text"]');
+				$el.val(colorCode);
+				$el.css('color', colorCode);
+
+				colorPicker.$trigger.css('border-bottom-color', colorCode);
+				colorPicker.toggle(false);
+			});
+
+			buttons.on('click', '#cp-cancel', (e) => {
+				colorPicker.toggle(false);
+			});
+		},
+		renderCallback: function ($elm, toggled) {
+			const colors = this.color.colors.RND;
+			const colorCode = '#' + this.color.colors.HEX;
+
+			const modes = {
+				r: colors.rgb.r,
+				g: colors.rgb.g,
+				b: colors.rgb.b,
+				h: colors.hsv.h,
+				s: colors.hsv.s,
+				v: colors.hsv.v,
+				HEX: colorCode
+			};
+
+			$('input', '.cp-panel').each(function () {
+				this.value = modes[this.className.substr(3)];
+			});
+
+			this.$trigger = $elm;
+		},
+		positionCallback: function ($elm) {
+			this.color.setColor($elm.attr('value'));
+		}
+	};
 
 	// get field from kintone app.
 	let GETFIELD = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
@@ -65,10 +142,17 @@ jQuery.noConflict();
 			let fieldForSearch = $(this).find("#field_for_search").val();
 			return { groupName, searchName, masterId, searchTarget, fieldForSearch };
 		}).get();
+
+		let colorSetting = {
+			titleColor: $("#title-color").val(),
+			buttonColor: $("#button-color").val(),
+			buttonTextColor: $("#button-text-color").val(),
+		}
 		return {
 			groupSetting,
 			codeMasterSetting,
-			searchContent
+			searchContent,
+			colorSetting
 		};
 	}
 
@@ -127,6 +211,11 @@ jQuery.noConflict();
 					rowForClone.find("#field_for_search").val(item.fieldForSearch);
 
 				})
+
+				//set color
+				$("#title-color").val(getConfig.colorSetting.titleColor).css("color", getConfig.colorSetting.titleColor);
+				$("#button-color").val(getConfig.colorSetting.buttonColor).css("color", getConfig.colorSetting.buttonColor);
+				$("#button-text-color").val(getConfig.colorSetting.buttonTextColor).css("color", getConfig.colorSetting.buttonTextColor);
 			}
 		} else {
 			// Clear all rows except the first row of table space for prompt template and button and table setting prompt template.
@@ -166,6 +255,11 @@ jQuery.noConflict();
 				rowForClone.find("#search_target").val(item.searchTarget);
 				rowForClone.find("#field_for_search").val(item.fieldForSearch);
 			})
+
+			//set color
+			$("#title-color").val(getConfig.colorSetting.titleColor).css("color", getConfig.colorSetting.titleColor);
+			$("#button-color").val(getConfig.colorSetting.buttonColor).css("color", getConfig.colorSetting.buttonColor);
+			$("#button-text-color").val(getConfig.colorSetting.buttonTextColor).css("color", getConfig.colorSetting.buttonTextColor);
 		}
 
 
@@ -301,6 +395,7 @@ jQuery.noConflict();
 		let groupSettingTable = $('#kintoneplugin-setting-tspace > tr:gt(0)').toArray();
 		let groupNameArray = [];
 		let masterIdArray = [];
+		let fieldForSearchArray = [];
 		for (const [index, element] of groupSettingTable.entries()) {
 			let groupName = $(element).find('#group_name');
 			// console.log('groupName', groupName);
@@ -366,11 +461,13 @@ jQuery.noConflict();
 
 		}
 		if (condition == "save" || condition == "export") {
-			$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function (index) {
-				let groupName = $(this).find('#group_name_ref');
-				let searchName = $(this).find('#search_name');
-				let targetFields = $(this).find('#search_target');
-				let fieldForSearch = $(this).find('#field_for_search');
+			const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
+			for (const [index, element] of searchContentTable.entries()) {
+
+				let groupName = $(element).find('#group_name_ref');
+				let searchName = $(element).find('#search_name');
+				let targetFields = $(element).find('#search_target');
+				let fieldForSearch = $(element).find('#field_for_search');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
 				console.log('currentGroup: ', currentGroup);
 				if (!searchName.val()) {
@@ -412,6 +509,14 @@ jQuery.noConflict();
 
 						default:
 							$(fieldForSearch).parent().removeClass('validation-error');
+							if (!fieldForSearchArray.includes(fieldForSearch.val().trim())) {
+								$(fieldForSearch).parent().removeClass('validation-error');
+								fieldForSearchArray.push(fieldForSearch.val());
+							} else {
+								$(fieldForSearch).parent().addClass('validation-error');
+								errorMessage += `<p>Field "${fieldForSearch.val()}" already exists.</p>`;
+								hasError = true;
+							}
 							break;
 					}
 				} else {
@@ -421,7 +526,8 @@ jQuery.noConflict();
 						hasError = true;
 					}
 				}
-			});
+
+			}
 		}
 
 		if (hasError) Swal10.fire({
@@ -441,6 +547,32 @@ jQuery.noConflict();
 		}).then(() => {
 			window.RsComAPI.hideSpinner();
 		});
+		// Color Picker
+		const colorPickerTitle = $('#font-color-picker-title-icon').colorPicker(defaultColorPickerConfig);
+		const colorPickerButton = $('#bg-color-picker-button-icon').colorPicker(defaultColorPickerConfig);
+		const colorPickerButtonText = $('#font-color-picker-button-text-icon').colorPicker(defaultColorPickerConfig);
+
+		$(document).keyup((event) => {
+			const TAB_KEY_CODE = 9;
+			const ENTER_KEY_CODE = 13;
+			const ESC_KEY_CODE = 27;
+			if (event.keyCode === TAB_KEY_CODE || event.keyCode === ENTER_KEY_CODE || event.keyCode === ESC_KEY_CODE) {
+				colorPickerTitle.colorPicker.toggle(false);
+				colorPickerButton.colorPicker.toggle(false);
+				colorPickerButtonText.colorPicker.toggle(false);
+			}
+		});
+
+		 // Set color when input text change
+		 $("#title-color").change(function(){
+      $(this).css('color', $(this).val());
+    });
+    $("#button-color").change(function(){
+      $(this).css('color', $(this).val());
+    });
+    $("#button-text-color").change(function(){
+      $(this).css('color', $(this).val());
+    });
 
 		$('#kintoneplugin-setting-body tbody, #kintoneplugin-setting-code-master, #kintoneplugin-setting-tspace').sortable({
 			handle: '.drag-icon',  // Restrict dragging to the drag icon (bars)
@@ -696,7 +828,7 @@ jQuery.noConflict();
 			$(this).val($(this).val().replace(/[^0-9]/g, ''));
 		});
 
-		$("input#group_name").on("input", function () {
+		$("input#group_name, input#search_length").on("input", function () {
 			console.log($(this).val());
 			$(this).val($(this).val().replace(/[^a-zA-Z0-9\s]/g, ''));
 		});

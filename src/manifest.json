@@ -26,6 +26,7 @@
       "js/jquery-ui.js",
       "js/sweetalert2.all.js",
       "common/RsComAPI.js",
+      "js/jqColorPicker.min.js",
       "js/config.js"
     ],
     "css": [
