@@ -15,226 +15,10 @@ jQuery.noConflict();
       console.log('Custom element already exists, skipping creation.');
       return; // Stop if element already exists
     }
-    const $spaceEl = $(spaceEl)
-    const $elementsAll = $('<div></div>').addClass('custom-space-el');
+    const spaceElement = $(spaceEl)
+    const elementsAll = $('<div></div>').addClass('custom-space-el');
 
-    // Create dropdowns based on the configuration
-    function createDropDowns(CONFIG) {
-      CONFIG.groupSetting.forEach(display => {
-        console.log("4545", display);
-        if (display.searchType === "dropdown_exact") {
-          let relatedContent = CONFIG.searchContent.filter(content => content.groupName === display.groupName);
 
-          // Only show content if `name_marker` is not empty
-          if (display.nameMarker) {
-            relatedContent = relatedContent.filter(content => content.groupName === display.groupName);
-          }
-
-          if (relatedContent.length > 0) {
-            const $dropDownTitle = $("<label>")
-              .text(display.nameMarker ? display.groupName : relatedContent[0].searchName)
-              .addClass('custom-dropdownTitle')
-              .css({ cursor: display.nameMarker ? "default" : "pointer" })
-              .on("click", function () {
-                handleDropDownTitleClick(display, CONFIG, relatedContent, $dropDownTitle);
-              });
-            const $dropDown = createDropDown(display, records, relatedContent[0], $dropDownTitle);
-            const $elementDropdown = $('<div></div>').addClass('search-item').append($dropDownTitle, $dropDown);
-            $elementsAll.append($elementDropdown)
-          }
-        }
-      });
-    }
-
-    function handleDropDownTitleClick(display, CONFIG, relatedContent, $dropDownTitle) {
-      if (display.nameMarker === "") {
-        $dropDownTitle.css({ cursor: "pointer" });
-        // Check if the dropdown is already visible
-        const existingMenu = $('.custom-context-menu');
-        if (existingMenu.length > 0) {
-          existingMenu.remove(); // Remove existing menu if it exists
-          // return; // Exit if you are closing the menu
-        }
-
-        // Filter items based on the group name
-        const filteredItems = CONFIG.searchContent.filter(content => content.groupName === display.groupName && !display.nameMarker);
-        console.log("filteredItems", filteredItems);
-        // const itemsList = filteredItems.map(content => content.searchName && content.searchTarget);
-        // console.log("itemsList", itemsList);
-
-        // Create a custom context menu or container for buttons
-        const customContextMenu = $('<div></div>')
-          .addClass('custom-context-menu')
-          .css({
-            display: 'flex',
-            'flex-direction': 'column',
-            'align-items': 'center',
-            margin: '5px',
-            padding: '10px',
-            'background-color': '#f0f0f0',
-            color: '#000',
-            position: 'absolute', // Make sure it appears above other elements
-            zIndex: 1000 // Ensure it’s above other content
-          });
-        // Position the pop-up to the left of the dropdown title
-        const offset = $dropDownTitle.offset();
-        console.log(offset);
-        customContextMenu.css({
-          top: offset.top + $dropDownTitle.outerHeight() - 250, // Position below the dropdown title
-          left: offset.left - customContextMenu.outerWidth() + 90 // Position to the left with a gap of 10px
-        });
-
-        // Dynamically create buttons using Kuc.Button for each item in the list
-        filteredItems.forEach((item, index) => {
-          const buttonLabel = item.searchName;
-          const targetField = filteredItems[index].searchTarget; // Assuming you need the target field
-          console.log("targetField", targetField);
-
-          const hoverBtn = new Kuc.Button({
-            text: buttonLabel,
-            type: 'normal',
-            className: 'class-btn',
-            id: targetField
-          });
-          $(hoverBtn).css({
-            margin: '5px 0',
-            width: '100%'
-          });
-
-          // Append the button to the custom context menu
-          customContextMenu.append(hoverBtn);
-          // Add click event handler to each button
-          $(hoverBtn).on('click', async () => {
-            const selectedItem = filteredItems[index]; // Get the selected item by index
-            console.log("selectedItem 555", selectedItem);
-            // Update the title with the selected item
-            $dropDownTitle.text(selectedItem.searchName);
-            // Call your function to update any other parts of the UI or state
-            updateDropDownOptions(selectedItem, filteredItems, records, $dropDownTitle);
-            // Optionally remove the custom context menu after selection
-            customContextMenu.remove();
-          });
-        });
-
-        // Append the custom context menu to the DOM
-        $elementsAll.append(customContextMenu); // Or another container you want to append to
-        $(document).on('click', function (event) {
-          if (!customContextMenu.is(event.target) && customContextMenu.has(event.target).length === 0 && !$dropDownTitle.is(event.target)) {
-            customContextMenu.remove(); // Close the menu
-            $(document).off('click'); // Remove the event listener once menu is closed
-          }
-        });
-      }
-    }
-    // Create dropdown element
-    function createDropDown(display, records, initialContent, $dropDownTitle) {
-      const NameDropdown = display.groupName;
-      NameDropdown.replace(/\s+/g, "_");
-      const $dropDown = $("<select>")
-        .addClass("kintoneplugin-dropdown")
-        .attr("id", `${NameDropdown}`)
-        .css({ width: display.searchLength });
-      $dropDown.append($("<option>").text('-----').val(''));
-
-      if (display.nameMarker) {
-        let filteredRecords = CONFIG.searchContent.filter(item => item.groupName === display.groupName);
-        filteredRecords.forEach(item => {
-          records.forEach(record => {
-            if (record[item.searchTarget].value === '') return;
-            const $option = $("<option>")
-              .text(record[item.searchTarget].value)
-              .addClass('option')
-              .attr('value', record[item.searchTarget].value)
-              .attr('fieldCode', item.searchTarget);
-            $dropDown.append($option);
-          });
-        });
-        // $dropDown.trigger('change');
-      } else {
-        $dropDownTitle.text(initialContent.searchName);
-        console.log(initialContent);
-        records.forEach(item => {
-          if (item[initialContent.searchTarget].value === '') return;
-          const $initialOption = $("<option>")
-            .text(item[initialContent.searchTarget].value)
-            .addClass('option')
-            .attr('value', item[initialContent.searchTarget].value)
-            .attr('fieldCode', initialContent.searchTarget);
-          $dropDown.append($initialOption);
-        });
-        $dropDown.trigger('change');
-      }
-      $dropDown.on('change', e => {
-        const selectedValue = $dropDown.val();
-        const selectedOption = $dropDown.find("option:selected");
-        const fieldCode = selectedOption.attr('fieldCode');
-        console.log(selectedValue);
-        console.log(fieldCode);
-
-        // Call queryDropdown function with the selected value
-        queryDropdown(selectedValue, fieldCode);
-        // queryDropdownNotEmty(selectedValue, fieldCode);
-      });
-
-      return $dropDown;
-    }
-
-    // Update dropdown options
-    function updateDropDownOptions(selectedItem, filteredItems, records, $dropDownTitle) {
-      console.log("selectedItem", selectedItem);
-      const $dropDown = $dropDownTitle.next("select"); // Find the corresponding dropdown
-      $dropDown.empty();
-      $dropDown.append($("<option>").text('-----').val(''));
-
-      const selectedContent = filteredItems.find(content => content.searchTarget === selectedItem.searchTarget);
-      records.forEach(record => {
-        if (!records || record[selectedContent.searchTarget].value === '') return;
-        const $selectedOption = $("<option>")
-          .text(record[selectedContent.searchTarget].value)
-          .addClass('option')
-          .attr('value', record[selectedContent.searchTarget].value)
-          .attr('fieldCode', selectedContent.searchTarget);
-        $dropDown.append($selectedOption);
-      });
-      $dropDown.trigger('change');
-    }
-
-    createDropDowns(CONFIG);
-    function createBokTermsObject(fieldCode, selectedValue) {
-      return { [fieldCode]: selectedValue };
-    }
-
-    function queryDropdown(selectedValue, fieldCode) {
-      console.log("selectedValue", selectedValue);
-      console.log("fieldCode", fieldCode);
-      const currentUrlBase = window.location.href.match(/\S+\//)[0];
-      console.log("currentUrlBase:", currentUrlBase);
-
-      // Check if both selectedValue and fieldCode are present
-      if (!selectedValue || !fieldCode) {
-        console.log("Missing selectedValue or fieldCode. Redirection aborted.");
-        return;
-      }
-
-      // Encode the query string properly
-      const query = encodeURIComponent(`${fieldCode} = "${selectedValue}"`);
-      console.log("Query string:", query);
-
-      // Create the bokTermsObject using the helper function
-      const bokTermsObject = createBokTermsObject(fieldCode, selectedValue);
-      console.log("BokTerms object:", bokTermsObject);
-
-      // Convert bokTermsObject to a JSON string
-      const bokTermsString = JSON.stringify(bokTermsObject);
-      const bokTerms = encodeURIComponent(bokTermsString)
-
-      // Construct the full URL with the query
-      const QueryUrl = `${currentUrlBase}?query=${query}&bokTerms={${bokTerms}}`;
-      console.log("Full URL:", QueryUrl);
-
-      // Redirect to the new URL
-      window.location.href = QueryUrl;
-    }
     // =========================
 
     var searchProcess = async function (searchInfoList) {
@@ -460,6 +244,223 @@ jQuery.noConflict();
       return queryChild;
     };
 
+    // Create dropdowns based on the configuration
+    function createDropDowns(CONFIG, display) {
+      let relatedContent = CONFIG.searchContent.filter(content => content.groupName === display.groupName);
+      // let relatedContent = CONFIG.searchContent.filter(content => content.groupName === display.groupName);
+      // Only show content if `name_marker` is not empty
+      // if (display.nameMarker) {
+      //   relatedContent = relatedContent.filter(content => content.groupName === display.groupName);
+      // }
+      // Only show content if `name_marker` is not empty
+      if (display.nameMarker && relatedContent.length === 0) return;
+
+      if (relatedContent.length > 0) {
+        const dropDownTitle = $("<label>")
+          .text(display.nameMarker ? display.groupName : relatedContent[0].searchName)
+          .addClass('custom-dropdownTitle')
+          .css({ cursor: display.nameMarker ? "default" : "pointer" })
+          .on("click", function () {
+            handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle);
+          });
+        const dropDown = createDropDown(display, records, relatedContent[0], dropDownTitle);
+        // return $('<div></div>').addClass('search-item').append(dropDownTitle, dropDown);
+        const DropdownAll = $('<div></div>').addClass('search-item').append(dropDownTitle, dropDown);
+        // eleDropdown.push(DropdownAll)
+        elementsAll.append(DropdownAll);
+      }
+    }
+
+
+    function handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle) {
+      if (display.nameMarker === "") {
+        dropDownTitle.css({ cursor: "pointer" });
+        // Check if the dropdown is already visible
+        const existingMenu = $('.custom-context-menu');
+        if (existingMenu.length > 0) {
+          existingMenu.remove(); // Remove existing menu if it exists
+          // return; // Exit if you are closing the menu
+        }
+
+        // Filter items based on the group name
+        const filteredItems = CONFIG.searchContent.filter(content => content.groupName === display.groupName && !display.nameMarker);
+        console.log("filteredItems", filteredItems);
+        // Create a custom context menu or container for buttons
+        const customContextMenu = $('<div></div>')
+          .addClass('custom-context-menu')
+          .css({
+            display: 'flex',
+            'flex-direction': 'column',
+            'align-items': 'center',
+            margin: '5px',
+            padding: '10px',
+            'background-color': '#f0f0f0',
+            color: '#000',
+            position: 'absolute', // Make sure it appears above other elements
+            zIndex: 1000 // Ensure it’s above other content
+          });
+        // Position the pop-up to the left of the dropdown title
+        const offset = dropDownTitle.offset();
+        console.log(offset);
+        customContextMenu.css({
+          top: offset.top + dropDownTitle.outerHeight() - 250, // Position below the dropdown title
+          left: offset.left - customContextMenu.outerWidth() + 90 // Position to the left with a gap of 10px
+        });
+
+        // Dynamically create buttons using Kuc.Button for each item in the list
+        filteredItems.forEach((item, index) => {
+          const buttonLabel = item.searchName;
+          const targetField = filteredItems[index].searchTarget; // Assuming you need the target field
+          console.log("targetField", targetField);
+
+          const hoverBtn = new Kuc.Button({
+            text: buttonLabel,
+            type: 'normal',
+            className: 'class-btn',
+            id: targetField
+          });
+          $(hoverBtn).css({
+            margin: '5px 0',
+            width: '100%'
+          });
+
+          // Append the button to the custom context menu
+          customContextMenu.append(hoverBtn);
+          // Add click event handler to each button
+          $(hoverBtn).on('click', async () => {
+            const selectedItem = filteredItems[index]; // Get the selected item by index
+            console.log("selectedItem 555", selectedItem);
+            // Update the title with the selected item
+            dropDownTitle.text(selectedItem.searchName);
+            // Call your function to update any other parts of the UI or state
+            updateDropDownOptions(selectedItem, filteredItems, records, dropDownTitle);
+            // Optionally remove the custom context menu after selection
+            customContextMenu.remove();
+          });
+        });
+
+        // Append the custom context menu to the DOM
+        elementsAll.append(customContextMenu); // Or another container you want to append to
+        $(document).on('click', function (event) {
+          if (!customContextMenu.is(event.target) && customContextMenu.has(event.target).length === 0 && !dropDownTitle.is(event.target)) {
+            customContextMenu.remove(); // Close the menu
+            $(document).off('click'); // Remove the event listener once menu is closed
+          }
+        });
+      }
+    }
+    // Create dropdown element
+    function createDropDown(display, records, initialContent, dropDownTitle) {
+      const NameDropdown = display.groupName;
+      NameDropdown.replace(/\s+/g, "_");
+      const dropDown = $("<select>")
+        .addClass("kintoneplugin-dropdown")
+        .attr("id", `${NameDropdown}`)
+        .css({ width: display.searchLength });
+      dropDown.append($("<option>").text('-----').val(''));
+
+      if (display.nameMarker) {
+        let filteredRecords = CONFIG.searchContent.filter(item => item.groupName === display.groupName);
+        filteredRecords.forEach(item => {
+          records.forEach(record => {
+            if (record[item.searchTarget].value === '') return;
+            const option = $("<option>")
+              .text(record[item.searchTarget].value)
+              .addClass('option')
+              .attr('value', record[item.searchTarget].value)
+              .attr('fieldCode', item.searchTarget);
+            dropDown.append(option);
+          });
+        });
+        // $dropDown.trigger('change');
+      } else {
+        dropDownTitle.text(initialContent.searchName);
+        console.log(initialContent);
+        records.forEach(item => {
+          if (item[initialContent.searchTarget].value === '') return;
+          const initialOption = $("<option>")
+            .text(item[initialContent.searchTarget].value)
+            .addClass('option')
+            .attr('value', item[initialContent.searchTarget].value)
+            .attr('fieldCode', initialContent.searchTarget);
+          dropDown.append(initialOption);
+        });
+        dropDown.trigger('change');
+      }
+      dropDown.on('change', e => {
+        const selectedValue = dropDown.val();
+        const selectedOption = dropDown.find("option:selected");
+        const fieldCode = selectedOption.attr('fieldCode');
+        console.log(selectedValue);
+        console.log(fieldCode);
+
+        // Call queryDropdown function with the selected value
+        queryDropdown(selectedValue, fieldCode);
+        // queryDropdownNotEmty(selectedValue, fieldCode);
+      });
+
+      return dropDown;
+    }
+
+    // Update dropdown options
+    function updateDropDownOptions(selectedItem, filteredItems, records, dropDownTitle) {
+      console.log("selectedItem", selectedItem);
+      const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
+      dropDown.empty();
+      dropDown.append($("<option>").text('-----').val(''));
+
+      const selectedContent = filteredItems.find(content => content.searchTarget === selectedItem.searchTarget);
+      records.forEach(record => {
+        if (!records || record[selectedContent.searchTarget].value === '') return;
+        const selectedOption = $("<option>")
+          .text(record[selectedContent.searchTarget].value)
+          .addClass('option')
+          .attr('value', record[selectedContent.searchTarget].value)
+          .attr('fieldCode', selectedContent.searchTarget);
+        dropDown.append(selectedOption);
+      });
+      dropDown.trigger('change');
+    }
+
+    // createDropDowns(CONFIG);
+
+
+    function createBokTermsObject(fieldCode, selectedValue) {
+      return { [fieldCode]: selectedValue };
+    }
+
+    function queryDropdown(selectedValue, fieldCode) {
+      console.log("selectedValue", selectedValue);
+      console.log("fieldCode", fieldCode);
+      const currentUrlBase = window.location.href.match(/\S+\//)[0];
+      console.log("currentUrlBase:", currentUrlBase);
+
+      // Check if both selectedValue and fieldCode are present
+      if (!selectedValue || !fieldCode) {
+        console.log("Missing selectedValue or fieldCode. Redirection aborted.");
+        return;
+      }
+
+      // Encode the query string properly
+      const query = encodeURIComponent(`${fieldCode} = "${selectedValue}"`);
+      console.log("Query string:", query);
+
+      // Create the bokTermsObject using the helper function
+      const bokTermsObject = createBokTermsObject(fieldCode, selectedValue);
+      console.log("BokTerms object:", bokTermsObject);
+
+      // Convert bokTermsObject to a JSON string
+      const bokTermsString = JSON.stringify(bokTermsObject);
+      const bokTerms = encodeURIComponent(bokTermsString)
+
+      // Construct the full URL with the query
+      const QueryUrl = `${currentUrlBase}?query=${query}&bokTerms={${bokTerms}}`;
+      console.log("Full URL:", QueryUrl);
+
+      // Redirect to the new URL
+      window.location.href = QueryUrl;
+    }
+
     // ========================
     function createTextInput(searchType, groupName) {
       console.log("type +++11", searchType);
@@ -506,22 +507,22 @@ jQuery.noConflict();
 
     function createNumberRangeInput(searchType, groupName) {
       let NumberRange = groupName.replace(/\s+/g, "_");
-      const $wrapper = $('<div class="wrapperd-number"></div>');
-      const $start = $('<input>', {
+      const wrapper = $('<div class="wrapperd-number"></div>');
+      const start = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
         'data-search-type': searchType,
         id: `${NumberRange}_start`,
       });
-      const $end = $('<input>', {
+      const end = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
         'data-search-type': searchType,
         id: `${NumberRange}_end`,
       });
-      const $separator = $('<span>⁓</span>').addClass('separatornumber');
+      const separator = $('<span>⁓</span>').addClass('separatornumber');
 
-      return $wrapper.append($start, $separator, $end);
+      return wrapper.append(start, separator, end);
     }
 
     function createDateInput(searchType, groupName) {
@@ -567,12 +568,12 @@ jQuery.noConflict();
         console.log("End Date", event.detail.value);
       });
 
-      const $separator = $('<span>⁓</span>').addClass('separator-datepicker');
+      const separator = $('<span>⁓</span>').addClass('separator-datepicker');
 
-      const $wrapper = $('<div></div>').addClass('wrapper-datepiker')
-      $wrapper.append(datePickerSatrt).append($separator).append(datePickerEnd);
+      const wrapper = $('<div></div>').addClass('wrapper-datepiker')
+      wrapper.append(datePickerSatrt).append(separator).append(datePickerEnd);
 
-      return $wrapper;
+      return wrapper;
     }
 
     // Create action buttons
@@ -580,19 +581,19 @@ jQuery.noConflict();
       return $('<button>').text(text).addClass('kintoneplugin-button-dialog-ok').css('font-size', '13px').on('click', callback);
     }
 
-    const $searchButton = createButton('Search', () => {
+    const searchButton = createButton('Search', () => {
       var searchInfoList = CONFIG.groupSetting;
       searchProcess(searchInfoList);
     });
-    const $clearButton = createButton('C', () => alert('Clear button clicked!'));
+    const clearButton = createButton('C', () => alert('Clear button clicked!'));
 
-    const $elementBtn = $('<div class="element-button"></div>').append($searchButton, $clearButton);
-
+    const elementBtn = $('<div class="element-button"></div>').append(searchButton, clearButton);
     CONFIG.groupSetting.forEach(searchItem => {
+      console.log('CONFIG22222222222222222222222', searchItem);
       const { searchType, groupName } = searchItem;
-      const $elementInput = $('<div></div>').addClass('search-item');
+      const elementInput = $('<div></div>').addClass('search-item');
       let afterFilter = CONFIG.searchContent.filter((item) => item.groupName == groupName);
-      console.log('5', afterFilter);
+      console.log('afterFilter', afterFilter);
       const Titlename = searchItem.nameMarker ? searchItem.groupName : afterFilter[0].searchName;
       // console.log(object);
       if (afterFilter.length > 0) {
@@ -616,7 +617,6 @@ jQuery.noConflict();
           inputElement = createTextArea(searchType, groupName);
           break;
         case 'multi_text_patial':
-
           inputElement = createTextArea(searchType, groupName);
           break;
         case 'number_exact':
@@ -631,20 +631,25 @@ jQuery.noConflict();
         case 'date_range':
           inputElement = createDateRangeInput(searchType, groupName);
           break;
+        case 'dropdown_exact':
+          inputElement = createDropDowns(CONFIG, searchItem);
+          break;
         default:
           inputElement = null;
       }
       if (inputElement) {
         $(inputElement).css('width', searchItem.searchLength);
-        console.log("object----------", groupName);
-        const $label = $('<label>').text(Titlename).addClass('label');
-        $elementInput.append($label, inputElement);
-        $elementsAll.append($elementInput);
+        if (searchItem.searchType !== 'dropdown_exact') {
+          const label = $('<label>').text(Titlename).addClass('label');
+          elementInput.append(label);
+        }
+        elementInput.append(inputElement);
+        elementsAll.append(elementInput);
       }
     });
 
-    $elementsAll.append($elementBtn);
-    $spaceEl.append($elementsAll);
+    elementsAll.append(elementBtn);
+    spaceElement.append(elementsAll);
 
   });
 
