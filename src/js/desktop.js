@@ -3,7 +3,27 @@ jQuery.noConflict();
   const CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
   console.log("config", CONFIG);
   kintone.events.on('app.record.index.show', async (event) => {
+    let setColor = CONFIG.colorSetting;
     // if (!CONFIG) return;
+    // console.log(window.location.href);
+    // // Create a URL object
+    // const urlObj = new URL(window.location.href);
+
+    // // Get the bokTerms parameter
+    // const bokTerms = urlObj.searchParams.get('bokTerms');
+
+    // // Decode the bokTerms string
+    // const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{{|}}/g, '');
+    // console.log(decodedBokTerms);
+
+    // const result = {};
+    // decodedBokTerms.split(',').forEach(pair => {
+    //   const [key, value] = pair.split(':').map(item => item.trim().replace(/"/g, ''));
+    //   result[key] = value;
+    // });
+
+    // // Log the result
+    // console.log(result);
 
     const records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
     console.log("records", records);
@@ -107,7 +127,7 @@ jQuery.noConflict();
       return query;
     };
 
-    var buildTextInitialQuery = function (searchInfo, query) {
+    let buildTextInitialQuery = function (searchInfo, query) {
       console.log("GGG");
       console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
@@ -158,7 +178,7 @@ jQuery.noConflict();
       return '';
     };
 
-    var buildTextPartialQuery = function (searchInfo, query) {
+    let buildTextPartialQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
@@ -201,7 +221,7 @@ jQuery.noConflict();
       }
       return '';
     };
-    var buildTextExactQuery = function (searchInfo, query) {
+    let buildTextExactQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
@@ -285,27 +305,21 @@ jQuery.noConflict();
     let buildNumberExactQuery = function (searchInfo, query) {
       let queryChild = "";
       let replacedText = searchInfo.groupName;
-      const startValue = $(`#${replacedText}`).length && $(`#${replacedText}_start`).val();
-      if ($(`#${replacedText}`).length) {
-        console.log("have");
+      const startValue = $(`#${replacedText}`).length && $(`#${replacedText}`).val();
+      // if ($(`#${replacedText}`).length) {
+      //   console.log("have");
 
-        let bla = $(`#${replacedText}`).val();
-        console.log("bla", bla);
-      }
-
-      // if (startValue && endValue == '') {
-      //   queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + ")";
-      //   // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
-      // } else if (endValue && startValue == '') {
-      //   queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + "<=" + ' "' + endValue + '"' + ")";
-      //   // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
-      // } else if (startValue && endValue) {
-      //   queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + " and " + searchInfo.target_field + ' ' + "<=" + ' "' + endValue + '"' + ")";
-      //   // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_start`, startValue);
-      //   // sessionStorage.setItem(`${searchInfo.fieldInfo.code}_end`, endValue);
+      //   let bla = $(`#${replacedText}`).val();
+      //   console.log("bla", bla);
       // }
+
+      if (startValue == '') {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+      } else if (startValue) {
+        queryChild = `${query ? " and " : ""}` + "(" + searchInfo.target_field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+      }
       return queryChild;
-    };
+    }
     let buildNumberRangeQuery = function (searchInfo, query) {
       let queryChild = "";
       let replacedText = searchInfo.groupName;
@@ -354,9 +368,9 @@ jQuery.noConflict();
       }
       return queryChild;
     };
-
     // Create dropdowns based on the configuration
-    function createDropDowns(CONFIG, display) {
+    function createDropDowns(CONFIG, display, color) {
+      console.log(">🎉🎉🎉setColor", color);
       let relatedContent = CONFIG.searchContent.filter(content => content.groupName === display.groupName);
       // Only show content if `name_marker` is not empty
       if (display.nameMarker && relatedContent.length === 0) return;
@@ -365,8 +379,10 @@ jQuery.noConflict();
         const dropDownTitle = $("<label>")
           .text(display.nameMarker ? display.groupName : relatedContent[0].searchName)
           .addClass('custom-dropdownTitle')
-          .css({ cursor: display.nameMarker ? "default" : "pointer" })
-          .on("click", function () {
+          .css({
+            cursor: display.nameMarker ? "default" : "pointer",
+            color: setColor?.titleColor
+          }).on("click", function () {
             handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle);
           });
         const dropDown = createDropDown(display, records, relatedContent[0], dropDownTitle);
@@ -389,17 +405,6 @@ jQuery.noConflict();
         console.log("filteredItems", filteredItems);
         const customContextMenu = $('<div></div>')
           .addClass('custom-context-menu')
-          .css({
-            display: 'flex',
-            'flex-direction': 'column',
-            'align-items': 'center',
-            margin: '5px',
-            padding: '10px',
-            'background-color': '#f0f0f0',
-            color: '#000',
-            position: 'absolute',
-            zIndex: 1000
-          });
         // Position the pop-up to the left of the dropdown title
         const offset = dropDownTitle.offset();
         console.log(offset);
@@ -492,10 +497,7 @@ jQuery.noConflict();
         const labelValue = dropDown.closest('.search-item').find('.custom-dropdownTitle').text().trim();
         console.log(`Label Value: ${labelValue}`);
 
-        // Call queryDropdown function with the selected value
         queryDropdown(selectedValue, fieldCode, dropdownId, labelValue);
-        // queryDropdownNotEmty(selectedValue, fieldCode);
-        // queryDropdownNotEmty(selectedValue, fieldCode);
       });
 
       return dropDown;
@@ -522,7 +524,7 @@ jQuery.noConflict();
     }
 
     // createDropDowns(CONFIG);
-    function createBokTermsObject(selectedValue, fieldCode, dropdownId, labelValue) {
+    function createBokTermsObject(selectedValue, dropdownId, labelValue) {
       return {
         groupName: {
           id: dropdownId,
@@ -591,7 +593,6 @@ jQuery.noConflict();
         disabled: false
       });
       textarea.setAttribute('data-search-type', searchType);
-      // textarea.setAttribute('id', inputTeatArae);
       textarea.addEventListener('change', event => console.log("TextArea:", event.detail.value));
       return textarea;
     }
@@ -680,8 +681,12 @@ jQuery.noConflict();
 
     // Create action buttons
     function createButton(text, callback) {
-      return $('<button>').text(text).addClass('kintoneplugin-button-dialog-ok').css('font-size', '13px').on('click', callback);
+      return $('<button>').text(text).addClass('kintoneplugin-button-dialog-ok').css({
+        'background': setColor.buttonColor,
+        'color': setColor.buttonTextColor,
+      }).on('click', callback);
     }
+    // .css('font-size', '13px', )
 
     const searchButton = createButton('Search', () => {
       let searchInfoList = CONFIG.groupSetting;
@@ -720,41 +725,30 @@ jQuery.noConflict();
 
     //Searchfunc----------------
     const elementBtn = $('<div class="element-button"></div>').append(searchButton, clearButton);
-    // CONFIG.groupSetting.forEach(searchItem => {
-    //   console.log('CONFIG22222222222222222222222', searchItem);
-    //   const { searchType, groupName } = searchItem;
-    //   const elementInput = $('<div></div>').addClass('search-item');
-    //   let afterFilter = CONFIG.searchContent.filter((item) => item.groupName == groupName);
-    //   console.log('afterFilter', afterFilter);
-    //   const Titlename = searchItem.nameMarker ? searchItem.groupName : afterFilter[0].searchName;
-    //   // console.log(object);
-    //   if (afterFilter.length > 0) {
-    //     searchItem["target_field"] = afterFilter[0].searchTarget;
-    //   }
-    //   console.log("afterFilte", afterFilter);
-    //   console.log("afterFilte", afterFilter[0].fieldForSearch);
-    //   let inputElement;
-    //   console.log("++++", groupName);
     CONFIG.groupSetting.forEach(searchItem => {
       const { searchType, groupName, nameMarker } = searchItem;
       let setSearchTarget = [];
       let Titlename;
       let afterFilter = CONFIG.searchContent.filter((searchItem) => searchItem.groupName == groupName);
-      console.log("🚀 ~ kintone.events.on ~ afterFilter:", afterFilter);
+      let setColor = CONFIG.colorSetting;
+      // console.log("🚀 ~ kintone.events.on ~ afterFilter:", afterFilter);
       afterFilter.forEach(searchItemTarget => {
-        console.log("searchItemTarget", searchItemTarget);
+        // console.log("searchItemTarget", searchItemTarget);
         Titlename = nameMarker ? searchItemTarget.groupName : searchItemTarget.searchName;
-        setSearchTarget.push(searchItemTarget.fieldForSearch);
+        setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
       });
 
       console.log("setSearchTarget::", setSearchTarget);
       console.log("groupName::", groupName);
-      console.log("searchType::", searchType);
+      console.log(">🎉🎉🎉lor", setColor);
 
 
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
-        const elementInput = $('<div></div>').addClass('search-item');
+        const elementInput = $('<div></div>').addClass('search-item').css({
+          'width': searchItem.searchLength,
+          'color': setColor.titleColor,
+        });
         let inputElement;
         switch (searchType) {
           case 'text_initial':
@@ -785,20 +779,17 @@ jQuery.noConflict();
             inputElement = createDateRangeInput(searchType, groupName);
             break;
           case 'dropdown_exact':
-            inputElement = createDropDowns(CONFIG, searchItem);
+            inputElement = createDropDowns(CONFIG, searchItem, setColor);
             break;
           default:
             inputElement = null;
         }
-        if (inputElement) {
-          $(inputElement).css('width', searchItem.searchLength);
-          if (searchItem.searchType !== 'dropdown_exact') {
-            const label = $('<label>').text(Titlename).addClass('label');
-            elementInput.append(label);
-          }
-          elementInput.append(inputElement);
-          elementsAll.append(elementInput);
+        if (searchItem.searchType !== 'dropdown_exact') {
+          const label = $('<label>').text(Titlename).addClass('label');
+          elementInput.append(label);
         }
+        elementInput.append(inputElement);
+        elementsAll.append(elementInput);
       }
     });
 
@@ -853,6 +844,74 @@ jQuery.noConflict();
       });
     });
     if (event.type === 'app.record.create.submit') {
+      let body = {
+        app: kintone.app.getId(),
+        records: [
+          {
+            id: kintone.app.record.getId(),
+            record: updateRecord
+          }
+        ]
+      };
+      try {
+        await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    return event;
+  });
+  kintone.events.on(['app.record.edit.show', 'app.record.create.show', 'app.record.create.submit', 'app.record.edit.submit.success'], async (event) => {
+    let record = event.record;
+    let updateRecord = {};
+    console.log(CONFIG);
+
+    CONFIG.searchContent.forEach((searchItem) => {
+      CONFIG.groupSetting.forEach((item) => {
+        if (item.groupName === searchItem.groupName) {
+          if (
+            item.searchType === "text_initial" ||
+            item.searchType === "text_patial" ||
+            item.searchType === "text_exact" ||
+            item.searchType === "multi_text_initial" ||
+            item.searchType === "multi_text_patial"
+          ) {
+            if (event.type === 'app.record.create.show') {
+              record[searchItem.fieldForSearch].disabled = true;
+            } else {
+              let targetValue = record[searchItem.searchTarget].value;
+              record[searchItem.fieldForSearch].disabled = true;
+              console.log(targetValue);
+              let convertedValue = "";
+              if (targetValue == "" || targetValue == undefined) {
+                convertedValue = ""
+              } else {
+                switch (item.searchType) {
+                  case "text_initial":
+                  case "multi_text_initial":
+                    convertedValue = `_,${targetValue.split('').join(',')}`;
+                    break;
+                  case "text_patial":
+                  case "multi_text_patial":
+                    convertedValue = `${targetValue.split('').join(',')}`;
+                    break;
+                  case "text_exact":
+                    convertedValue = `_,${targetValue.split('').join(',')},_`;
+                    break;
+                  default:
+                    break;
+                }
+              }
+              updateRecord[searchItem.fieldForSearch] = {
+                value: convertedValue
+              }
+              record[searchItem.fieldForSearch].value = convertedValue;
+            }
+          }
+        }
+      });
+    });
+    if (event.type == 'app.record.create.submit' || event.type == 'app.record.edit.submit.success') {
       let body = {
         app: kintone.app.getId(),
         records: [
