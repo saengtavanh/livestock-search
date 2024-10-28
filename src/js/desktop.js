@@ -4,26 +4,6 @@ jQuery.noConflict();
   console.log("config", CONFIG);
   kintone.events.on('app.record.index.show', async (event) => {
     let setColor = CONFIG.colorSetting;
-    // if (!CONFIG) return;
-    // console.log(window.location.href);
-    // // Create a URL object
-    // const urlObj = new URL(window.location.href);
-
-    // // Get the bokTerms parameter
-    // const bokTerms = urlObj.searchParams.get('bokTerms');
-
-    // // Decode the bokTerms string
-    // const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{{|}}/g, '');
-    // console.log(decodedBokTerms);
-
-    // const result = {};
-    // decodedBokTerms.split(',').forEach(pair => {
-    //   const [key, value] = pair.split(':').map(item => item.trim().replace(/"/g, ''));
-    //   result[key] = value;
-    // });
-
-    // // Log the result
-    // console.log(result);
 
     const records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
     console.log("records", records);
@@ -37,16 +17,11 @@ jQuery.noConflict();
     const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{{|}}/g, '');
     const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-]/g, '');
     const wrappedBokTerms = `{${cleanBokTerms}}`;
-    console.log(bokTerms);
 
     if (bokTerms != null) {
       let bokTermsObj = JSON.parse(wrappedBokTerms);
       console.log('hellooo', bokTermsObj);
       CONFIG.groupSetting.forEach(searchItem => {
-        // console.log(searchItem.groupName);
-        // console.log(bokTermsObj.groupName.id);
-        // console.log(bokTermsObj.groupName.value);
-
         if (searchItem.groupName === bokTermsObj.groupName.id) {
           let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
           console.log('Formatted ID Element:', getIdElement);
@@ -216,7 +191,6 @@ jQuery.noConflict();
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
         }
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
         return queryChild;
       }
       return '';
@@ -370,7 +344,7 @@ jQuery.noConflict();
     };
     // Create dropdowns based on the configuration
     function createDropDowns(CONFIG, display, color) {
-      console.log(">🎉🎉🎉setColor", color);
+      console.log(">🎉🎉🎉setColor===", color);
       let relatedContent = CONFIG.searchContent.filter(content => content.groupName === display.groupName);
       // Only show content if `name_marker` is not empty
       if (display.nameMarker && relatedContent.length === 0) return;
@@ -383,7 +357,7 @@ jQuery.noConflict();
             cursor: display.nameMarker ? "default" : "pointer",
             color: setColor?.titleColor
           }).on("click", function () {
-            handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle);
+            handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle, dropDown);
           });
         const dropDown = createDropDown(display, records, relatedContent[0], dropDownTitle);
         const DropdownAll = $('<div></div>').addClass('search-item').append(dropDownTitle, dropDown);
@@ -392,7 +366,7 @@ jQuery.noConflict();
     }
 
 
-    function handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle) {
+    function handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle, dropDown) {
       if (display.nameMarker === "") {
         dropDownTitle.css({ cursor: "pointer" });
         const existingMenu = $('.custom-context-menu');
@@ -403,8 +377,18 @@ jQuery.noConflict();
         // Filter items based on the group name
         const filteredItems = CONFIG.searchContent.filter(content => content.groupName === display.groupName && !display.nameMarker);
         console.log("filteredItems", filteredItems);
-        const customContextMenu = $('<div></div>')
-          .addClass('custom-context-menu')
+        const customContextMenu = $('<div></div>').addClass('custom-context-menu')
+          .css({
+            display: 'flex',
+            'flex-direction': 'column',
+            'align-items': 'center',
+            margin: '5px',
+            padding: '10px',
+            'background-color': '#f0f0f0',
+            color: '#000',
+            position: 'absolute', // Make sure it appears above other elements
+            zIndex: 1000 // Ensure it’s above other content
+          });
         // Position the pop-up to the left of the dropdown title
         const offset = dropDownTitle.offset();
         console.log(offset);
@@ -433,9 +417,8 @@ jQuery.noConflict();
           customContextMenu.append(hoverBtn);
           $(hoverBtn).on('click', async () => {
             const selectedItem = filteredItems[index]; // Get the selected item by index
-            console.log("selectedItem 555", selectedItem);
             dropDownTitle.text(selectedItem.searchName);
-            updateDropDownOptions(selectedItem, filteredItems, records, dropDownTitle);
+            updateDropDownOptions(selectedItem, filteredItems, records, dropDownTitle, dropDown);
             customContextMenu.remove();
           });
         });
@@ -505,8 +488,7 @@ jQuery.noConflict();
 
     // Update dropdown options
     function updateDropDownOptions(selectedItem, filteredItems, records, dropDownTitle) {
-      console.log("selectedItem", selectedItem);
-      const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
+      const dropDown = dropDownTitle.next('select');
       dropDown.empty();
       dropDown.append($("<option>").text('-----').val(''));
 
@@ -544,7 +526,6 @@ jQuery.noConflict();
         console.log("Missing selectedValue or fieldCode. Redirection aborted.");
         return;
       }
-
       // Encode the query string properly
       const query = encodeURIComponent(`${fieldCode} = "${selectedValue}"`);
       console.log("Query string:", query);
@@ -552,38 +533,26 @@ jQuery.noConflict();
       // Create the bokTermsObject using the helper function
       const bokTermsObject = createBokTermsObject(selectedValue, fieldCode, dropdownId, labelValue);
       console.log("BokTerms object:", bokTermsObject);
-
-      // Convert bokTermsObject to a JSON string
       const bokTermsString = JSON.stringify(bokTermsObject);
       const bokTerms = encodeURIComponent(bokTermsString)
-
-      // Construct the full URL with the query
       const QueryUrl = `${currentUrlBase}?query=${query}&bokTerms={${bokTerms}}`;
       console.log("Full URL:", QueryUrl);
-
-      // Redirect to the new URL
       window.location.href = QueryUrl;
     }
-
     // ========================
-    function createTextInput(searchType, groupName) {
-      console.log("type +++11", searchType);
-      console.log("groupName +++111", groupName);
+    function createTextInput(searchType, groupName, width) {
       let initialText = groupName.replace(/\s+/g, "_");
       const inputElement = $('<input>', {
         type: searchType,
         class: 'kintoneplugin-input-text',
         'data-serach-type': searchType,
         'id': initialText
-      });
-
-      // Return the input element for further use
-      console.log(inputElement.val());
+      }).css({
+        'width': width.searchLength,
+      })
       return inputElement;
     }
-    function createTextArea(searchType, groupName) {
-      console.log("type +++22", searchType);
-      console.log("groupName +++22", groupName);
+    function createTextArea(searchType, groupName, width) {
       let inputTeatArae = groupName.replace(/\s+/g, "_");
       const textarea = new Kuc.TextArea({
         requiredIcon: true,
@@ -591,24 +560,27 @@ jQuery.noConflict();
         id: inputTeatArae,
         visible: true,
         disabled: false
-      });
+      }).css({
+        'width': width.searchLength,
+      })
       textarea.setAttribute('data-search-type', searchType);
-      textarea.addEventListener('change', event => console.log("TextArea:", event.detail.value));
       return textarea;
     }
 
-    function createTextNumberInput(searchType, groupName) {
+    function createTextNumberInput(searchType, groupName, width) {
       let initialNumber = groupName.replace(/\s+/g, "_");
       const InputNumber = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
         'data-search-type': searchType,
         'id': initialNumber
+      }).css({
+        'width': width.searchLength,
       })
       return InputNumber;
     }
 
-    function createNumberRangeInput(searchType, groupName) {
+    function createNumberRangeInput(searchType, groupName, width) {
       let NumberRange = groupName.replace(/\s+/g, "_");
       const wrapper = $('<div class="wrapperd-number"></div>');
       const start = $('<input>', {
@@ -616,19 +588,22 @@ jQuery.noConflict();
         class: 'kintoneplugin-input-text',
         'data-search-type': searchType,
         id: `${NumberRange}_start`,
-      });
+      }).css({
+        'width': width.searchLength,
+      })
       const end = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
         'data-search-type': searchType,
         id: `${NumberRange}_end`,
-      });
-      const separator = $('<span>⁓</span>').addClass('separatornumber');
-
+      }).css({
+        'width': width.searchLength,
+      })
+      const separator = $('<span>⁓</span>').addClass('separatornumber')
       return wrapper.append(start, separator, end);
     }
 
-    function createDateInput(searchType, groupName) {
+    function createDateInput(searchType, groupName, width) {
       let dateInput = groupName.replace(/\s+/g, "_");
       const datePicker = new Kuc.DatePicker({
         requiredIcon: true,
@@ -637,13 +612,14 @@ jQuery.noConflict();
         id: dateInput,
         visible: true,
         disabled: false
-      });
+      }).css({
+        'width': width.searchLength,
+      })
       datePicker.setAttribute('data-search-type', searchType);
-      datePicker.addEventListener('change', event => console.log("DatePicker", event.detail.value));
       return datePicker;
     }
 
-    function createDateRangeInput(searchType, groupName) {
+    function createDateRangeInput(searchType, groupName, width) {
       let dateRange = groupName.replace(/\s+/g, "_");
       const datePickerSatrt = new Kuc.DatePicker({
         requiredIcon: true,
@@ -652,7 +628,9 @@ jQuery.noConflict();
         id: `${dateRange}_start`,
         visible: true,
         disabled: false
-      });
+      }).css({
+        'width': width.searchLength,
+      })
       datePickerSatrt.setAttribute('data-search-type', searchType);
       datePickerSatrt.addEventListener('change', event => {
         console.log("Start Date", event.detail.value);
@@ -665,17 +643,14 @@ jQuery.noConflict();
         id: `${dateRange}_end`,
         visible: true,
         disabled: false
-      });
+      }).css({
+        'width': width.searchLength,
+      })
       datePickerEnd.setAttribute('data-search-type', searchType);
-      datePickerEnd.addEventListener('change', event => {
-        console.log("End Date", event.detail.value);
-      });
 
       const separator = $('<span>⁓</span>').addClass('separator-datepicker');
-
       const wrapper = $('<div></div>').addClass('wrapper-datepiker')
       wrapper.append(datePickerSatrt).append(separator).append(datePickerEnd);
-
       return wrapper;
     }
 
@@ -686,7 +661,6 @@ jQuery.noConflict();
         'color': setColor.buttonTextColor,
       }).on('click', callback);
     }
-    // .css('font-size', '13px', )
 
     const searchButton = createButton('Search', () => {
       let searchInfoList = CONFIG.groupSetting;
@@ -723,60 +697,57 @@ jQuery.noConflict();
       });
     });
 
-    //Searchfunc----------------
+    //check type to create element
     const elementBtn = $('<div class="element-button"></div>').append(searchButton, clearButton);
     CONFIG.groupSetting.forEach(searchItem => {
       const { searchType, groupName, nameMarker } = searchItem;
       let setSearchTarget = [];
       let Titlename;
-      let afterFilter = CONFIG.searchContent.filter((searchItem) => searchItem.groupName == groupName);
-      let setColor = CONFIG.colorSetting;
-      // console.log("🚀 ~ kintone.events.on ~ afterFilter:", afterFilter);
+      let afterFilter = CONFIG.searchContent.filter((searchItem) => searchItem.groupName === groupName);
+      console.log("afterFilter", afterFilter);
+      let masterId = afterFilter.length > 0 ? afterFilter[0].masterId : null;
+      console.log("masterIds", masterId);
+      let Codemaster = CONFIG.codeMasterSetting.filter(marster => marster.masterId === masterId);
+      console.log("Codemaster", Codemaster[0].codeField);
       afterFilter.forEach(searchItemTarget => {
-        // console.log("searchItemTarget", searchItemTarget);
         Titlename = nameMarker ? searchItemTarget.groupName : searchItemTarget.searchName;
         setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
+        setSearchTarget.push(searchItemTarget.nameMarker !== "-----" ? searchItemTarget.searchTarget : Codemaster.length > 0 ? Codemaster[0].codeField : "");
       });
-
-      console.log("setSearchTarget::", setSearchTarget);
-      console.log("groupName::", groupName);
-      console.log(">🎉🎉🎉lor", setColor);
-
 
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
         const elementInput = $('<div></div>').addClass('search-item').css({
-          'width': searchItem.searchLength,
           'color': setColor.titleColor,
         });
         let inputElement;
         switch (searchType) {
           case 'text_initial':
-            inputElement = createTextInput(searchType, groupName);
+            inputElement = createTextInput(searchType, groupName, searchItem);
             break;
           case 'text_patial':
-            inputElement = createTextInput(searchType, groupName);
+            inputElement = createTextInput(searchType, groupName, searchItem);
             break;
           case 'text_exact':
-            inputElement = createTextInput(searchType, groupName);
+            inputElement = createTextInput(searchType, groupName, searchItem);
             break;
           case 'multi_text_initial':
-            inputElement = createTextArea(searchType, groupName);
+            inputElement = createTextArea(searchType, groupName, searchItem);
             break;
           case 'multi_text_patial':
-            inputElement = createTextArea(searchType, groupName);
+            inputElement = createTextArea(searchType, groupName, searchItem);
             break;
           case 'number_exact':
-            inputElement = createTextNumberInput(searchType, groupName);
+            inputElement = createTextNumberInput(searchType, groupName, searchItem);
             break;
           case 'number_range':
-            inputElement = createNumberRangeInput(searchType, groupName);
+            inputElement = createNumberRangeInput(searchType, groupName, searchItem);
             break;
           case 'date_exact':
-            inputElement = createDateInput(searchType, groupName);
+            inputElement = createDateInput(searchType, groupName, searchItem);
             break;
           case 'date_range':
-            inputElement = createDateRangeInput(searchType, groupName);
+            inputElement = createDateRangeInput(searchType, groupName, searchItem);
             break;
           case 'dropdown_exact':
             inputElement = createDropDowns(CONFIG, searchItem, setColor);

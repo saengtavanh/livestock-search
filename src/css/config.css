@@ -77,7 +77,7 @@ table td:first-child {
   display: flex;
   margin-left: 5%;
   margin-top: 35px;
-  gap: 2.3%;
+  gap: 1%;
 }
 
 /* #container-table-setting-prompt-template {

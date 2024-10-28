@@ -156,8 +156,6 @@ jQuery.noConflict();
 		};
 	}
 
-
-
 	// setInitialValue function
 	async function setInitialValue(status, setInitial) {
 		let getConfig = {};
@@ -177,7 +175,6 @@ jQuery.noConflict();
 				return;
 			} else {
 				getConfig = JSON.parse(CONFIG.config);
-				console.log('config', getConfig);
 				getConfig.groupSetting.forEach((item) => {
 					let rowForClone = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
 					$("#kintoneplugin-setting-tspace tr:last-child").after(rowForClone);
@@ -261,9 +258,6 @@ jQuery.noConflict();
 			$("#button-color").val(getConfig.colorSetting.buttonColor).css("color", getConfig.colorSetting.buttonColor);
 			$("#button-text-color").val(getConfig.colorSetting.buttonTextColor).css("color", getConfig.colorSetting.buttonTextColor);
 		}
-
-
-
 		checkRow();
 		checkRecreateButton();
 	}
@@ -305,13 +299,8 @@ jQuery.noConflict();
 			showConfirmButton: true,
 		})
 		let getValueUpdated = await getData();
-		console.log(getValueUpdated);
 		let hassError = await validation("update", getValueUpdated);
-		// let valueValidation = true;
-		let dataLost = false;
 		if (!hassError) {
-			// Clear validation-error.
-			// $('.spaceForPromptTemplate, .storeFields, .spaceForButton').removeClass('validation-error');
 
 			// Clear value in row 0 of table space for prompt template and button and set to default value.
 			let firstRow = $('#kintoneplugin-setting-prompt-template tr:eq(0)');
@@ -334,7 +323,6 @@ jQuery.noConflict();
 			// Select all table rows except the first one.
 			$('#kintoneplugin-setting-prompt-template > tr').each(function () {
 				let row = $(this); // Store the current row in a jQuery object.
-
 				// Get the selected values from the dropdowns space for button and space for prompt template.
 				let selectedGroupName = row.find('select#group_name_ref').val();
 				let selectedMasterId = row.find('select#master_id_ref').val();
@@ -342,7 +330,6 @@ jQuery.noConflict();
 				// Clear the value and set to default value.
 				row.find('select#group_name_ref').empty().append($('<option>').val('-----').text("-----"));
 				row.find('select#master_id_ref').empty().append($('<option>').val('-----').text("-----"));
-				let appendedValues = new Set();
 				getValueUpdated.groupSetting.forEach((item) => {
 					if (item.groupName) {
 						row.find('select#group_name_ref').append(
@@ -364,11 +351,9 @@ jQuery.noConflict();
 				// Check to see if not same value is set "-----".
 				if (row.find('select#group_name_ref option[value="' + selectedGroupName + '"]').length == 0) {
 					selectedGroupName = "-----";
-					dataLost = true;
 				}
 				if (row.find('select#master_id_ref option[value="' + selectedMasterId + '"]').length == 0) {
 					selectedMasterId = "-----";
-					dataLost = true;
 				}
 
 				// Set to the value selected.
@@ -380,7 +365,7 @@ jQuery.noConflict();
 			Swal10.fire({
 				position: 'center',
 				icon: 'success',
-				text: 'プラグイン設定が更新されました。',
+				text: 'Update data successfully',
 				showConfirmButton: true,
 			});
 
@@ -398,7 +383,6 @@ jQuery.noConflict();
 		let fieldForSearchArray = [];
 		for (const [index, element] of groupSettingTable.entries()) {
 			let groupName = $(element).find('#group_name');
-			// console.log('groupName', groupName);
 			let searchType = $(element).find('#search_type');
 			if (searchType.val() == "-----") {
 				errorMessage += `<p>Please select Search type on Group setting row: ${index + 1}</p>`;
@@ -413,23 +397,22 @@ jQuery.noConflict();
 				$(groupName).addClass('validation-error');
 				hasError = true;
 			} else {
-				$(groupName).removeClass('validation-error');
+				if (!groupNameArray.includes(groupName.val().trim())) {
+					$(groupName).removeClass('validation-error');
+					groupNameArray.push(groupName.val());
+				} else {
+					$(groupName).addClass('validation-error');
+					errorMessage += `<p>The group "${groupName.val()}" already exists.</p>`;
+					hasError = true;
+				}
 			}
 
-			if (!groupNameArray.includes(groupName.val().trim())) {
-				$(groupName).removeClass('validation-error');
-				groupNameArray.push(groupName.val());
-			} else {
-				$(groupName).addClass('validation-error');
-				errorMessage += `<p>The group "${groupName.val()}" already exists.</p>`;
-				hasError = true;
-			}
+			
 
 
 		}
 
 		const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
-		console.log(codeMasterTable);
 		//code master table
 		for (const [index, element] of codeMasterTable.entries()) {
 			let appId = $(element).find('#app_id');
@@ -439,7 +422,15 @@ jQuery.noConflict();
 				$(masterId).addClass('validation-error');
 				hasError = true;
 			} else {
-				$(masterId).removeClass('validation-error');
+				// $(masterId).removeClass('validation-error');
+				if (!masterIdArray.includes(masterId.val().trim())) {
+					$(masterId).removeClass('validation-error');
+					masterIdArray.push(masterId.val());
+				} else {
+					$(masterId).addClass('validation-error');
+					errorMessage += `<p>Master ID "${masterId.val()}" already exists.</p>`;
+					hasError = true;
+				}
 			}
 
 			if (!appId.val()) {
@@ -450,14 +441,7 @@ jQuery.noConflict();
 				$(appId).removeClass('validation-error');
 			}
 
-			if (!masterIdArray.includes(masterId.val().trim())) {
-				$(masterId).removeClass('validation-error');
-				masterIdArray.push(masterId.val());
-			} else {
-				$(masterId).addClass('validation-error');
-				errorMessage += `<p>Master ID "${masterId.val()}" already exists.</p>`;
-				hasError = true;
-			}
+			
 
 		}
 		if (condition == "save" || condition == "export") {
@@ -469,7 +453,6 @@ jQuery.noConflict();
 				let targetFields = $(element).find('#search_target');
 				let fieldForSearch = $(element).find('#field_for_search');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
-				console.log('currentGroup: ', currentGroup);
 				if (!searchName.val()) {
 					errorMessage += `<p>Please enter Search type on Search content row: ${index + 1}</p>`;
 					$(searchName).addClass('validation-error');
@@ -504,7 +487,6 @@ jQuery.noConflict();
 							$(fieldForSearch).parent().addClass('validation-error');
 							hasError = true;
 							errorMessage += `<p>Search type "${currentGroup[0].searchType} is can not select field for search"</p>`;
-
 							break;
 
 						default:
@@ -563,16 +545,16 @@ jQuery.noConflict();
 			}
 		});
 
-		 // Set color when input text change
-		 $("#title-color").change(function(){
-      $(this).css('color', $(this).val());
-    });
-    $("#button-color").change(function(){
-      $(this).css('color', $(this).val());
-    });
-    $("#button-text-color").change(function(){
-      $(this).css('color', $(this).val());
-    });
+		// Set color when input text change
+		$("#title-color").change(function () {
+			$(this).css('color', $(this).val());
+		});
+		$("#button-color").change(function () {
+			$(this).css('color', $(this).val());
+		});
+		$("#button-text-color").change(function () {
+			$(this).css('color', $(this).val());
+		});
 
 		$('#kintoneplugin-setting-body tbody, #kintoneplugin-setting-code-master, #kintoneplugin-setting-tspace').sortable({
 			handle: '.drag-icon',  // Restrict dragging to the drag icon (bars)
@@ -605,25 +587,20 @@ jQuery.noConflict();
 		// button-load data.
 		$("#load_data").click(async function () {
 			window.RsComAPI.showSpinner();
-			console.log($("#kintoneplugin-setting-code-master > tr:gt(0)"))
 			let allResponse = [];
 			let codeMasterTable = $("#kintoneplugin-setting-code-master > tr:gt(0)");
 			let hasError = await validateLoadData(codeMasterTable);
-			console.log('hasError', hasError);
 			if (!hasError) {
 				try {
 					for (let row of codeMasterTable) {
 						let appId = $(row).find('#app_id').val();
 						let apiToken = $(row).find('#api_token').val();
 						let body = { app: appId };
-
+						let selectedCode = $(row).find('select#code_field').val();
+						let selectedName = $(row).find('select#name_field').val();
 						if (!appId) continue;  // Skip if appId is not present
-
 						if (apiToken) body.token = apiToken;
-
 						let checkData = allResponse.filter(item => item.appId == appId);
-						console.log('checkData', checkData);
-
 						let response = [];
 						try {
 							if (checkData.length <= 0) {
@@ -632,12 +609,9 @@ jQuery.noConflict();
 								}).then(res => { return res.properties });
 								allResponse.push({ appId, response });
 							} else {
-								console.log('get old');
 								response = checkData[0].response;
 							}
-							console.log('response', response);
 
-							// $(row).find('select#type_field').empty().append($('<option>').val('-----').text("-----"));
 							$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
 							$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
 							$(row).find('select#code_field').append(
@@ -646,12 +620,20 @@ jQuery.noConflict();
 							$(row).find('select#name_field').append(
 								$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
 							);
-							console.log('response', response);
+							// Check to see if not same value is set "-----".
+							if ($(row).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
+								selectedCode = "-----";
+							}
+							if ($(row).find('select#name_field option[value="' + selectedName + '"]').length == 0) {
+								selectedName = "-----";
+							}
+
+							// Set to the value selected.
+							$(row).find('select#code_field').val(selectedCode);
+							$(row).find('select#name_field').val(selectedName);
 						} catch (error) {
 							throw new Error("Cannot find code master app");
 						}
-
-
 					}
 					Swal10.fire({
 						position: 'center',
@@ -676,7 +658,6 @@ jQuery.noConflict();
 		});
 
 		$("button#recreate-button").on('click', async function () {
-			// e.preventDefault();
 			let currentRow = $(this).closest('tr');
 			let targetField = $(currentRow).find('select#search_target').val();
 			let groupName = $(currentRow).find('select#group_name_ref').val();
@@ -738,7 +719,6 @@ jQuery.noConflict();
 					case "text_initial":
 					case "multi_text_initial":
 						convertedValue = `_,${targetValue.split('').join(',')}`
-						console.log('convertedValue', convertedValue);
 						break;
 
 					case "text_patial":
@@ -764,7 +744,6 @@ jQuery.noConflict();
 					}
 				});
 
-
 			}
 			let body = {
 				app: kintone.app.getId(),
@@ -779,7 +758,6 @@ jQuery.noConflict();
 					showConfirmButton: true,
 				});
 			} catch (error) {
-				console.log(error);
 				Swal10.fire({
 					position: 'center',
 					icon: 'error',
@@ -800,21 +778,6 @@ jQuery.noConflict();
 			}
 		})
 
-		//hide and show recreate button
-		// $("select#group_name_ref").on('change',async (e) => {
-		// 	let data = await getData();
-		// 	let currentRow = $(e.target).closest('tr');
-		// 	let currentGroup = data.groupSetting.filter(item =>item.groupName == e.target.value);
-		// 	console.log('currentGroup: ' , currentGroup);
-		// 	// if (e.target.value == "-----") {
-		// 	// 	$(currentRow).find('button#recreate-button').hide();
-		// 	// } else {
-		// 	// 	$(currentRow).find('button#recreate-button').show();
-		// 	// }
-		// })
-
-
-
 		$("#name_marker, #group_name, #search_length, #master_id, #app_id").on("input", function () {
 			HASUPDATED = false;
 		});
@@ -824,16 +787,12 @@ jQuery.noConflict();
 		});
 
 		$("input#app_id").on("input", function () {
-			console.log($(this).val());
 			$(this).val($(this).val().replace(/[^0-9]/g, ''));
 		});
 
 		$("input#group_name, input#search_length").on("input", function () {
-			console.log($(this).val());
 			$(this).val($(this).val().replace(/[^a-zA-Z0-9\s]/g, ''));
 		});
-
-
 
 		// get version of chat gpt from api 
 		async function validateLoadData(codeMasterTable) {
@@ -845,7 +804,7 @@ jQuery.noConflict();
 					Swal10.fire({
 						position: "center",
 						icon: "error",
-						text: "アプリIDが未入力です。",
+						text: "App ID has not been entered",
 						showConfirmButton: true,
 					});
 					hasError = true;
@@ -860,12 +819,12 @@ jQuery.noConflict();
 			Swal10.fire({
 				position: "center",
 				icon: "info",
-				text: "プラグインの設定を終了しますか？",
+				text: "Do you want to exit the plugin configuration?",
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
-				confirmButtonText: "はい",
-				cancelButtonText: "いいえ",
+				confirmButtonText: "Yes",
+				cancelButtonText: "No",
 				customClass: {
 					confirmButton: 'custom-confirm-button',
 					cancelButton: 'custom-cancel-button'
@@ -886,21 +845,8 @@ jQuery.noConflict();
 			$(this).closest("tr").find(".slide-up").hide();
 		};
 
-
-
 		//add new row function
 		$(".addRow").on('click', function () {
-			// let closestTable = $(this).closest("table");
-			// if (closestTable.is("#kintoneplugin-setting-space")) {
-			//     let clonedRow = $(this).closest("tr").after($("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden")).next();
-			//     clonedRow.find('#labelForButton').val('生成');
-			//     clonedRow.find('#labelForPromptTemplate').val('プロンプトテンプレート');
-			//     checkRow("#kintoneplugin-setting-tspace");
-			// } else if (closestTable.is("#kintoneplugin-setting-body")) {
-			//     slideUp.call(this);
-			//     $(this).closest("tr").after($("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden"));
-			//     checkRow("#kintoneplugin-setting-prompt-template");
-			// };
 			let closestTable = $(this).closest("table");
 			let closestTbody = $(this).closest("tbody");
 			let clonedRow = closestTbody.find("tr").first().clone(true).removeAttr("hidden");
@@ -941,12 +887,12 @@ jQuery.noConflict();
 				},
 				position: "center",
 				icon: "info",
-				text: "設定情報を書き出ししますか？",
+				text: "Do you want to export configuration information?",
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
-				confirmButtonText: "はい",
-				cancelButtonText: "いいえ",
+				confirmButtonText: "Yes",
+				cancelButtonText: "Cancel",
 			}).then(async (result) => {
 				if (result.isConfirmed) {
 					let hasError = await validation("export", await getData());
@@ -986,7 +932,7 @@ jQuery.noConflict();
 						dataImport = JSON.parse(fileContent);
 					} catch (error) {
 						let customClass = $("<div></div>")
-							.html(`設定情報を読み込むためのファイル形式はJSON形式になります。<br>  拡張子をご確認ください。`)
+							.html(`The file format for reading configuration information is JSON format<br>  Please check the file format extension.`)
 							.css("font-size", "14px");
 						await Swal10.fire({
 							icon: "error",
@@ -1007,7 +953,7 @@ jQuery.noConflict();
 						Swal10.fire({
 							position: 'center',
 							icon: 'success',
-							text: '設定情報の読み込みに成功しました。',
+							text: 'Configuration information was successfully imported',
 							showConfirmButton: true,
 						});
 						$("#fileInput").val('');
@@ -1017,7 +963,7 @@ jQuery.noConflict();
 			} else {
 				Swal10.fire({
 					position: "center",
-					text: "インポートするファイルを選択してください。",
+					text: "Select the file you want to import",
 					confirmButtonColor: "#3498db",
 					confirmButtonText: "OK",
 				});
@@ -1055,18 +1001,23 @@ jQuery.noConflict();
 						searchTarget: "string",
 						fieldForSearch: "string"
 					}
-				]
+				],
+				colorSetting: {
+					buttonColor: "string",
+					buttonTextColor: "string",
+					titleColor: "string",
+				}
 			}
 
 			function checkType(configStructure, dataImport) {
 				if (Array.isArray(configStructure)) {
 					if (!Array.isArray(dataImport)) {
-						errorTexts.push("設定情報の読み込みしたデータは配列ではありません。");
+						errorTexts.push("The data loaded with configuration information is not an array");
 						return false;
 					}
 					for (let item of dataImport) {
 						if (!checkType(configStructure[0], item)) {
-							errorTexts.push("配列要素の型が一致しません。");
+							errorTexts.push("Array element type mismatch");
 							return false;
 						}
 					}
@@ -1075,12 +1026,12 @@ jQuery.noConflict();
 
 				if (typeof configStructure === 'object' && !Array.isArray(configStructure)) {
 					if (typeof dataImport !== 'object' || Array.isArray(dataImport)) {
-						errorTexts.push("設定情報の読み込みしたデータはオブジェクトではありません。");
+						errorTexts.push("The data loaded with configuration information is not an object");
 						return false;
 					}
 					for (let key in configStructure) {
 						if (!(key in dataImport)) {
-							errorTexts.push(`${key} キーが見つかりません。`);
+							errorTexts.push(`${key} Key not found.`);
 							return false;
 						}
 						if (!checkType(configStructure[key], dataImport[key])) {
@@ -1097,30 +1048,6 @@ jQuery.noConflict();
 				return true;
 			}
 
-			// function checkRequiredFields(dataImport) {
-			// 	let settingPromptTemplateFields = ['status', 'settingName', 'fieldResult', 'slide', 'spacePromptTemplate', 'systemInstruction', 'prompt'];
-
-			// 	if (dataImport.spaceSetting.length === 0) {
-			// 		errorTexts.push(" spaceSettingが未入力です。");
-			// 		return false;
-			// 	}
-
-			// 	if (dataImport.settingPromptTemplate.length === 0) {
-			// 		errorTexts.push(" settingPromptTemplateが未入力です。");
-			// 		return false;
-			// 	}
-
-			// 	for (let template of dataImport.settingPromptTemplate) {
-			// 		for (let field of settingPromptTemplateFields) {
-			// 			if (field === 'status' && typeof template[field] !== 'boolean') {
-			// 				errorTexts.push(`settingPromptTemplateのstatusはブール型であるべきです。`);
-			// 				return false;
-			// 			}
-			// 		}
-			// 	}
-			// 	return true;
-			// }
-
 			function checkAllCases(dataImport) {
 				// Check if the object is empty
 				if (Object.keys(dataImport).length === 0) {
@@ -1133,17 +1060,13 @@ jQuery.noConflict();
 					return false;
 				}
 
-				// Specific checks for required fields and non-empty arrays/objects
-				// if (!checkRequiredFields(dataImport)) {
-				// 	return false;
-				// }
 				return true;
 			}
 
 			let isValid = checkAllCases(dataImport);
 			if (!isValid) {
 				let customClass = $("<div></div>")
-					.text("設定情報の読み込みに失敗しました。")
+					.text("Failed to load configuration information")
 					.css("font-size", "18px");
 
 				let errors = errorTexts.join("<br>");
@@ -1161,8 +1084,6 @@ jQuery.noConflict();
 			}
 			return true;
 		}
-
-
 	});
 })(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
 
