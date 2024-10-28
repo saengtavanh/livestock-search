@@ -406,10 +406,6 @@ jQuery.noConflict();
 					hasError = true;
 				}
 			}
-
-			
-
-
 		}
 
 		const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
@@ -478,7 +474,7 @@ jQuery.noConflict();
 				}
 
 				if (fieldForSearch.val() != "-----") {
-					switch (currentGroup[0].searchType) {
+					switch (currentGroup.length > 0 && currentGroup[0].searchType) {
 						case "number_exact":
 						case "number_range":
 						case "date_exact":
@@ -502,7 +498,7 @@ jQuery.noConflict();
 							break;
 					}
 				} else {
-					if (currentGroup[0].searchType == "text_initial") {
+					if (currentGroup.length > 0 && currentGroup[0].searchType == "text_initial") {
 						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
@@ -778,7 +774,7 @@ jQuery.noConflict();
 			}
 		})
 
-		$("#name_marker, #group_name, #search_length, #master_id, #app_id").on("input", function () {
+		$("#name_marker, #group_name, #search_length, #master_id").on("input", function () {
 			HASUPDATED = false;
 		});
 
@@ -788,6 +784,7 @@ jQuery.noConflict();
 
 		$("input#app_id").on("input", function () {
 			$(this).val($(this).val().replace(/[^0-9]/g, ''));
+			HASLOADDATA = false;
 		});
 
 		$("input#group_name, input#search_length").on("input", function () {
