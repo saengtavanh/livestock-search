@@ -949,10 +949,11 @@ jQuery.noConflict();
               item.searchType == "multi_text_patial"
             ) {
               kintone.app.record.setFieldShown(searchItem.fieldForSearch, false);
-              let targetValue = record[searchItem.searchTarget].value;
-              console.log(record[searchItem.searchTarget]);
               let convertedValue = "";
-              if (record[searchItem.searchTarget].type === "CHECK_BOX") {
+              if (record[searchItem.searchTarget].type != "CHECK_BOX") {
+                let targetValue = record[searchItem.searchTarget].value;
+                console.log(record[searchItem.searchTarget].type)
+                console.log(targetValue);
                 if (targetValue == "" || targetValue == undefined) {
                   convertedValue = "";
                 } else {
