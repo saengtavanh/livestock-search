@@ -127,3 +127,20 @@
   min-width: 100px;
   color: black;
 }
+
+/* .custom-container{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kintoneplugin-select-outer{
+ margin-top: 6px;
+}
+.kintoneplugin-input-text{
+  width: 60px;
+}
+.custom-main{
+  display: flex;
+  flex-direction: column;
+
+} */
