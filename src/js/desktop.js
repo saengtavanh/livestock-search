@@ -12,35 +12,6 @@ jQuery.noConflict();
       element.style.display = 'none';
     });
 
-    const urlObj = new URL(window.location.href);
-    const bokTerms = urlObj.searchParams.get('bokTerms');
-    const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{{|}}/g, '');
-    const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-]/g, '');
-    const wrappedBokTerms = `{${cleanBokTerms}}`;
-
-    if (bokTerms != null) {
-      let bokTermsObj = JSON.parse(wrappedBokTerms);
-      console.log('hellooo', bokTermsObj);
-      CONFIG.groupSetting.forEach(searchItem => {
-        if (searchItem.groupName === bokTermsObj.groupName.id) {
-          let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-          console.log('Formatted ID Element:', getIdElement);
-          const getId = $(`#dropdown1`);
-          const getId2 = $(`.kintoneplugin-dropdown`);
-          console.log('Dropdown Element:', getId);
-          console.log('Dropdown Element:', getId2);
-          if (getId.hasClass("kintoneplugin-dropdown")) {
-            const optionExists = getId.find(`option[value="${bokTermsObj.groupName.value}"]`).length > 0;
-            if (optionExists) {
-              getId.val(bokTermsObj.groupName.value);
-            } else {
-              getId.append($("<option>").text(bokTermsObj.groupName.value).val(bokTermsObj.groupName.value));
-              getId.val(bokTermsObj.groupName.value);
-            }
-          }
-        }
-      });
-    }
 
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
     if (!spaceEl) throw new Error('The header element is unavailable on this page.');
@@ -62,7 +33,6 @@ jQuery.noConflict();
     };
     let getValueConditionAndBuildQuery = function (searchInfoList) {
       console.log("searchInfoList::::", searchInfoList);
-
       let query = "";
       searchInfoList.forEach((searchInfo) => {
         switch (searchInfo.searchType) {
@@ -487,60 +457,156 @@ jQuery.noConflict();
     }
 
     // Update dropdown options
-    function updateDropDownOptions(selectedItem, filteredItems, records, dropDownTitle) {
-      const dropDown = dropDownTitle.next('select');
-      dropDown.empty();
-      dropDown.append($("<option>").text('-----').val(''));
+    function updateDropDownOptions(selectedItem, filteredItems, records, dropDownTitle, groupName, status) {
+      console.log(groupName);
 
-      const selectedContent = filteredItems.find(content => content.searchTarget === selectedItem.searchTarget);
-      records.forEach(record => {
-        if (!records || record[selectedContent.searchTarget].value === '') return;
-        const selectedOption = $("<option>")
-          .text(record[selectedContent.searchTarget].value)
-          .addClass('option')
-          .attr('value', record[selectedContent.searchTarget].value)
-          .attr('fieldCode', selectedContent.searchTarget);
-        dropDown.append(selectedOption);
-      });
-      dropDown.trigger('change');
+      if (status == "active") {
+        const dropDown = dropDownTitle
+        dropDown.empty();
+        dropDown.append($("<option>").text('-----').val(''));
+        const selectedContent = filteredItems.filter(content => content.groupName === groupName);
+        const matchingContent = selectedContent.find(content => content.searchName === selectedItem);
+        if (matchingContent) {
+          records.forEach(record => {
+            if (!records || record[matchingContent.searchTarget].value === '') return;
+            console.log(record[matchingContent.searchTarget].value);
+            const selectedOption = $("<option>")
+              .text(record[matchingContent.searchTarget].value)
+              .addClass('option')
+              .attr('value', record[matchingContent.searchTarget].value)
+              .attr('fieldCode', matchingContent.searchTarget);
+            dropDown.append(selectedOption);
+          });
+          dropDown.trigger('change');
+        }
+      } else {
+        const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
+        dropDown.empty();
+        dropDown.append($("<option>").text('-----').val(''));
+        const selectedContent = filteredItems.find(content => content.searchTarget === selectedItem.searchTarget);
+        records.forEach(record => {
+          if (!records || record[selectedContent.searchTarget].value === '') return;
+          const selectedOption = $("<option>")
+            .text(record[selectedContent.searchTarget].value)
+            .addClass('option')
+            .attr('value', record[selectedContent.searchTarget].value)
+            .attr('fieldCode', selectedContent.searchTarget);
+          dropDown.append(selectedOption);
+        });
+        dropDown.trigger('change');
+      }
     }
 
-    // createDropDowns(CONFIG);
     function createBokTermsObject(selectedValue, dropdownId, labelValue) {
       return {
-        groupName: {
-          id: dropdownId,
+        [dropdownId]: {
           value: selectedValue,
           active: labelValue
         }
       };
     }
-    function queryDropdown(selectedValue, fieldCode, dropdownId, labelValue) {
-      console.log("selectedValue", selectedValue);
-      console.log("fieldCode", fieldCode);
-      const currentUrlBase = window.location.href.match(/\S+\//)[0];
-      console.log("currentUrlBase:", currentUrlBase);
 
+    function queryDropdown(selectedValue, fieldCode, dropdownId, labelValue) {
       // Check if both selectedValue and fieldCode are present
       if (!selectedValue || !fieldCode) {
-        console.log("Missing selectedValue or fieldCode. Redirection aborted.");
         return;
       }
-      // Encode the query string properly
       const query = encodeURIComponent(`${fieldCode} = "${selectedValue}"`);
-      console.log("Query string:", query);
-
-      // Create the bokTermsObject using the helper function
-      const bokTermsObject = createBokTermsObject(selectedValue, fieldCode, dropdownId, labelValue);
-      console.log("BokTerms object:", bokTermsObject);
+      const bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelValue);
+      const currentUrlBase = window.location.href.match(/\S+\//)[0];
       const bokTermsString = JSON.stringify(bokTermsObject);
-      const bokTerms = encodeURIComponent(bokTermsString)
-      const QueryUrl = `${currentUrlBase}?query=${query}&bokTerms={${bokTerms}}`;
-      console.log("Full URL:", QueryUrl);
-      window.location.href = QueryUrl;
+      const bokTerms = encodeURIComponent(bokTermsString);
+      const QueryUrl = `${currentUrlBase}?query=${query}&bokTerms=${bokTerms}`;
+      const urlObj = new URL(window.location.href);
+      const bokTerm = urlObj.searchParams.get('bokTerms');
+      if (bokTerm == null) {
+        window.location.href = QueryUrl;
+      } else {
+        const decodedBokTerms = decodeURIComponent(bokTerm).replace(/(^\{|\}$)/g, '');
+        const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-]/g, '');
+        const wrappedBokTerms = `{${cleanBokTerms}}`;
+        let bokTermObj;
+        try {
+          bokTermObj = JSON.parse(wrappedBokTerms);
+        } catch (error) {
+          console.error('Error parsing bokTerm:', error);
+          bokTermObj = {}; // initialize as an empty object in case of error
+        }
+
+        // Update the bokTermObj only if the dropdownId exists
+        if (dropdownId in bokTermObj) {
+          bokTermObj[dropdownId].value = selectedValue;
+          bokTermObj[dropdownId].active = labelValue;
+        } else {
+          bokTermObj[dropdownId] = {
+            value: selectedValue,
+            active: labelValue
+          };
+        }
+        const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
+        const updatedUrl = `${currentUrlBase}?query=${query}&bokTerms=${mergedBokTerms}`;
+        window.location.href = updatedUrl;
+      }
+    }
+    async function getURL() {
+      const urlObj = new URL(window.location.href);
+      const bokTerms = urlObj.searchParams.get('bokTerms');
+      if (bokTerms != null) {
+        const decodedBokTerms = decodeURIComponent(bokTerms).replace(/(^\{|\}$)/g, '');
+        const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-]/g, '');
+        const wrappedBokTerms = `{${cleanBokTerms}}`;
+        let bokTerm;
+        try {
+          bokTerm = JSON.parse(wrappedBokTerms);
+          console.log(bokTerm);
+        } catch (error) {
+          console.error('Error parsing bokTerm:', error);
+          return; // Exit if there's an error parsing
+        }
+        Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
+          CONFIG.groupSetting.forEach(searchItem => {
+            if (searchItem.groupName === key) {
+              console.log(searchItem.nameMarker)
+              if (searchItem.nameMarker == "") {
+                let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+                const getId = $(`#${getIdElement}`);
+                const trimmedActive = bokTermsObj.active.trim();
+                getId.closest('.search-item').find('.custom-dropdownTitle').text(trimmedActive);
+                updateDropDownOptions(trimmedActive, CONFIG.searchContent, records, getId, searchItem.groupName, "active");
+                if (getId.hasClass("kintoneplugin-dropdown")) {
+                  const optionExists = getId.find(`option[value="${bokTermsObj.value}"]`).length > 0;
+                  if (optionExists) {
+                    getId.val(bokTermsObj.value);
+                  } else {
+                    getId.append($("<option>").text(bokTermsObj.value).val(bokTermsObj.value));
+                    getId.val(bokTermsObj.value);
+                  }
+                }
+              }
+              else {
+                let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+                const getId = $(`#${getIdElement}`);
+                if (getId.hasClass("kintoneplugin-dropdown")) {
+                  const optionExists = getId.find(`option[value="${bokTermsObj.value}"]`).length > 0;
+                  if (optionExists) {
+                    getId.val(bokTermsObj.value);
+                  } else {
+                    getId.append($("<option>").text(bokTermsObj.value).val(bokTermsObj.value));
+                    getId.val(bokTermsObj.value);
+                  }
+                }
+              }
+            }
+          });
+        });
+      }
     }
     // ========================
     function createTextInput(searchType, groupName, width) {
+      console.log(width);
+
+      console.log(width.searchLength);
+
       let initialText = groupName.replace(/\s+/g, "_");
       const inputElement = $('<input>', {
         type: searchType,
@@ -548,11 +614,13 @@ jQuery.noConflict();
         'data-serach-type': searchType,
         'id': initialText
       }).css({
-        'width': width.searchLength,
+        'width': width.searchLength || ""
       })
+
       return inputElement;
     }
     function createTextArea(searchType, groupName, width) {
+      console.log(width);
       let inputTeatArae = groupName.replace(/\s+/g, "_");
       const textarea = new Kuc.TextArea({
         requiredIcon: true,
@@ -561,7 +629,7 @@ jQuery.noConflict();
         visible: true,
         disabled: false
       }).css({
-        'width': width.searchLength,
+        'width': width.searchLength || ""
       })
       textarea.setAttribute('data-search-type', searchType);
       return textarea;
@@ -575,7 +643,7 @@ jQuery.noConflict();
         'data-search-type': searchType,
         'id': initialNumber
       }).css({
-        'width': width.searchLength,
+        'width': width.searchLength || ""
       })
       return InputNumber;
     }
@@ -589,15 +657,16 @@ jQuery.noConflict();
         'data-search-type': searchType,
         id: `${NumberRange}_start`,
       }).css({
-        'width': width.searchLength,
+        'width': width.searchLength || ""
       })
+
       const end = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
         'data-search-type': searchType,
         id: `${NumberRange}_end`,
       }).css({
-        'width': width.searchLength,
+        'width': width.searchLength || ""
       })
       const separator = $('<span>⁓</span>').addClass('separatornumber')
       return wrapper.append(start, separator, end);
@@ -613,7 +682,7 @@ jQuery.noConflict();
         visible: true,
         disabled: false
       }).css({
-        'width': width.searchLength,
+        'width': width.searchLength || ""
       })
       datePicker.setAttribute('data-search-type', searchType);
       return datePicker;
@@ -629,7 +698,7 @@ jQuery.noConflict();
         visible: true,
         disabled: false
       }).css({
-        'width': width.searchLength,
+        'width': width.searchLength || ""
       })
       datePickerSatrt.setAttribute('data-search-type', searchType);
       datePickerSatrt.addEventListener('change', event => {
@@ -644,7 +713,7 @@ jQuery.noConflict();
         visible: true,
         disabled: false
       }).css({
-        'width': width.searchLength,
+        'width': width.searchLength || ""
       })
       datePickerEnd.setAttribute('data-search-type', searchType);
 
@@ -705,14 +774,9 @@ jQuery.noConflict();
       let Titlename;
       let afterFilter = CONFIG.searchContent.filter((searchItem) => searchItem.groupName === groupName);
       console.log("afterFilter", afterFilter);
-      let masterId = afterFilter.length > 0 ? afterFilter[0].masterId : null;
-      console.log("masterIds", masterId);
-      let Codemaster = CONFIG.codeMasterSetting.filter(marster => marster.masterId === masterId);
-      console.log("Codemaster", Codemaster[0].codeField);
       afterFilter.forEach(searchItemTarget => {
         Titlename = nameMarker ? searchItemTarget.groupName : searchItemTarget.searchName;
         setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
-        setSearchTarget.push(searchItemTarget.nameMarker !== "-----" ? searchItemTarget.searchTarget : Codemaster.length > 0 ? Codemaster[0].codeField : "");
       });
 
       if (afterFilter.length >= 1) {
@@ -766,139 +830,75 @@ jQuery.noConflict();
 
     elementsAll.append(elementBtn);
     spaceElement.append(elementsAll);
+    getURL()
 
   });
-
-  kintone.events.on(['app.record.edit.show', 'app.record.create.submit'], async (event) => {
-    let record = event.record;
-    let updateRecord = {};
-    CONFIG.searchContent.forEach((searchItem) => {
-      CONFIG.groupSetting.forEach((item) => {
-        if (item.groupName === searchItem.groupName) {
-          if (
-            item.searchType === "text_initial" ||
-            item.searchType === "text_patial" ||
-            item.searchType === "text_exact" ||
-            item.searchType === "multi_text_initial" ||
-            item.searchType === "multi_text_patial"
-
-          ) {
-            let targetValue = record[searchItem.searchTarget].value;
-            console.log(targetValue);
-
-            let convertedValue = "";
-            if (targetValue == "" || targetValue == undefined) {
-              convertedValue = ""
-            } else {
-              switch (item.searchType) {
-                case "text_initial":
-                case "multi_text_initial":
-                  convertedValue = `_,${targetValue.split('').join(',')}`;
-                  break;
-                case "text_patial":
-                case "multi_text_patial":
-                  convertedValue = `${targetValue.split('').join(',')}`;
-                  break;
-                case "text_exact":
-                  convertedValue = `_,${targetValue.split('').join(',')},_`;
-                  break;
-                default:
-                  break;
-              }
-            }
-            updateRecord[searchItem.fieldForSearch] = {
-              value: convertedValue
-            }
-            record[searchItem.fieldForSearch].value = convertedValue;
-          }
-        }
-      });
-    });
-    if (event.type === 'app.record.create.submit') {
-      let body = {
-        app: kintone.app.getId(),
-        records: [
-          {
-            id: kintone.app.record.getId(),
-            record: updateRecord
-          }
-        ]
-      };
-      try {
-        await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    return event;
-  });
-  kintone.events.on(['app.record.edit.show', 'app.record.create.show', 'app.record.create.submit', 'app.record.edit.submit.success'], async (event) => {
-    let record = event.record;
-    let updateRecord = {};
-    console.log(CONFIG);
-
-    CONFIG.searchContent.forEach((searchItem) => {
-      CONFIG.groupSetting.forEach((item) => {
-        if (item.groupName === searchItem.groupName) {
-          if (
-            item.searchType === "text_initial" ||
-            item.searchType === "text_patial" ||
-            item.searchType === "text_exact" ||
-            item.searchType === "multi_text_initial" ||
-            item.searchType === "multi_text_patial"
-          ) {
-            if (event.type === 'app.record.create.show') {
-              record[searchItem.fieldForSearch].disabled = true;
-            } else {
+  kintone.events.on([
+    'app.record.edit.show',
+    'app.record.create.show',
+    'app.record.create.submit',
+    'app.record.edit.submit.success',
+    'app.record.detail.show'], async (event) => {
+      let record = event.record;
+      let updateRecord = {};
+      for (const searchItem of CONFIG.searchContent) {
+        for (const item of CONFIG.groupSetting) {
+          if (item.groupName == searchItem.groupName) {
+            if (
+              item.searchType == "text_initial" ||
+              item.searchType == "text_patial" ||
+              item.searchType == "text_exact" ||
+              item.searchType == "multi_text_initial" ||
+              item.searchType == "multi_text_patial"
+            ) {
+              console.log(searchItem.fieldForSearch);
+              kintone.app.record.setFieldShown(searchItem.fieldForSearch, false);
               let targetValue = record[searchItem.searchTarget].value;
-              record[searchItem.fieldForSearch].disabled = true;
               console.log(targetValue);
+
               let convertedValue = "";
               if (targetValue == "" || targetValue == undefined) {
-                convertedValue = ""
+                convertedValue = "";
               } else {
                 switch (item.searchType) {
                   case "text_initial":
                   case "multi_text_initial":
-                    convertedValue = `_,${targetValue.split('').join(',')}`;
+                    convertedValue = `_,${targetValue.split("").join(",")}`;
                     break;
                   case "text_patial":
                   case "multi_text_patial":
-                    convertedValue = `${targetValue.split('').join(',')}`;
+                    convertedValue = `${targetValue.split("").join(",")}`;
                     break;
                   case "text_exact":
-                    convertedValue = `_,${targetValue.split('').join(',')},_`;
+                    convertedValue = `_,${targetValue.split("").join(",")},_`;
                     break;
                   default:
                     break;
                 }
               }
-              updateRecord[searchItem.fieldForSearch] = {
-                value: convertedValue
-              }
+              updateRecord[searchItem.fieldForSearch] = { value: convertedValue };
               record[searchItem.fieldForSearch].value = convertedValue;
             }
           }
         }
-      });
-    });
-    if (event.type == 'app.record.create.submit' || event.type == 'app.record.edit.submit.success') {
-      let body = {
-        app: kintone.app.getId(),
-        records: [
-          {
-            id: kintone.app.record.getId(),
-            record: updateRecord
-          }
-        ]
-      };
-      try {
-        await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
-      } catch (error) {
-        console.log(error);
       }
-    }
-    return event;
-  });
 
+      if (event.type == 'app.record.create.submit' || event.type == 'app.record.edit.submit.success') {
+        let body = {
+          app: kintone.app.getId(),
+          records: [
+            {
+              id: kintone.app.record.getId(),
+              record: updateRecord
+            }
+          ]
+        };
+        try {
+          await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body)
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      return event;
+    });
 })(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
