@@ -1,46 +1,23 @@
-/* .plugin-space-heading {
-  font-size: 1.5rem;
-  margin: 0.8rem;
-}
-.plugin-space-message {
-  display: inline-block;
-  font-size: 1.2em;
-  margin: 0.8rem;
-  margin-top: 0;
-}
-/* .plugin-space-heading {
-  font-size: 1.5rem;
-  margin: 0.8rem;
-}
-.plugin-space-message {
-  display: inline-block;
-  font-size: 1.2em;
-  margin: 0.8rem;
-  margin-top: 0;
-} */
-
 .custom-space-el {
   display: flex;
   flex-direction: row;
   flex-wrap: none;
-  gap: 10px;
-  justify-content: flex-start;
+  gap: 5px;
+  /* justify-content: flex-start; */
   margin-top: -20px;
-  /* max-width: 100%;
-  /* overflow-y: auto; */
-  /* max-height: 450px; */
 }
 
 .custom-dropdownTitle {
-  color: #4CAF50;
   margin-bottom: -20px;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .search-item {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  margin-right: -2px;
+  /* margin-bottom: -20px; */
 }
 
 .separatornumber {
@@ -69,18 +46,23 @@
 }
 
 .kintoneplugin-button-dialog-ok {
-  background-color: #4CAF50;
   font-size: 15px;
-  min-Width: 80px;
-  margin-Left: 10px;
+  min-Width: 20px;
+  margin-Left: 1px;
   color: white;
   border: none;
   cursor: pointer;
   margin-top: 20px;
 }
 
-.kintoneplugin-button-dialog-ok:hover {
-  background-color: #5eb461;
+.btnClear {
+  font-size: 15px;
+  min-Width: 15px;
+  /* margin-Left: 10px; */
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
 }
 
 
@@ -88,48 +70,54 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  /* margin-bottom: 20px; */
 }
 
 .label {
   margin-bottom: -20px;
-  font-size: 13px;
-  color: #4CAF50;
+  font-size: 15px;
 }
 
 .kintoneplugin-dropdown {
   margin: 0;
   padding: 0;
   height: 35px;
-  font-size: 13px;
+  font-size: 15px;
   color: rgb(93, 92, 92);
 }
 
 .element-button {
-  margin-left: -10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: none;
+  /* margin-left: -10px; */
 }
 
-.options-class .kuc-date-picker-1-18-0__group input[type="text"].kuc-base-date-1-18-0__input {
+.options-class .kuc-date-picker-1-18-0_group input[type="text"].kuc-base-date-1-18-0_input {
   margin: 0;
   padding: 0;
   height: 35px;
-  font-size: 13px;
+  font-size: 15px;
 }
 
-.options-class textarea.kuc-textarea-1-18-0__group__textarea {
-  /* width: 100px !important; */
+.options-class textarea.kuc-textarea-1-18-0_group_textarea {
   min-height: 0 !important;
   height: 35px !important;
-  font-size: 13px;
+  font-size: 15px;
 
 }
 
 .kintoneplugin-input-text {
   height: 35px;
-  font-size: 13px;
+  font-size: 15px;
+  padding: 0;
+  margin-bottom: 1px;
+  padding: 5px;
 }
 
 .option {
-  font-size: 13px;
+  font-size: 15px;
+  gap: 5px;
 }
 
 .searchButton {
@@ -137,8 +125,9 @@
 }
 
 .class-btn .kuc-button-1-18-0__button {
-  font-size: 13px;
+  font-size: 15px;
   width: 20px;
   height: 35px;
   min-width: 100px;
+  color: black;
 }
