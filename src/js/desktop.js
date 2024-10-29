@@ -262,15 +262,23 @@ jQuery.noConflict();
     }
     // =========================
 //TODO: FunctionSearch-------------------------------------------------
+let bokTermsGet = {};
     var searchProcess = async function (searchInfoList) {
       var query = await getValueConditionAndBuildQuery(searchInfoList, query);
       var queryEscape = encodeURIComponent(query);
       console.log("queryEscape", queryEscape);
       var currentUrlBase = window.location.href.match(/\S+\//)[0];
-      var url = currentUrlBase + "?query=" + queryEscape;
+      console.log("bokTermsGet =======>>>>", bokTermsGet);
+      const bokTermsString = JSON.stringify(bokTermsGet);
+      const bokTerms = encodeURIComponent(bokTermsString)
+      var url = currentUrlBase + "?query=" + queryEscape + "&bokTerms={" +bokTerms+"}";
+
+      console.log("url====>", url);
+      
 
       window.location.href = url;
     };
+
     var getValueConditionAndBuildQuery = function (searchInfoList) {
       console.log("searchInfoList::::", searchInfoList);
 
@@ -287,10 +295,10 @@ jQuery.noConflict();
             query += buildTextExactQuery(searchInfo, query);
             break;
           case 'multi_text_initial':
-            query += buildMultieinitialQuery(searchInfo, query);
+            query += buildTextInitialQuery(searchInfo, query);
             break;
           case 'multi_text_patial':
-            query += buildMultiePatialQuery(searchInfo, query);
+            query += buildTextPartialQuery(searchInfo, query);
             break;
           case 'number_exact':
             query += buildNumberExactQuery(searchInfo, query);
@@ -302,7 +310,7 @@ jQuery.noConflict();
             query += buildDateExactQuery(searchInfo, query);
             break;
           case 'date_range':
-            query += buildDateRangeQuery(searchInfo, query);
+            query += buildNumberRangeQuery(searchInfo, query);
             break;
           default:
             break;
@@ -318,6 +326,7 @@ jQuery.noConflict();
       console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
       let queryChild;
+      
 
       function transformString(input) {
         // Split the input string into an array of characters
@@ -333,6 +342,7 @@ jQuery.noConflict();
         console.log("have");
         if ( $(`#${replacedText}`).val()) {
           var searchValue = transformString($(`#${replacedText}`).val());
+          bokTermsGet[replacedText] = $(`#${replacedText}`).val();
           console.log("bla", searchValue);
         }
       }
@@ -368,6 +378,7 @@ jQuery.noConflict();
       console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
       let queryChild;
+      let searchValue;
 
       function transformString(input) {
         // Split the input string into an array of characters
@@ -382,7 +393,8 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         console.log("have");
         if ( $(`#${replacedText}`).val()) {
-          var searchValue = transformString($(`#${replacedText}`).val());
+          searchValue = transformString($(`#${replacedText}`).val());
+          bokTermsGet[replacedText] = $(`#${replacedText}`).val();
           console.log("bla", searchValue);
         }
       }
@@ -410,6 +422,8 @@ jQuery.noConflict();
       console.log("fff");
       console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
+      let queryChild;
+      let searchValue;
 
       function transformString(input) {
         // Split the input string into an array of characters
@@ -423,9 +437,10 @@ jQuery.noConflict();
 
       if ($(`#${replacedText}`).length) {
         console.log("have");
-        var searchValue = $(`#${replacedText}`).val();
-        if ( $(`#${replacedText}`).val()) {
-          var searchValue = transformString($(`#${replacedText}`).val());
+        searchValue = $(`#${replacedText}`).val();
+        if (searchValue) {
+          searchValue = transformString($(`#${replacedText}`).val());
+          bokTermsGet[replacedText] = $(`#${replacedText}`).val();
           console.log("bla", searchValue);
         }
       }
@@ -448,6 +463,7 @@ jQuery.noConflict();
       }
       return '';
     };
+
     var buildMultieinitialQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
@@ -456,7 +472,7 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         console.log("have");
 
-        var bla = $(`#${replacedText}`).val();
+        let bla = $(`#${replacedText}`).val();
         console.log("bla", bla);
       }
 
@@ -467,6 +483,7 @@ jQuery.noConflict();
       }
       return '';
     };
+
     var buildMultiePatialQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
@@ -486,47 +503,74 @@ jQuery.noConflict();
       }
       return '';
     };
+
+
     var buildNumberExactQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
-      let replacedText = searchInfo.groupName;
+      let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
+      let queryChild;
+      let searchValue;
 
       if ($(`#${replacedText}`).length) {
-        console.log("have");
-
-        var bla = $(`#${replacedText}`).val();
-        console.log("bla", bla);
+        searchValue = $(`#${replacedText}`).val();
+        if (searchValue) {
+          searchValue = $(`#${replacedText}`).val();
+        }
+        console.log("bla", searchValue);
       }
 
-      if (bla) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${bla}")`;
+      if (searchValue) {
+        if (searchInfo.target_field.length > 1) {
+          console.log("searchInfo.target_field++++++", searchInfo.target_field);
+          searchInfo.target_field.forEach((field) => {
+            if (queryChild) {
+              queryChild += `or (${field} = "${searchValue}")`
+            } else {
+              queryChild = `${query ? " and " : ""}(${field} = "${searchValue}") `;
+            }
+          })
+        } else if ((searchInfo.target_field.length = 1)) {
+          queryChild = `${query ? " and " : ""}(${searchInfo.target_field} = ${searchValue})`;
+        }
         // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
         return queryChild;
       }
       return '';
     };
-    var buildNumberRangeQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
-      let replacedText = searchInfo.groupName;
-      if ($(`#${replacedText}_start`).length) {
-        console.log("have");
 
-        var start = $(`#${replacedText}_start`).val();
-        console.log("bla", start);
-      }
-      if ($(`#${replacedText}_end`).length) {
-        console.log("have");
+    let buildNumberRangeQuery = function (searchInfo, query) {
+      let queryChild = "";
+      let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
+      const startValue = $(`#${replacedText}_start`).length && $(`#${replacedText}_start`).val();
+      const endValue = $(`#${replacedText}_end`).length && $(`#${replacedText}_end`).val();
 
-        var end = $(`#${replacedText}_end`).val();
-        console.log("bla", end);
+      searchInfo.target_field.forEach((field) => {
+        if (startValue && endValue == '') {
+          bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+            queryChild += queryChild ? `${query ? " and " : ""}` + " or (" + field + ' ' + ">=" + ' "' + startValue + '"' + ")" : "(" + field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+        } else if (endValue && startValue == '') {
+          bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}end`).val();
+          queryChild += queryChild ? `${query ? " and " : ""}` + " or (" + field + ' ' + "<=" + ' "' + endValue + '"' + ")" : "or (" + field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+        } else if (startValue && endValue) {
+          bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+          bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
+          queryChild += queryChild ?  + " or ((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" :
+            "((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))";
+        }
+
+      });
+      let queryFinal
+      if (queryChild) {
+        queryFinal = `${query ? " and " : ""}` +queryChild;
+      } else {
+        return "";
       }
-      if (start && end) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${start}" and "${end}")`;
-        return queryChild;
-      }
-      return '';
+      console.log("queryChild::::::", queryFinal);
+      
+      return queryFinal;
     };
+
     var buildDateExactQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
@@ -546,6 +590,7 @@ jQuery.noConflict();
       }
       return '';
     };
+
     var buildDateRangeQuery = function (searchInfo, query) {
       console.log("fff");
       console.log("searchInfo", searchInfo);
@@ -585,10 +630,15 @@ jQuery.noConflict();
         'id': initialText
       });
 
+      if (result[initialText]) {
+        inputElement.val(result[initialText]);
+      }
+
       // Return the input element for further use
       console.log(inputElement.val());
       return inputElement;
     }
+
     function createTextArea(searchType, groupName) {
       console.log("type +++22", searchType);
       console.log("groupName +++22", groupName);
@@ -600,6 +650,11 @@ jQuery.noConflict();
         visible: true,
         disabled: false
       });
+
+      if (result[inputTeatArae]) {
+        textarea.value = result[inputTeatArae];
+      }
+
       textarea.setAttribute('data-search-type', searchType);
       // textarea.setAttribute('id', inputTeatArae);
       textarea.addEventListener('change', event => console.log("TextArea:", event.detail.value));
@@ -619,22 +674,26 @@ jQuery.noConflict();
 
     function createNumberRangeInput(searchType, groupName) {
       let NumberRange = groupName.replace(/\s+/g, "_");
-      const $wrapper = $('<div class="wrapperd-number"></div>');
-      const $start = $('<input>', {
+      const wrapper = $('<div class="wrapperd-number"></div>');
+      const start = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
         'data-search-type': searchType,
         id: `${NumberRange}_start`,
       });
-      const $end = $('<input>', {
+      const end = $('<input>', {
         type: 'number',
         class: 'kintoneplugin-input-text',
         'data-search-type': searchType,
         id: `${NumberRange}_end`,
       });
-      const $separator = $('<span>⁓</span>').addClass('separatornumber');
 
-      return $wrapper.append($start, $separator, $end);
+      result[`${NumberRange}_start`] ? start.val(result[`${NumberRange}_start`]) : "";
+      result[`${NumberRange}_end`] ? end.val(result[`${NumberRange}_end`]) : "";
+
+      const separator = $('<span>⁓</span>').addClass('separatornumber');
+
+      return wrapper.append(start, separator, end);
     }
 
     function createDateInput(searchType, groupName) {
@@ -680,6 +739,9 @@ jQuery.noConflict();
         console.log("End Date", event.detail.value);
       });
 
+      result[`${dateRange}_start`] ? datePickerSatrt.val(result[`${dateRange}_start`]) : "";
+      result[`${dateRange}_end`] ? datePickerEnd.val(result[`${dateRange}_end`]) : "";
+
       const $separator = $('<span>⁓</span>').addClass('separator-datepicker');
 
       const $wrapper = $('<div></div>').addClass('wrapper-datepiker')
@@ -703,8 +765,6 @@ jQuery.noConflict();
 
 
     //TODO: Create Function-------------------------------------------------------------------------
-    
-    let setSearchForfile = [];
     CONFIG.groupSetting.forEach(searchItem => {
       const { searchType, groupName, nameMarker } = searchItem;
       let setSearchTarget = [];
@@ -714,7 +774,7 @@ jQuery.noConflict();
         afterFilter.forEach(searchItemTarget => {
           console.log("searchItemTarget", searchItemTarget);
           Titlename = nameMarker ? searchItemTarget.groupName : searchItemTarget.searchName;
-          setSearchTarget.push(searchItemTarget.fieldForSearch);
+            setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
         });
 
         console.log("setSearchTarget::", setSearchTarget);
@@ -724,9 +784,10 @@ jQuery.noConflict();
           searchItem["target_field"] = setSearchTarget;
           const $elementInput = $('<div></div>').addClass('search-item');
           let inputElement;
+          let defaultValue = result
           switch (searchType) {
             case 'text_initial':
-              inputElement = createTextInput(searchType, groupName);
+              inputElement = createTextInput(searchType, groupName, defaultValue);
               break;
             case 'text_patial':
               inputElement = createTextInput(searchType, groupName);
