@@ -124,8 +124,6 @@ tbody tr {
   display: flex;
   align-items: center;
   margin-top: 22px;
-  margin-left: 15px;
-  margin-right: 15px;
   justify-content: end;
 }
 
