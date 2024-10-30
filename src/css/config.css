@@ -225,7 +225,7 @@ tbody tr {
 
 .color-container {
   display: flex;
-  width: 42%;
+  width: 35%;
   flex-direction: column;
   border: 1px solid #3333;
   margin-left: 4.5%;
