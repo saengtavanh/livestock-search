@@ -3,15 +3,52 @@ jQuery.noConflict();
   const CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
   console.log("config", CONFIG);
   kintone.events.on('app.record.index.show', async (event) => {
-    let setColor = CONFIG.colorSetting;
+    // TODO: SetItem in the sessionStorage
+    CONFIG.codeMasterSetting.forEach(setting => {
+      window.RsComAPI.getRecords({ app: setting.appId })
+        .then(dataFromMaster => {
+          const dataToStore = {
+            AppId: setting.appId,
+            ApiToken: setting.apiToken,
+            code: setting.codeField,
+            name: setting.nameField,
+            condition: setting.typeField,
+            records: dataFromMaster
+          };
+          sessionStorage.setItem(`bokMst${setting.masterId}`, JSON.stringify(dataToStore));
+        })
+        .catch(error => {
+          console.error('Error fetching records:', error);
+        });
+    });
+    function getDataFromSessionStorage(key) {
+      const data = sessionStorage.getItem(key);
+      return data ? JSON.parse(data) : null;
+    }
+    const storedData = getDataFromSessionStorage('bokMst1');
+    storedData ? console.log("Retrieved data:", storedData) : console.log("No data found for this key in sessionStorage.");
+    const condition = storedData.condition;
+    let ITEMS = [];
 
+    storedData.records.forEach((item) => {
+      if (condition === item.type.value) {
+        ITEMS.push({
+          code: item.code.value,
+          name: item.name.value
+        });
+      }
+    });
+    console.log("Filtered items:", ITEMS);
+    
+
+
+    let setColor = CONFIG.colorSetting;
     const records = await window.RsComAPI.getRecords({ app: kintone.app.getId() });
     console.log("records", records);
     let elements = document.querySelectorAll('.recordlist-edit-gaia');
     elements.forEach(element => {
       element.style.display = 'none';
     });
-
 
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
     if (!spaceEl) throw new Error('The header element is unavailable on this page.');
@@ -313,8 +350,8 @@ jQuery.noConflict();
       return queryChild;
     };
     // Create dropdowns based on the configuration
-    function createDropDowns(CONFIG, display, color) {
-      console.log(">🎉🎉🎉setColor===", color);
+    function createDropDowns(CONFIG, display, setColor) {
+      console.log("dataSession----------", ITEMS);
       let relatedContent = CONFIG.searchContent.filter(content => content.groupName === display.groupName);
       // Only show content if `name_marker` is not empty
       if (display.nameMarker && relatedContent.length === 0) return;
@@ -334,11 +371,8 @@ jQuery.noConflict();
         elementsAll.append(DropdownAll);
       }
     }
-
-
-    function handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle, dropDown) {
+    function handleDropDownTitleClick(display, CONFIG, dropDownTitle, dropDown) {
       if (display.nameMarker === "") {
-        dropDownTitle.css({ cursor: "pointer" });
         const existingMenu = $('.custom-context-menu');
         if (existingMenu.length > 0) {
           existingMenu.remove();
@@ -356,24 +390,19 @@ jQuery.noConflict();
             padding: '10px',
             'background-color': '#f0f0f0',
             color: '#000',
-            position: 'absolute', // Make sure it appears above other elements
-            zIndex: 1000 // Ensure it’s above other content
+            position: 'absolute',
+            zIndex: 1000,
+            // Set position manually, adjust these values as necessary
+            top: dropDownTitle.position().top + dropDownTitle.outerHeight() + 5, // Position below dropDownTitle
+            left: dropDownTitle.position().left // Align with the dropDownTitle's left edge
           });
-        // Position the pop-up to the left of the dropdown title
-        const offset = dropDownTitle.offset();
-        console.log(offset);
-        customContextMenu.css({
-          top: offset.top + dropDownTitle.outerHeight() - 250, // Position below the dropdown title
-          left: offset.left - customContextMenu.outerWidth() + 90 // Position to the left with a gap of 10px
-        });
-
         // Dynamically create buttons using Kuc.Button for each item in the list
         filteredItems.forEach((item, index) => {
           const buttonLabel = item.searchName;
           const targetField = filteredItems[index].searchTarget;
           console.log("targetField", targetField);
 
-          const hoverBtn = new Kuc.Button({
+          const clickBtn = new Kuc.Button({
             text: buttonLabel,
             type: 'normal',
             className: 'class-btn',
@@ -384,8 +413,8 @@ jQuery.noConflict();
             width: '100%'
           });
 
-          customContextMenu.append(hoverBtn);
-          $(hoverBtn).on('click', async () => {
+          customContextMenu.append(clickBtn);
+          $(clickBtn).on('click', async () => {
             const selectedItem = filteredItems[index]; // Get the selected item by index
             dropDownTitle.text(selectedItem.searchName);
             updateDropDownOptions(selectedItem, filteredItems, records, dropDownTitle, dropDown);
@@ -401,53 +430,88 @@ jQuery.noConflict();
             $(document).off('click');
           }
         });
+
       }
     }
     // Create dropdown element
     function createDropDown(display, records, initialContent, dropDownTitle) {
       const NameDropdown = display.groupName;
-      NameDropdown.replace(/\s+/g, "_");
+      NameDropdown.replace(/\s+/g, "_")
       const dropDown = $("<select>")
         .addClass("kintoneplugin-dropdown")
         .attr("id", `${NameDropdown}`)
         .css({ width: display.searchLength });
       dropDown.append($("<option>").text('-----').val(''));
 
+      let filteredRecords = CONFIG.searchContent.filter(item => item.groupName === display.groupName);
+      console.log("filteredRecords", filteredRecords);
       if (display.nameMarker) {
-        let filteredRecords = CONFIG.searchContent.filter(item => item.groupName === display.groupName);
-        filteredRecords.forEach(item => {
-          records.forEach(record => {
-            if (record[item.searchTarget].value === '') return;
-            const option = $("<option>")
-              .text(record[item.searchTarget].value)
-              .addClass('option')
-              .attr('value', record[item.searchTarget].value)
-              .attr('fieldCode', item.searchTarget);
-            dropDown.append(option);
+        if (filteredRecords[0]?.masterId > 0) {
+          filteredRecords.forEach(item => {
+            ITEMS.forEach(data => {
+              if (data.code && data.name) {
+                console.log("data", data);
+                const option = $("<option>")
+                  .text(data.name)
+                  .addClass('option')
+                  .attr('value', data.code)
+                  .attr('fieldCode', item.searchTarget);
+                dropDown.append(option);
+              }
+            });
           });
-        });
-        // $dropDown.trigger('change');
+        } else {
+          filteredRecords.forEach(item => {
+            records.forEach(record => {
+              if (record[item.searchTarget].value === '') return;
+              const option = $("<option>")
+                .text(record[item.searchTarget].value)
+                .addClass('option')
+                .attr('value', record[item.searchTarget].value)
+                .attr('fieldCode', item.searchTarget);
+              dropDown.append(option);
+            });
+          });
+        }
       } else {
-        dropDownTitle.text(initialContent.searchName);
-        console.log(initialContent);
-        records.forEach(item => {
-          if (item[initialContent.searchTarget].value === '') return;
-          const initialOption = $("<option>")
-            .text(item[initialContent.searchTarget].value)
-            .addClass('option')
-            .attr('value', item[initialContent.searchTarget].value)
-            .attr('fieldCode', initialContent.searchTarget);
-          dropDown.append(initialOption);
-        });
-        dropDown.trigger('change');
+        if (filteredRecords[0]?.masterId > 0) {
+          dropDownTitle.text(initialContent.searchName);
+          ITEMS.forEach(data => {
+            if (data.code && data.name) {
+              const initialOption = $("<option>")
+                .text(data.name)
+                .addClass('option')
+                .attr('value', data.code)
+                .attr('fieldCode', initialContent.searchTarget);
+              dropDown.append(initialOption);
+            }
+          });
+          dropDown.trigger('change');
+        } else {
+          dropDownTitle.text(initialContent.searchName);
+          console.log(initialContent);
+          records.forEach(item => {
+            if (item[initialContent.searchTarget].value === '') return;
+            const initialOption = $("<option>")
+              .text(item[initialContent.searchTarget].value)
+              .addClass('option')
+              .attr('value', item[initialContent.searchTarget].value)
+              .attr('fieldCode', initialContent.searchTarget);
+            dropDown.append(initialOption);
+          });
+          dropDown.trigger('change');
+        }
       }
       dropDown.on('change', e => {
         const selectedValue = dropDown.val();
         const selectedOption = dropDown.find("option:selected");
         const fieldCode = selectedOption.attr('fieldCode');
         const getDropdownId = dropDown.attr('id');
+        console.log("getDropdownId", getDropdownId);
         const dropdownId = getDropdownId.replace(/_/g, ' ');
+        console.log("dropdownId", dropdownId);
         const labelValue = dropDown.closest('.search-item').find('.custom-dropdownTitle').text().trim();
+        console.log("labelValue", labelValue);
         console.log(`Label Value: ${labelValue}`);
 
         queryDropdown(selectedValue, fieldCode, dropdownId, labelValue);
@@ -545,7 +609,7 @@ jQuery.noConflict();
         }
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
         const updatedUrl = `${currentUrlBase}?query=${query}&bokTerms=${mergedBokTerms}`;
-        window.location.href = updatedUrl;
+        // window.location.href = updatedUrl;
       }
     }
     async function getURL() {
@@ -781,7 +845,7 @@ jQuery.noConflict();
 
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
-        const elementInput = $('<div></div>').addClass('search-item').css({
+        const elementInput = $('<div></div>').addClass('search-items').css({
           'color': setColor.titleColor,
         });
         let inputElement;
