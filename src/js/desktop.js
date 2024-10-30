@@ -1,6 +1,8 @@
 jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
-  const CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
+  let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
+  if (!CONFIG) return; 
+  CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config)
   console.log("config", CONFIG);
   kintone.events.on("app.record.index.show", async (event) => {
     //data test
