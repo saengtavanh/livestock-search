@@ -4,8 +4,7 @@ jQuery.noConflict();
   console.log("config", CONFIG);
   kintone.events.on("app.record.index.show", async (event) => {
     //data test
-    window.RsComAPI.getRecords({ app: 234 }).then((dataFromMaster) => {
-      console.log(dataFromMaster, "helloooo");
+    window.RsComAPI.getRecords({ app: 1 }).then((dataFromMaster) => {
       sessionStorage.setItem("kintoneRecords", JSON.stringify(dataFromMaster));
       sessionStorage.setItem(
         "dataspace",
@@ -42,29 +41,27 @@ jQuery.noConflict();
       );
     });
     //data test
-
-    console.log(CONFIG);
-
     CONFIG.codeMasterSetting.forEach((setting) => {
-      window.RsComAPI.getRecords({ app: setting.appId })
+      window.RsComAPI.getRecords({ app: setting.appId, query: setting.typeField })
         .then((dataFromMaster) => {
+          const codeAndName = dataFromMaster.map(record => ({
+            code: record.code.value,
+            name: record.name.value
+          }));
+
           const dataToStore = {
             AppId: setting.appId,
             ApiToken: setting.apiToken,
-            code: setting.codeField,
-            name: setting.nameField,
-            condition: setting.typeField,
-            records: dataFromMaster,
+            codeAndName: codeAndName,
+            condition: setting.typeField
           };
-          sessionStorage.setItem(
-            `bokMst${setting.masterId}`,
-            JSON.stringify(dataToStore)
-          );
+          sessionStorage.setItem(`bokMst${setting.masterId}`, JSON.stringify(dataToStore));
         })
         .catch((error) => {
           console.error("Error fetching records:", error);
         });
     });
+
 
     let setColor = CONFIG.colorSetting;
     let queryForDropdow = "";
@@ -75,12 +72,21 @@ jQuery.noConflict();
     const records = await window.RsComAPI.getRecords({
       app: kintone.app.getId(),
     });
-    console.log("records", records);
 
     let elements = document.querySelectorAll(".recordlist-edit-gaia");
-    console.log(elements);
     elements.forEach((element) => {
       element.style.display = "none";
+    });
+    const recordRows = document.querySelectorAll('.recordlist-row-gaia');
+    recordRows.forEach(row => {
+      row.addEventListener(
+        'dblclick',
+        function (e) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        },
+        true
+      );
     });
 
     // getItem sessionStorage
@@ -89,31 +95,18 @@ jQuery.noConflict();
       return data ? JSON.parse(data) : null;
     }
     const storedData = getDataFromSessionStorage("bokMst1");
-    console.log("🚀 ~ kintone.events.on ~ storedData:", storedData)
     storedData
-      ? console.log("Retrieved data:", storedData)
-      : console.log("No data found for this key in sessionStorage.");
-      const condition = storedData != null ? storedData.condition : null;
+    let codeMaster = storedData != null ? storedData.codeAndName : null;
     let ITEMS = [];
-
-    storedData?.records.forEach((item) => {
-      if (condition === item.type.value) {
-        ITEMS.push({
-          code: item.code.value,
-          name: item.name.value,
-        });
-      }
-    });
-    console.log("Filtered items:", ITEMS);
-
+    if (codeMaster !== null) {
+      ITEMS.push(codeMaster);
+    }
     // if (!CONFIG) return;
-    console.log(window.location.href);
     const urlObj = new URL(window.location.href);
 
     const bokTerms = urlObj.searchParams.get("bokTerms");
 
     const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{|}/g, "");
-    console.log(decodedBokTerms);
 
     const result = {};
     decodedBokTerms.split(",").forEach((pair) => {
@@ -124,7 +117,6 @@ jQuery.noConflict();
     });
 
     // Log the result
-    console.log(result);
 
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
     if (!spaceEl)
@@ -132,7 +124,6 @@ jQuery.noConflict();
     // Check if the custom element already exists to avoid duplicates
 
     if ($(spaceEl).find(".custom-space-el").length > 0) {
-      console.log("Custom element already exists, skipping creation.");
       return; // Stop if element already exists
     }
     const spaceElement = $(spaceEl);
@@ -313,15 +304,11 @@ jQuery.noConflict();
     };
 
     let buildMultieinitialQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName;
 
       if ($(`#${replacedText}`).length) {
-        console.log("have");
 
         let bla = $(`#${replacedText}`).val();
-        console.log("bla", bla);
       }
 
       if (bla) {
@@ -333,15 +320,9 @@ jQuery.noConflict();
     };
 
     let buildMultiePatialQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName;
-
       if ($(`#${replacedText}`).length) {
-        console.log("have");
-
         let bla = $(`#${replacedText}`).val();
-        console.log("bla", bla);
       }
 
       if (bla) {
@@ -396,27 +377,27 @@ jQuery.noConflict();
           ).val();
           queryChild += queryChild
             ? `${query ? " and " : ""}` +
-              " or (" +
-              field +
-              " " +
-              ">=" +
-              ' "' +
-              startValue +
-              '"' +
-              ")"
+            " or (" +
+            field +
+            " " +
+            ">=" +
+            ' "' +
+            startValue +
+            '"' +
+            ")"
             : "(" + field + " " + ">=" + ' "' + startValue + '"' + ")";
         } else if (endValue && startValue == "") {
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}end`).val();
           queryChild += queryChild
             ? `${query ? " and " : ""}` +
-              " or (" +
-              field +
-              " " +
-              "<=" +
-              ' "' +
-              endValue +
-              '"' +
-              ")"
+            " or (" +
+            field +
+            " " +
+            "<=" +
+            ' "' +
+            endValue +
+            '"' +
+            ")"
             : "or (" + field + " " + "<=" + ' "' + endValue + '"' + ")";
         } else if (startValue && endValue) {
           bokTermsGet[`${replacedText}_start`] = $(
@@ -425,35 +406,35 @@ jQuery.noConflict();
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
           queryChild += queryChild
             ? +" or ((" +
-              field +
-              " " +
-              ">=" +
-              ' "' +
-              startValue +
-              '")' +
-              " and (" +
-              field +
-              " " +
-              "<=" +
-              ' "' +
-              endValue +
-              '"' +
-              "))"
+            field +
+            " " +
+            ">=" +
+            ' "' +
+            startValue +
+            '")' +
+            " and (" +
+            field +
+            " " +
+            "<=" +
+            ' "' +
+            endValue +
+            '"' +
+            "))"
             : "((" +
-              field +
-              " " +
-              ">=" +
-              ' "' +
-              startValue +
-              '")' +
-              " and (" +
-              field +
-              " " +
-              "<=" +
-              ' "' +
-              endValue +
-              '"' +
-              "))";
+            field +
+            " " +
+            ">=" +
+            ' "' +
+            startValue +
+            '")' +
+            " and (" +
+            field +
+            " " +
+            "<=" +
+            ' "' +
+            endValue +
+            '"' +
+            "))";
         }
       });
       let queryFinal;
@@ -487,10 +468,7 @@ jQuery.noConflict();
         let start = $(`#${replacedText}_start`).val();
       }
       if ($(`#${replacedText}_end`).length) {
-        console.log("have");
-
         let end = $(`#${replacedText}_end`).val();
-        console.log("bla", end);
       }
 
       if (start && end) {
@@ -561,7 +539,6 @@ jQuery.noConflict();
           (content) =>
             content.groupName === display.groupName && !display.nameMarker
         );
-        console.log("filteredItems", filteredItems);
         const customContextMenu = $("<div></div>")
           .addClass("custom-context-menu")
           .css({
@@ -577,7 +554,6 @@ jQuery.noConflict();
           });
         // Position the pop-up to the left of the dropdown title
         const offset = dropDownTitle.offset();
-        console.log(offset);
         customContextMenu.css({
           top: offset.top + dropDownTitle.outerHeight() - 250, // Position below the dropdown title
           left: offset.left - customContextMenu.outerWidth() + 90, // Position to the left with a gap of 10px
@@ -587,8 +563,6 @@ jQuery.noConflict();
         filteredItems.forEach((item, index) => {
           const buttonLabel = item.searchName;
           const targetField = filteredItems[index].searchTarget;
-          console.log("targetField", targetField);
-
           const hoverBtn = new Kuc.Button({
             text: buttonLabel,
             type: "normal",
@@ -636,18 +610,16 @@ jQuery.noConflict();
         .addClass("kintoneplugin-dropdown")
         .attr("id", `${NameDropdown}`)
         .css({ width: display.searchLength });
-      dropDown.append($("<option>").text("-----").val(""));
+      dropDown.append($("<option>").text("-----").val("-----"));
       let filteredRecords = CONFIG.searchContent.filter(
         (item) => item.groupName === display.groupName
       );
-      console.log("filteredRecords", filteredRecords);
 
       if (display.nameMarker) {
         if (filteredRecords[0]?.masterId > 0) {
           filteredRecords.forEach((item) => {
-            ITEMS.forEach((data) => {
+            ITEMS[0].forEach((data) => {
               if (data.code && data.name) {
-                console.log("data", data);
                 const option = $("<option>")
                   .text(data.name)
                   .addClass("option")
@@ -676,7 +648,7 @@ jQuery.noConflict();
       } else {
         if (filteredRecords[0]?.masterId > 0) {
           dropDownTitle.text(initialContent.searchName);
-          ITEMS.forEach((data) => {
+          ITEMS[0].forEach((data) => {
             if (data.code && data.name) {
               const initialOption = $("<option>")
                 .text(data.name)
@@ -689,7 +661,6 @@ jQuery.noConflict();
           dropDown.trigger("change");
         } else {
           dropDownTitle.text(initialContent.searchName);
-          console.log(initialContent);
           records.forEach((item) => {
             if (item[initialContent.searchTarget].value === "") return;
             const initialOption = $("<option>")
@@ -704,6 +675,7 @@ jQuery.noConflict();
       }
       dropDown.on("change", (e) => {
         const selectedValue = dropDown.val();
+
         const selectedOption = dropDown.find("option:selected");
         const fieldCode = selectedOption.attr("fieldCode");
         const getDropdownId = dropDown.attr("id");
@@ -731,7 +703,7 @@ jQuery.noConflict();
       if (status == "active") {
         const dropDown = dropDownTitle;
         dropDown.empty();
-        dropDown.append($("<option>").text("-----").val(""));
+        dropDown.append($("<option>").text("-----").val("-----"));
         const selectedContent = filteredItems.filter(
           (content) => content.groupName === groupName
         );
@@ -740,8 +712,7 @@ jQuery.noConflict();
         );
         if (matchingContent) {
           if (matchingContent.masterId > 0) {
-            ITEMS.forEach((data) => {
-              console.log("+++++++++++++++++++++++++++++", data);
+            ITEMS[0].forEach((data) => {
               // if (!ITEMS ||[matchingContent.searchTarget].value === '') return;
               const selectedOption = $("<option>")
                 .text(data.name)
@@ -768,13 +739,12 @@ jQuery.noConflict();
       } else {
         const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
         dropDown.empty();
-        dropDown.append($("<option>").text("-----").val(""));
+        dropDown.append($("<option>").text("-----").val("-----"));
         const selectedContent = filteredItems.find(
           (content) => content.searchTarget === selectedItem.searchTarget
         );
         if (selectedContent.masterId > 0) {
-          ITEMS.forEach((data) => {
-            console.log("CodeMaster", data);
+          ITEMS[0].forEach((data) => {
             if (data.name && data.code) {
               const selectedOption = $("<option>")
                 .text(data.name)
@@ -810,17 +780,11 @@ jQuery.noConflict();
       };
     }
 
-    async function queryDropdown(
-      selectedValue,
-      fieldCode,
-      dropdownId,
-      labelValue
-    ) {
+    async function queryDropdown(selectedValue, fieldCode, dropdownId, labelValue) {
       // Check if both selectedValue and fieldCode are present
       if (!selectedValue || !fieldCode) {
         return;
       }
-
       let selectedId = dropdownId;
       let queryChild;
       let query;
@@ -832,48 +796,37 @@ jQuery.noConflict();
       }
 
       searchInfoList.forEach((field, index) => {
-        if (field.groupName == selectedId && field.nameMarker != "") {
+        queryChild = "";
+        if (field.groupName == selectedId && field.nameMarker) {
           if (field.target_field.length > 1) {
             field.target_field.forEach((fieldCode, index) => {
               const isLastIndex = index === field.target_field.length - 1;
 
               if (queryChild) {
                 if (isLastIndex) {
-                  queryChild += `or (${fieldCode} like "${selectedValue}"))`;
+                  queryChild += ` or (${fieldCode} like "${selectedValue}"))`;
                 } else {
-                  queryChild += `or (${fieldCode} like "${selectedValue}") `;
+                  queryChild += ` or (${fieldCode} like "${selectedValue}")`;
                 }
               } else {
-                queryChild = `${query ? " and " : ""}((${fieldCode} like "${selectedValue}") `;
+                queryChild = `((${fieldCode} like "${selectedValue}") `;
               }
             });
+            query = `${query ? " and " : ""}${queryChild}`;
           } else {
-            query += `${query ? " and " : ""}(${field.target_field} like "${selectedValue}")`;
+            query = `${query ? " and " : ""}(${field.target_field[0]} like "${selectedValue}")`;
           }
-          query = `${query ? " and " : ""}${queryChild}`;
-        } else if (field.groupName == selectedId && field.nameMarker == "") {
-          if (query) {
-            query += `${query ? " and " : ""}(${fieldCode} = "${selectedValue}")`;
-          } else {
-            query = `${query ? " and " : ""}(${fieldCode} = "${selectedValue}")`;
-          }
+        } else if (field.groupName == selectedId && field.nameMarker == '') {
+          query = `${query ? " and " : ""}(${fieldCode} = "${selectedValue}")`;
         }
       });
 
-      // let query = encodeURIComponent(`${fieldCode} = "${selectedValue}"`);
-      // query = `(${fieldCode} = "${selectedValue}")`;
-      bokTermsObject = createBokTermsObject(
-        selectedValue,
-        dropdownId,
-        labelValue
-      );
+      bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelValue);
       let joinObject = { ...bokTermsGet, ...bokTermsObject };
 
       const currentUrlBase = window.location.href.match(/\S+\//)[0];
       const bokTermsString = JSON.stringify(joinObject);
       const bokTerms = encodeURIComponent(bokTermsString);
-      // const bokTermsString = JSON.stringify(bokTermsObject);
-      // const bokTerms = encodeURIComponent(bokTermsString);
 
       if (queryInput) {
         query += `${query ? " and" : ""} ${queryInput}`;
@@ -882,24 +835,18 @@ jQuery.noConflict();
 
       const QueryUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
       const urlObj = new URL(window.location.href);
-      const bokTerm = urlObj.searchParams.get("bokTerms");
+      const bokTerm = urlObj.searchParams.get('bokTerms');
       if (bokTerm == null) {
         window.location.href = QueryUrl;
       } else {
-        const decodedBokTerms = decodeURIComponent(bokTerm).replace(
-          /(^\{|\}$)/g,
-          ""
-        );
-        const cleanBokTerms = decodedBokTerms.replace(
-          /[^{}\[\]":,0-9a-zA-Z._-\s]/g,
-          ""
-        );
+        const decodedBokTerms = decodeURIComponent(bokTerm).replace(/(^\{|\}$)/g, '');
+        const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-\s]/g, '');
         const wrappedBokTerms = `{${cleanBokTerms}}`;
         let bokTermObj;
         try {
           bokTermObj = JSON.parse(wrappedBokTerms);
         } catch (error) {
-          console.error("Error parsing bokTerm:", error);
+          console.error('Error parsing bokTerm:', error);
           bokTermObj = {}; // initialize as an empty object in case of error
         }
 
@@ -910,7 +857,7 @@ jQuery.noConflict();
         } else {
           bokTermObj[dropdownId] = {
             value: selectedValue,
-            active: labelValue,
+            active: labelValue
           };
         }
 
@@ -918,7 +865,8 @@ jQuery.noConflict();
         const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${mergedBokTerms}`;
         window.location.href = updatedUrl;
       }
-    }
+    };
+
 
     async function getURL() {
       const urlObj = new URL(window.location.href);
@@ -936,9 +884,7 @@ jQuery.noConflict();
         let bokTerm;
         try {
           bokTerm = JSON.parse(wrappedBokTerms);
-          console.log(bokTerm);
         } catch (error) {
-          console.error("Error parsing bokTerm:", error);
           return; // Exit if there's an error parsing
         }
         Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
@@ -947,7 +893,6 @@ jQuery.noConflict();
               if (searchItem.nameMarker == "") {
                 let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                 const getId = $(`#${getIdElement}`);
-                console.log("bokTermsObj.valu ======>>>>>", bokTermsObj.valu);
                 const trimmedActive = bokTermsObj.active.trim();
                 getId
                   .closest(".search-item")
@@ -1010,16 +955,15 @@ jQuery.noConflict();
         class: "kintoneplugin-input-text",
         "data-serach-type": searchType,
         id: initialText,
-      }).css({
-        width: width.searchLength || "",
-      });
+      })
+      // .css({
+      //   width: width.searchLength || "",
+      // });
 
       if (result[initialText]) {
         inputElement.val(result[initialText]);
       }
-
       // Return the input element for further use
-      console.log(inputElement.val());
       return inputElement;
     }
 
@@ -1031,9 +975,10 @@ jQuery.noConflict();
         id: inputTeatArae,
         visible: true,
         disabled: false,
-      }).css({
-        width: width.searchLength || "",
-      });
+      })
+      // .css({
+      //   width: width.searchLength || "",
+      // });
 
       if (result[inputTeatArae]) {
         textarea.value = result[inputTeatArae];
@@ -1054,9 +999,10 @@ jQuery.noConflict();
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
         id: initialNumber,
-      }).css({
-        width: width.searchLength || "",
-      });
+      })
+      // .css({
+      //   width: width.searchLength || "",
+      // });
 
       return InputNumber;
     }
@@ -1069,18 +1015,20 @@ jQuery.noConflict();
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
         id: `${NumberRange}_start`,
-      }).css({
-        width: width.searchLength || "",
-      });
+      })
+      // .css({
+      //   width: width.searchLength || "",
+      // });
 
       const end = $("<input>", {
         type: "number",
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
         id: `${NumberRange}_end`,
-      }).css({
-        width: width.searchLength || "",
-      });
+      })
+      // .css({
+      //   width: width.searchLength || "",
+      // });
 
       result[`${NumberRange}_start`]
         ? start.val(result[`${NumberRange}_start`])
@@ -1101,9 +1049,10 @@ jQuery.noConflict();
         id: dateInput,
         visible: true,
         disabled: false,
-      }).css({
-        width: width.searchLength || "",
-      });
+      })
+      // .css({
+      //   width: width.searchLength || "",
+      // });
 
       datePicker.setAttribute("data-search-type", searchType);
       datePicker.addEventListener("change", (event) =>
@@ -1121,9 +1070,10 @@ jQuery.noConflict();
         id: `${dateRange}_start`,
         visible: true,
         disabled: false,
-      }).css({
-        width: width.searchLength || "",
-      });
+      })
+      // .css({
+      //   width: width.searchLength || "",
+      // });
 
       datePickerSatrt.setAttribute("data-search-type", searchType);
       datePickerSatrt.addEventListener("change", (event) => {
@@ -1137,9 +1087,10 @@ jQuery.noConflict();
         id: `${dateRange}_end`,
         visible: true,
         disabled: false,
-      }).css({
-        width: width.searchLength || "",
-      });
+      })
+      // .css({
+      //   width: width.searchLength || "",
+      // });
 
       datePickerEnd.setAttribute("data-search-type", searchType);
       datePickerEnd.addEventListener("change", (event) => {
@@ -1180,34 +1131,67 @@ jQuery.noConflict();
 
     const clearButton = createButton("C", () => {
       Swal10.fire({
-        title: "Are you sure?",
-        text: "Do you want to delete the search condition?",
-        icon: "warning",
+        position: "center",
+        icon: "info",
+        text: "クエリをクリアにしますか？",
+        confirmButtonColor: "#3498db",
         showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!",
-        cancelButtonText: "Cancel",
+        cancelButtonColor: "#f7f9fa",
+        confirmButtonText: "はい",
+        cancelButtonText: "いいえ",
+        customClass: {
+            confirmButton: 'custom-confirm-button',
+            cancelButton: 'custom-cancel-button'
+        }
       }).then((result) => {
         if (result.isConfirmed) {
-          CONFIG.groupSetting.forEach((searchItem) => {
-            let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-            const getId = $(`#${getIdElement}`);
-            const getIdStart = $(`#${getIdElement}_start`);
-            const getIdEnd = $(`#${getIdElement}_end`);
-            if (getId.length) getId.val("");
-            if (getIdStart.length) getIdStart.val("");
-            if (getIdEnd.length) getIdEnd.val("");
-            if (getId.hasClass("kintoneplugin-dropdown")) {
-              if (!getId.find("option[value='']").length) {
-                getId.append($("<option>").text("-----").val(""));
-              }
+          const urlObj = new URL(window.location.href);
+          const bokTerms = urlObj.searchParams.get("bokTerms");
+          let bokTermObj;
+          if (bokTerms != null) {
+            const decodedBokTerms = decodeURIComponent(bokTerms).replace(/(^\{|\}$)/g, "");
+            const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-\s]/g, "");
+            const wrappedBokTerms = `{${cleanBokTerms}}`;
+            try {
+              bokTermObj = JSON.parse(wrappedBokTerms);
+            } catch (error) {
+              console.error("Error parsing bokTerm:", error);
+              return;
             }
-            window.location.href =
-              "../../" + "k" + "/" + kintone.app.getId() + "/";
-          });
+            eventClickHandler(bokTermObj)
+          } else {
+            eventClickHandler(bokTermObj)
+          }
         }
       });
+      function eventClickHandler(bokTermObj) {
+        CONFIG.groupSetting.forEach((searchItem) => {
+          let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+          const getId = $(`#${getIdElement}`);
+          // const getIdStart = $(`#${getIdElement}_start`);
+          // const getIdEnd = $(`#${getIdElement}_end`);
+          // if (getId.length) getId.val("");
+          // if (getIdStart.length) getIdStart.val("");
+          // if (getIdEnd.length) getIdEnd.val("");
+          if (getId.hasClass("kintoneplugin-dropdown")) {
+            const dropdownId = getId.attr("id");
+            const labelValue = getId.closest(".search-item").find(".custom-dropdownTitle").text().trim();
+            if (dropdownId && dropdownId in bokTermObj) {
+              bokTermObj[dropdownId].value = "-----";
+              bokTermObj[dropdownId].active = labelValue;
+            } else if (dropdownId) {
+              bokTermObj[dropdownId] = {
+                value: "-----",
+                active: labelValue,
+              };
+            }
+          }
+        });
+        const currentUrlBase = window.location.href.match(/\S+\//)[0];
+        const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
+        const updatedUrl = `${currentUrlBase}?&bokTerms=${mergedBokTerms}`;
+        window.location.href = updatedUrl;
+      }
     });
 
     const elementBtn = $('<div class="element-button"></div>').append(
@@ -1320,7 +1304,6 @@ jQuery.noConflict();
               item.searchType == "multi_text_initial" ||
               item.searchType == "multi_text_patial"
             ) {
-              console.log(searchItem.fieldForSearch);
               kintone.app.record.setFieldShown(
                 searchItem.fieldForSearch,
                 false
@@ -1423,7 +1406,6 @@ jQuery.noConflict();
         let sortedSpaces = SPACE.sort((a, b) => {
           return a.value.localeCompare(b.value);
         });
-        console.log(sortedSpaces);
 
         let storedRecords = JSON.parse(
           sessionStorage.getItem("kintoneRecords")
@@ -1434,11 +1416,7 @@ jQuery.noConflict();
           storedDataSpace.forEach((item) => {
             sortedSpaces.forEach((space) => {
               let selectElement;
-              console.log(item.spc);
-              console.log(space.value);
               if (item.spc === space.value) {
-                console.log(storedRecords);
-
                 let filteredRecords = storedRecords.filter(
                   (rec) => rec.type.value == item.kind
                 );
@@ -1497,7 +1475,6 @@ jQuery.noConflict();
                       );
                     });
                   }
-                  console.log(record);
                   inputBox.on("input", function () {
                     let inputValue = $(this)
                       .val()
@@ -1591,7 +1568,6 @@ jQuery.noConflict();
                               $(optionElement).prop("selected", true);
                               //setField(codeValue, optionValue, typeValue);
                               const correspondingInputBox = inputBox.eq(index);
-                              console.log(correspondingInputBox);
                               correspondingInputBox.val(codeValue);
                               return false;
                             }
