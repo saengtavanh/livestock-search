@@ -50,9 +50,17 @@
   min-Width: 20px;
   margin-Left: 1px;
   color: white;
-  border: none;
+  border: none !important;
   cursor: pointer;
   margin-top: 20px;
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: white;
+}
+
+.kintoneplugin-button-dialog-ok:hover {
+  color: white;
+  background-color: white;
 }
 
 .btnClear {
@@ -76,9 +84,12 @@
 .label {
   margin-bottom: -20px;
   font-size: 15px;
+  /* color: white; */
 }
 
 .kintoneplugin-dropdown {
+  width: 0;
+  min-width: 0;
   margin: 0;
   padding: 0;
   height: 35px;
@@ -90,24 +101,21 @@
   display: flex;
   flex-direction: row;
   flex-wrap: none;
+  border: none !important;
+  outline: none !important;
   /* margin-left: -10px; */
 }
 
-.options-class .kuc-date-picker-1-18-0_group input[type="text"].kuc-base-date-1-18-0_input {
+.options-class-date .kuc-date-picker-1-18-0__group input[type=text].kuc-base-date-1-18-0__input {
+  width: 0;
   margin: 0;
   padding: 0;
-  height: 35px;
-  font-size: 15px;
-}
-
-.options-class textarea.kuc-textarea-1-18-0_group_textarea {
-  min-height: 0 !important;
   height: 35px !important;
   font-size: 15px;
-
 }
 
 .kintoneplugin-input-text {
+  width: 0;
   height: 35px;
   font-size: 15px;
   padding: 0;
