@@ -80,6 +80,18 @@ jQuery.noConflict();
       element.style.display = "none";
     });
 
+    const recordRows = document.querySelectorAll('.recordlist-row-gaia');
+    recordRows.forEach(row => {
+      row.addEventListener(
+        'dblclick',
+        function (e) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        },
+        true
+      );
+    });
+
     // getItem sessionStorage 
     function getDataFromSessionStorage(key) {
       const data = sessionStorage.getItem(key);
@@ -1108,33 +1120,67 @@ jQuery.noConflict();
 
     const clearButton = createButton("C", () => {
       Swal10.fire({
-        title: "Are you sure?",
-        text: "Do you want to delete the search condition?",
-        icon: "warning",
+        position: "center",
+        icon: "info",
+        text: "クエリをクリアにしますか？",
+        confirmButtonColor: "#3498db",
         showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!",
-        cancelButtonText: "Cancel"
+        cancelButtonColor: "#f7f9fa",
+        confirmButtonText: "はい",
+        cancelButtonText: "いいえ",
+        customClass: {
+            confirmButton: 'custom-confirm-button',
+            cancelButton: 'custom-cancel-button'
+        }
       }).then((result) => {
         if (result.isConfirmed) {
-          CONFIG.groupSetting.forEach(searchItem => {
-            let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-            const getId = $(`#${getIdElement}`);
-            const getIdStart = $(`#${getIdElement}_start`);
-            const getIdEnd = $(`#${getIdElement}_end`);
-            if (getId.length) getId.val('');
-            if (getIdStart.length) getIdStart.val('');
-            if (getIdEnd.length) getIdEnd.val('');
-            if (getId.hasClass("kintoneplugin-dropdown")) {
-              if (!getId.find("option[value='']").length) {
-                getId.append($("<option>").text('-----').val(''));
-              }
+          const urlObj = new URL(window.location.href);
+          const bokTerms = urlObj.searchParams.get("bokTerms");
+          let bokTermObj;
+          if (bokTerms != null) {
+            const decodedBokTerms = decodeURIComponent(bokTerms).replace(/(^\{|\}$)/g, "");
+            const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-\s]/g, "");
+            const wrappedBokTerms = `{${cleanBokTerms}}`;
+            try {
+              bokTermObj = JSON.parse(wrappedBokTerms);
+            } catch (error) {
+              console.error("Error parsing bokTerm:", error);
+              return;
             }
-            window.location.href = '../../' + "k" + "/" + kintone.app.getId() + "/";
-          });
+            eventClickHandler(bokTermObj)
+          } else {
+            eventClickHandler(bokTermObj)
+          }
         }
       });
+      function eventClickHandler(bokTermObj) {
+        CONFIG.groupSetting.forEach((searchItem) => {
+          let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+          const getId = $(`#${getIdElement}`);
+          const getIdStart = $(`#${getIdElement}_start`);
+          const getIdEnd = $(`#${getIdElement}_end`);
+          if (getId.length) getId.val("");
+          if (getIdStart.length) getIdStart.val("");
+          if (getIdEnd.length) getIdEnd.val("");
+          if (getId.hasClass("kintoneplugin-dropdown")) {
+            const dropdownId = getId.attr("id");
+            const labelValue = getId.closest(".search-item").find(".custom-dropdownTitle").text().trim();
+            if (dropdownId && dropdownId in bokTermObj) {
+              bokTermObj[dropdownId].value = "-----";
+              bokTermObj[dropdownId].active = labelValue;
+            } else if (dropdownId) {
+              bokTermObj[dropdownId] = {
+                value: "-----",
+                active: labelValue,
+              };
+            }
+          }
+        });
+        const currentUrlBase = window.location.href.match(/\S+\//)[0];
+        const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
+        const updatedUrl = `${currentUrlBase}?&bokTerms=${mergedBokTerms}`;
+        window.location.href = updatedUrl;
+      }
     });
 
     const elementBtn = $('<div class="element-button"></div>').append($searchButton, clearButton);

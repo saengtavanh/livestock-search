@@ -156,6 +156,92 @@ jQuery.noConflict();
 		};
 	}
 
+	async function setValueToTable(getConfig) {
+		console.log('getConfig', getConfig);
+		getConfig.groupSetting.forEach((item) => {
+			let rowForClone = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
+			$("#kintoneplugin-setting-tspace tr:last-child").after(rowForClone);
+			rowForClone.find("#name_marker").val(item.nameMarker);
+			rowForClone.find("#group_name").val(item.groupName);
+			rowForClone.find("#search_length").val(item.searchLength);
+			rowForClone.find("#search_type").val(item.searchType);
+
+		})
+
+		let allResponse = [];
+		for (const item of getConfig.codeMasterSetting) {
+			let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
+			$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
+			let appId = item.appId;
+			let apiToken = item.apiToken;
+			let body = { app: appId };
+			if (apiToken) body.token = apiToken;
+			let checkData = allResponse.filter(item => item.appId == appId);
+			let response = [];
+			let selectedCode = item.codeField;
+			let selectedName = item.nameField;
+			try {
+				if (checkData.length <= 0) {
+					response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
+						app: appId
+					}).then(res => { return res.properties });
+					allResponse.push({ appId, response });
+				} else {
+					response = checkData[0].response;
+				}
+
+				$(rowForClone).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+				$(rowForClone).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+				$(rowForClone).find('select#code_field').append(
+					$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
+				);
+				$(rowForClone).find('select#name_field').append(
+					$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
+				);
+				// Check to see if not same value is set "-----".
+				if ($(rowForClone).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
+					selectedCode = "-----";
+				}
+				if ($(rowForClone).find('select#name_field option[value="' + selectedName + '"]').length == 0) {
+					selectedName = "-----";
+				}
+
+				// Set to the value selected.
+				$(rowForClone).find('select#code_field').val(selectedCode);
+				$(rowForClone).find('select#name_field').val(selectedName);
+				$(rowForClone).find("#master_id").val(item.masterId);
+				$(rowForClone).find("#app_id").val(item.appId);
+				$(rowForClone).find("#api_token").val(item.apiToken);
+				$(rowForClone).find("#type_field").val(item.typeField);
+			} catch (error) {
+				throw new Error("Cannot find code master app");
+			}
+		}
+		await updateData("initial");
+
+		getConfig.searchContent.forEach((item) => {
+			let rowForClone = $("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden");
+			$("#kintoneplugin-setting-prompt-template tr:last-child").after(rowForClone);
+			rowForClone.find("#group_name_ref").val(item.groupName);
+			rowForClone.find("#search_name").val(item.searchName);
+			// rowForClone.find("#master_id_ref").val(item.masterId);
+			rowForClone.find("#search_target").val(item.searchTarget);
+			rowForClone.find("#field_for_search").val(item.fieldForSearch);
+
+			if ($(rowForClone).find('select#master_id_ref option[value="' + item.masterId + '"]').length == 0) {
+				rowForClone.find("#master_id_ref").val("-----");
+			} else {
+				rowForClone.find("#master_id_ref").val(item.masterId);
+			}
+
+		})
+
+		//set color
+		$("#title-color").val(getConfig.colorSetting.titleColor).css("color", getConfig.colorSetting.titleColor);
+		$("#button-color").val(getConfig.colorSetting.buttonColor).css("color", getConfig.colorSetting.buttonColor);
+		$("#button-text-color").val(getConfig.colorSetting.buttonTextColor).css("color", getConfig.colorSetting.buttonTextColor);
+	}
+
 	// setInitialValue function
 	async function setInitialValue(status, setInitial) {
 		let getConfig = {};
@@ -175,44 +261,7 @@ jQuery.noConflict();
 				return;
 			} else {
 				getConfig = JSON.parse(CONFIG.config);
-				getConfig.groupSetting.forEach((item) => {
-					let rowForClone = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
-					$("#kintoneplugin-setting-tspace tr:last-child").after(rowForClone);
-					rowForClone.find("#name_marker").val(item.nameMarker);
-					rowForClone.find("#group_name").val(item.groupName);
-					rowForClone.find("#search_length").val(item.searchLength);
-					rowForClone.find("#search_type").val(item.searchType);
-
-				})
-
-				getConfig.codeMasterSetting.forEach((item) => {
-					let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
-					$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
-					rowForClone.find("#master_id").val(item.masterId);
-					rowForClone.find("#app_id").val(item.appId);
-					rowForClone.find("#api_token").val(item.apiToken);
-					rowForClone.find("#type_field").val(item.typeField);
-					rowForClone.find("#code_field").val(item.codeField);
-					rowForClone.find("#name_field").val(item.nameField);
-
-				})
-				await updateData("initial");
-
-				getConfig.searchContent.forEach((item) => {
-					let rowForClone = $("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden");
-					$("#kintoneplugin-setting-prompt-template tr:last-child").after(rowForClone);
-					rowForClone.find("#group_name_ref").val(item.groupName);
-					rowForClone.find("#search_name").val(item.searchName);
-					rowForClone.find("#api_master_id_ref").val(item.masterId);
-					rowForClone.find("#search_target").val(item.searchTarget);
-					rowForClone.find("#field_for_search").val(item.fieldForSearch);
-
-				})
-
-				//set color
-				$("#title-color").val(getConfig.colorSetting.titleColor).css("color", getConfig.colorSetting.titleColor);
-				$("#button-color").val(getConfig.colorSetting.buttonColor).css("color", getConfig.colorSetting.buttonColor);
-				$("#button-text-color").val(getConfig.colorSetting.buttonTextColor).css("color", getConfig.colorSetting.buttonTextColor);
+				await setValueToTable(getConfig);
 			}
 		} else {
 			// Clear all rows except the first row of table space for prompt template and button and table setting prompt template.
@@ -222,44 +271,11 @@ jQuery.noConflict();
 			HASUPDATED = false;
 			getConfig = setInitial;
 
-			getConfig.groupSetting.forEach((item) => {
-				let rowForClone = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
-				$("#kintoneplugin-setting-tspace tr:last-child").after(rowForClone);
-				rowForClone.find("#name_marker").val(item.nameMarker);
-				rowForClone.find("#group_name").val(item.groupName);
-				rowForClone.find("#search_length").val(item.searchLength);
-				rowForClone.find("#search_type").val(item.searchType || item.searchType != null || item.searchType != undefined ? item.searchType : "-----");
-			})
-
-			getConfig.codeMasterSetting.forEach((item) => {
-				let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
-				$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
-				rowForClone.find("#master_id").val(item.masterId);
-				rowForClone.find("#app_id").val(item.appId);
-				rowForClone.find("#api_token").val(item.apiToken);
-				rowForClone.find("#type_field").val(item.typeField);
-				rowForClone.find("#code_field").val(item.codeField);
-				rowForClone.find("#name_field").val(item.nameField);
-			})
-			await updateData("initial");
-
-			getConfig.searchContent.forEach((item) => {
-				let rowForClone = $("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden");
-				$("#kintoneplugin-setting-prompt-template tr:last-child").after(rowForClone);
-				rowForClone.find("#group_name_ref").val(item.groupName);
-				rowForClone.find("#search_name").val(item.searchName);
-				rowForClone.find("#api_master_id_ref").val(item.masterId);
-				rowForClone.find("#search_target").val(item.searchTarget);
-				rowForClone.find("#field_for_search").val(item.fieldForSearch);
-			})
-
-			//set color
-			$("#title-color").val(getConfig.colorSetting.titleColor).css("color", getConfig.colorSetting.titleColor);
-			$("#button-color").val(getConfig.colorSetting.buttonColor).css("color", getConfig.colorSetting.buttonColor);
-			$("#button-text-color").val(getConfig.colorSetting.buttonTextColor).css("color", getConfig.colorSetting.buttonTextColor);
+			await setValueToTable(getConfig);
 		}
 		checkRow();
 		checkRecreateButton();
+		checkMasterId();
 	}
 
 	//check recreate button function
@@ -413,6 +429,9 @@ jQuery.noConflict();
 		for (const [index, element] of codeMasterTable.entries()) {
 			let appId = $(element).find('#app_id');
 			let masterId = $(element).find('#master_id');
+			let condition = $(element).find('#type_field');
+			let code = $(element).find('#code_field');
+			let name = $(element).find('#name_field');
 			if (!masterId.val()) {
 				errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
 				$(masterId).addClass('validation-error');
@@ -437,25 +456,43 @@ jQuery.noConflict();
 				$(appId).removeClass('validation-error');
 			}
 
-			
+			if (!condition.val()) {
+				errorMessage += `<p>Please enter Condition on Code master difinition row: ${index + 1}</p>`;
+				$(condition).addClass('validation-error');
+				hasError = true;
+			} else {
+				$(condition).removeClass('validation-error');
+			}
+
+			if (code.val() == "-----") {
+				errorMessage += `<p>Please select Code on Code master difinition row: ${index + 1}</p>`;
+				$(code).parent().addClass('validation-error');
+				hasError = true;
+			} else {
+				$(code).parent().removeClass('validation-error');
+			}
+
+			if (name.val() == "-----") {
+				errorMessage += `<p>Please select Name on Code master difinition row: ${index + 1}</p>`;
+				$(name).parent().addClass('validation-error');
+				hasError = true;
+			} else {
+				$(name).parent().removeClass('validation-error');
+			}
+
 
 		}
 		if (condition == "save" || condition == "export") {
 			const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
+			let searchNameArray = [];
 			for (const [index, element] of searchContentTable.entries()) {
 
 				let groupName = $(element).find('#group_name_ref');
 				let searchName = $(element).find('#search_name');
 				let targetFields = $(element).find('#search_target');
 				let fieldForSearch = $(element).find('#field_for_search');
+				let masterId = $(element).find('#master_id_ref');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
-				if (!searchName.val()) {
-					errorMessage += `<p>Please enter Search type on Search content row: ${index + 1}</p>`;
-					$(searchName).addClass('validation-error');
-					hasError = true;
-				} else {
-					$(searchName).removeClass('validation-error');
-				}
 
 				if (groupName.val() == "-----") {
 					errorMessage += `<p>Please select Group name on Search content row: ${index + 1}</p>`;
@@ -465,12 +502,83 @@ jQuery.noConflict();
 					$(groupName).parent().removeClass('validation-error');
 				}
 
+				if (!searchName.val()) {
+					errorMessage += `<p>Please enter Search name on Search content row: ${index + 1}</p>`;
+					$(searchName).addClass('validation-error');
+					hasError = true;
+				} else {
+					// $(searchName).removeClass('validation-error');
+					if (!searchNameArray.includes(searchName.val().trim())) {
+						$(searchName).removeClass('validation-error');
+						searchNameArray.push(searchName.val());
+					} else {
+						$(searchName).addClass('validation-error');
+						errorMessage += `<p>Search name "${searchName.val()}" already exists.</p>`;
+						hasError = true;
+					}
+				}
+
 				if (targetFields.val() == "-----") {
 					errorMessage += `<p>Please select Search target field on Search content row: ${index + 1}</p>`;
 					$(targetFields).parent().addClass('validation-error');
 					hasError = true;
 				} else {
+					let fieldType = $(element).find('#search_target option:selected').attr('type');
 					$(targetFields).parent().removeClass('validation-error');
+					if (currentGroup.length > 0 && (currentGroup[0].searchType == "number_range" || currentGroup[0].searchType == "number_exact")) {
+						if (fieldType == "NUMBER" || fieldType == "CALC") {
+							$(targetFields).parent().removeClass('validation-error');
+						} else {
+							errorMessage += `<p>Field "${targetFields.val()}" is not number type.</p>`;
+							$(targetFields).parent().addClass('validation-error');
+							hasError = true;
+						}
+					} else if (currentGroup.length > 0 && (
+						currentGroup[0].searchType == "text_initial" ||
+						currentGroup[0].searchType == "text_patial" ||
+						currentGroup[0].searchType == "text_exact" ||
+						currentGroup[0].searchType == "multi_text_initial" ||
+						currentGroup[0].searchType == "multi_text_patial"
+					)) {
+						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
+							$(targetFields).parent().removeClass('validation-error');
+						} else {
+							errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
+							$(targetFields).parent().addClass('validation-error');
+							hasError = true;
+						}
+					} else if (currentGroup.length > 0 && (
+						currentGroup[0].searchType == "date_exact" ||
+						currentGroup[0].searchType == "date_range"
+					)) {
+						if (fieldType == "DATE" || fieldType == "DATETIME") {
+							$(targetFields).parent().removeClass('validation-error');
+						} else {
+							errorMessage += `<p>Field "${targetFields.val()}" is not type date.</p>`;
+							$(targetFields).parent().addClass('validation-error');
+							hasError = true;
+						}
+					} else if (currentGroup.length > 0 && (
+						currentGroup[0].searchType == "dropdown_exact"
+					))  {
+						if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
+							$(targetFields).parent().removeClass('validation-error');
+						} else {
+							errorMessage += `<p>Field "${targetFields.val()}" is not support for search type dropdown.</p>`;
+							$(targetFields).parent().addClass('validation-error');
+							hasError = true;
+						}
+					}
+
+					if (masterId.val() != "-----"){
+						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER"){
+							$(targetFields).parent().removeClass('validation-error');
+						}else {
+							errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
+							$(targetFields).parent().addClass('validation-error');
+							hasError = true;
+						}
+					}
 				}
 
 				if (fieldForSearch.val() != "-----") {
@@ -498,6 +606,7 @@ jQuery.noConflict();
 							break;
 					}
 				} else {
+					$(fieldForSearch).parent().removeClass('validation-error');
 					if (currentGroup.length > 0 && currentGroup[0].searchType == "text_initial") {
 						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
@@ -515,6 +624,25 @@ jQuery.noConflict();
 			showConfirmButton: true,
 		});
 		return hasError;
+	}
+
+	async function checkMasterId() {
+		let data = await getData();
+		const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
+		for (const [index, element] of searchContentTable.entries()) {
+			let groupName = $(element).find('#group_name_ref');
+			if (groupName.val() != "-----") {
+				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
+				if (currentGroup[0].searchType == "dropdown_exact") {
+					$(element).find('select#master_id_ref').prop('disabled', false).parent().removeClass('disabled-select');
+				} else {
+					$(element).find('select#master_id_ref').val('-----').prop('disabled', true).parent().addClass('disabled-select');
+				}
+			} else {
+				$(element).find('select#master_id_ref').prop('disabled', true).parent().addClass('disabled-select');
+			}
+
+		}
 	}
 
 	//function start when open the plugin.
@@ -654,6 +782,8 @@ jQuery.noConflict();
 		});
 
 		$("button#recreate-button").on('click', async function () {
+			let data = await getData();
+			console.log('data', data);
 			let currentRow = $(this).closest('tr');
 			let targetField = $(currentRow).find('select#search_target').val();
 			let groupName = $(currentRow).find('select#group_name_ref').val();
@@ -683,6 +813,17 @@ jQuery.noConflict();
 				})
 			} else {
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
+				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
+				// let searchType = currentGroup[0].searchType;
+				// console.log('current group: ' , currentGroup);
+				// if (searchType != "text_initial" || searchType != "text_patial" || searchType != "text_exact"|| searchType != "multi_text_initial" || searchType != "multi_text_patial"){
+				// 	return Swal10.fire({
+				//     position: 'center',
+				//     icon: 'error',
+				//     text: "this group name does not support recreation",
+				//     showConfirmButton: true,
+				//   })
+				// }
 			}
 
 			//check target field
@@ -696,6 +837,19 @@ jQuery.noConflict();
 				})
 			} else {
 				$(currentRow).find('select#search_target').parent().removeClass('validation-error');
+				let fieldType = $(currentRow).find('select#search_target option:selected').attr('type');
+				console.log('field type: ' + fieldType);
+				if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
+					$(currentRow).find('select#search_target').parent().removeClass('validation-error');
+				} else {
+					$(currentRow).find('select#search_target').parent().addClass('validation-error');
+					return Swal10.fire({
+						position: 'center',
+						icon: 'error',
+						text: "Recreation is not supported by the target field type",
+						showConfirmButton: true,
+					})
+				}
 			}
 
 			window.RsComAPI.showSpinner();
@@ -774,12 +928,21 @@ jQuery.noConflict();
 			}
 		})
 
-		$("#name_marker, #group_name, #search_length, #master_id").on("input", function () {
+		$("#name_marker, #group_name, #search_length").on("input", function () {
 			HASUPDATED = false;
+		});
+
+		//input ASCII format only
+		$("#master_id").on("input", function () {
+			HASUPDATED = false;
+			$(this).val($(this).val().replace(/[^ -~]/g, ''));
 		});
 
 		$("#search_type").on("change", function () {
 			HASUPDATED = false;
+		});
+		$("#group_name_ref").on("change", function () {
+			checkMasterId();
 		});
 
 		$("input#app_id").on("input", function () {
@@ -853,6 +1016,7 @@ jQuery.noConflict();
 			$(this).closest("tr").after(clonedRow);
 			checkRow();
 			checkRecreateButton();
+			checkMasterId();
 		});
 
 		//remove row function
