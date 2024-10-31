@@ -5,6 +5,7 @@ jQuery.noConflict();
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config)
   console.log("config", CONFIG);
   kintone.events.on("app.record.index.show", async (event) => {
+    let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
     //data test
     window.RsComAPI.getRecords({ app: 255 }).then((dataFromMaster) => {
       console.log(dataFromMaster, "helloooo");
@@ -653,26 +654,25 @@ jQuery.noConflict();
           let filteredRecords = CONFIG.searchContent.filter(
             (item) => item.groupName === display.groupName
           );
-          let checkValues = [];
-          console.log("checkValues", checkValues);
-          filteredRecords.forEach((item) => {
-            records.forEach((record) => {
-              let values = record[item.searchTarget]?.value;
-              console.log("values ✅✅✅", values);
-              if (!values) return;
-              let valuesCheckBox = Array.isArray(values) ? values : [values];
-
-              valuesCheckBox.forEach((value) => {
-                console.log("value 😂😂😂", value);
-                if (!checkValues.includes(value)) {
-                  checkValues.push(value);
+          //get field 
+          $.each(filteredRecords, (index, item) => {
+            $.each(DETFIELDlIST, (index, data) => {
+              let fieldList = data.fieldList;
+              console.log("fieldList", fieldList);
+              $.each(fieldList, (index, value) => {
+                if (item.searchTarget !== value.var) return;
+                let dataValue = value.properties?.options;
+                if (!dataValue) return;
+                $.each(dataValue, (index, options) => {
+                  let optionValue = options.label;
+                  console.log("optionValue", optionValue);
                   const option = $("<option>")
-                    .text(value)
+                    .text(optionValue)
                     .addClass("option")
-                    .attr("value", value)
+                    .attr("value", optionValue)
                     .attr("fieldCode", item.searchTarget);
                   dropDown.append(option);
-                }
+                });
               });
             });
           });
@@ -693,24 +693,44 @@ jQuery.noConflict();
           dropDown.trigger("change");
         } else {
           dropDownTitle.text(initialContent.searchName);
-          console.log(initialContent);
-          let checkValue = [];
-          records.forEach((item) => {
-            // if (!item[initialContent.searchTarget].value) return;
-            let value = item[initialContent.searchTarget]?.value;
-            if (!value) return;
-            let valuesCheckBox = Array.isArray(value) ? value : [value];
-            valuesCheckBox.forEach((value) => {
-              if (!checkValue.includes(value)) {
-                checkValue.push(value);
+          // console.log(initialContent);
+          // let checkValue = [];
+          // records.forEach((item) => {
+          //   // if (!item[initialContent.searchTarget].value) return;
+          //   let value = item[initialContent.searchTarget]?.value;
+          //   if (!value) return;
+          //   let valuesCheckBox = Array.isArray(value) ? value : [value];
+          //   valuesCheckBox.forEach((value) => {
+          //     if (!checkValue.includes(value)) {
+          //       checkValue.push(value);
+          //       const initialOption = $("<option>")
+          //         .text(value)
+          //         .addClass("option")
+          //         .attr("value", value)
+          //         .attr("fieldCode", initialContent.searchTarget);
+          //       dropDown.append(initialOption);
+          //     }
+          //   })
+          // });
+
+          $.each(DETFIELDlIST, (index, data) => {
+            let fieldList = data.fieldList;
+            console.log("fieldList", fieldList);
+            $.each(fieldList, (index, value) => {
+              if (initialContent.searchTarget !== value.var) return;
+              let dataValue = value.properties?.options;
+              if (!dataValue) return;
+              $.each(dataValue, (index, options) => {
+                let optionValue = options.label;
+                console.log("optionValue", optionValue);
                 const initialOption = $("<option>")
-                  .text(value)
+                  .text(optionValue)
                   .addClass("option")
-                  .attr("value", value)
+                  .attr("value", optionValue)
                   .attr("fieldCode", initialContent.searchTarget);
                 dropDown.append(initialOption);
-              }
-            })
+              });
+            });
           });
           dropDown.trigger("change");
         }
@@ -763,22 +783,24 @@ jQuery.noConflict();
             });
             dropDown.trigger("change");
           } else {
-            let checkValue = [];
-            records.forEach((record) => {
-              let value = record[matchingContent.searchTarget]?.value;
-              if (!value) return;
-              let valuesCheckBox = Array.isArray(value) ? value : [value];
-              valuesCheckBox.forEach((value) => {
-                if (!checkValue.includes(value)) {
-                  checkValue.push(value);
+            $.each(DETFIELDlIST, (index, data) => {
+              let fieldList = data.fieldList;
+              console.log("fieldList", fieldList);
+              $.each(fieldList, (index, value) => {
+                if (matchingContent.searchTarget !== value.var) return;
+                let dataValue = value.properties?.options;
+                if (!dataValue) return;
+                $.each(dataValue, (index, options) => {
+                  let optionValue = options.label;
+                  console.log("optionValue", optionValue);
                   const selectedOption = $("<option>")
-                    .text(value)
+                    .text(optionValue)
                     .addClass("option")
-                    .attr("value", value)
+                    .attr("value", optionValue)
                     .attr("fieldCode", matchingContent.searchTarget);
                   dropDown.append(selectedOption);
-                }
-              })
+                });
+              });
             });
             dropDown.trigger("change");
           }
@@ -803,21 +825,24 @@ jQuery.noConflict();
           });
           dropDown.trigger("change");
         } else {
-          let checkValue = [];
-          records.forEach((record) => {
-            let value = record[selectedItem.searchTarget]?.value;
-            if (!value) return;
-            let valuesCheckBox = Array.isArray(value) ? value : [value];
-            valuesCheckBox.forEach((value) => {
-              if (!checkValue.includes(value)) {
-                checkValue.push(value);
+
+          $.each(DETFIELDlIST, (index, data) => {
+            let fieldList = data.fieldList;
+            console.log("fieldList", fieldList);
+            $.each(fieldList, (index, value) => {
+              if (selectedItem.searchTarget !== value.var) return;
+              let dataValue = value.properties?.options;
+              if (!dataValue) return;
+              $.each(dataValue, (index, options) => {
+                let optionValue = options.label;
+                console.log("optionValue", optionValue);
                 const selectedOption = $("<option>")
-                  .text(value)
+                  .text(optionValue)
                   .addClass("option")
-                  .attr("value", value)
-                  .attr("fieldCode", selectedContent.searchTarget);
+                  .attr("value", optionValue)
+                  .attr("fieldCode", selectedItem.searchTarget);
                 dropDown.append(selectedOption);
-              }
+              });
             });
           });
           dropDown.trigger("change");
