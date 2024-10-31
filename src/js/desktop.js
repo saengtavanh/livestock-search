@@ -2,9 +2,8 @@ jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
   if (!CONFIG) return;
-  CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config)
-  console.log("config", CONFIG);
   kintone.events.on("app.record.index.show", async (event) => {
+    CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config)
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
     //data test
     window.RsComAPI.getRecords({ app: 255 }).then((dataFromMaster) => {
@@ -45,7 +44,6 @@ jQuery.noConflict();
       );
     });
     //data test
-    console.log(CONFIG);
     CONFIG.codeMasterSetting.forEach((setting) => {
       window.RsComAPI.getRecords({ app: setting.appId, query: setting.typeField })
         .then((dataFromMaster) => {
@@ -68,7 +66,7 @@ jQuery.noConflict();
         });
     });
 
-    let setColor = CONFIG.colorSetting;
+    let SETCOLOR = CONFIG.colorSetting;
     let queryForDropdow = "";
     let queryAll = "";
     let bokTermsGet = {};
@@ -77,10 +75,8 @@ jQuery.noConflict();
     const records = await window.RsComAPI.getRecords({
       app: kintone.app.getId(),
     });
-    console.log("records", records);
 
     let elements = document.querySelectorAll(".recordlist-edit-gaia");
-    console.log(elements);
     elements.forEach((element) => {
       element.style.display = "none";
     });
@@ -91,9 +87,6 @@ jQuery.noConflict();
       return data ? JSON.parse(data) : null;
     }
     const storedData = getDataFromSessionStorage("bokMst1");
-    storedData
-      ? console.log("Retrieved data:", storedData)
-      : console.log("No data found for this key in sessionStorage.");
     let coseMaster = storedData != null ? storedData.codeAndName : null;
     let ITEMS = [];
     if (coseMaster !== null) {
@@ -115,9 +108,6 @@ jQuery.noConflict();
       result[key] = value;
     });
 
-    // Log the result
-    console.log(result);
-
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
     if (!spaceEl)
       throw new Error("The header element is unavailable on this page.");
@@ -127,6 +117,7 @@ jQuery.noConflict();
       console.log("Custom element already exists, skipping creation.");
       return; // Stop if element already exists
     }
+    //space Element
     const spaceElement = $(spaceEl);
     const elementsAll = $("<div></div>").addClass("custom-space-el");
 
@@ -493,11 +484,8 @@ jQuery.noConflict();
     };
 
     // Create dropdowns based on the configuration
-    function createDropDowns(CONFIG, display, color) {
-      console.log("display", display);
-      let relatedContent = CONFIG.searchContent.filter(
-        (content) => content.groupName === display.groupName
-      );
+    function createDropDowns(display) {
+      let relatedContent = CONFIG.searchContent.filter((content) => content.groupName === display.groupName);
       // Only show content if `name_marker` is not empty
       if (display.nameMarker && relatedContent.length === 0) return;
 
@@ -511,12 +499,11 @@ jQuery.noConflict();
           .addClass("custom-dropdownTitle")
           .css({
             cursor: display.nameMarker ? "default" : "pointer",
-            color: setColor?.titleColor,
+            color: SETCOLOR?.titleColor,
           })
           .on("click", function () {
             handleDropDownTitleClick(
               display,
-              CONFIG,
               relatedContent,
               dropDownTitle,
               dropDown
@@ -537,7 +524,6 @@ jQuery.noConflict();
 
     function handleDropDownTitleClick(
       display,
-      CONFIG,
       relatedContent,
       dropDownTitle,
       dropDown
@@ -550,10 +536,7 @@ jQuery.noConflict();
         }
 
         // Filter items based on the group name
-        const filteredItems = CONFIG.searchContent.filter(
-          (content) =>
-            content.groupName === display.groupName && !display.nameMarker
-        );
+        const filteredItems = CONFIG.searchContent.filter((content) => content.groupName === display.groupName && !display.nameMarker);
         console.log("filteredItems", filteredItems);
         const customContextMenu = $("<div></div>")
           .addClass("custom-context-menu")
@@ -565,23 +548,21 @@ jQuery.noConflict();
             padding: "10px",
             "background-color": "#f0f0f0",
             color: "#000",
-            position: "absolute", // Make sure it appears above other elements
-            zIndex: 1000, // Ensure it’s above other content
+            position: "absolute",
+            zIndex: 1000,
           });
         // Position the pop-up to the left of the dropdown title
         const offset = dropDownTitle.offset();
         console.log(offset);
         customContextMenu.css({
-          top: offset.top + dropDownTitle.outerHeight() - 250, // Position below the dropdown title
-          left: offset.left - customContextMenu.outerWidth() + 90, // Position to the left with a gap of 10px
+          top: offset.top + dropDownTitle.outerHeight() - 250,
+          left: offset.left - customContextMenu.outerWidth() + 90,
         });
 
         // Dynamically create buttons using Kuc.Button for each item in the list
         filteredItems.forEach((item, index) => {
           const buttonLabel = item.searchName;
           const targetField = filteredItems[index].searchTarget;
-          console.log("targetField", targetField);
-
           const hoverBtn = new Kuc.Button({
             text: buttonLabel,
             type: "normal",
@@ -630,17 +611,13 @@ jQuery.noConflict();
         .attr("id", `${NameDropdown}`)
         .css({ width: display.searchLength });
       dropDown.append($("<option>").text("-----").val(""));
-      let filteredRecords = CONFIG.searchContent.filter(
-        (item) => item.groupName === display.groupName
-      );
-      console.log("filteredRecords", filteredRecords);
+      let filteredRecords = CONFIG.searchContent.filter((item) => item.groupName === display.groupName);
 
       if (display.nameMarker) {
         if (filteredRecords[0]?.masterId > 0) {
           filteredRecords.forEach((item) => {
             ITEMS[0].forEach((data) => {
               if (data.code && data.name) {
-                console.log("data", data);
                 const option = $("<option>")
                   .text(data.name)
                   .addClass("option")
@@ -658,14 +635,12 @@ jQuery.noConflict();
           $.each(filteredRecords, (index, item) => {
             $.each(DETFIELDlIST, (index, data) => {
               let fieldList = data.fieldList;
-              console.log("fieldList", fieldList);
               $.each(fieldList, (index, value) => {
                 if (item.searchTarget !== value.var) return;
                 let dataValue = value.properties?.options;
                 if (!dataValue) return;
                 $.each(dataValue, (index, options) => {
                   let optionValue = options.label;
-                  console.log("optionValue", optionValue);
                   const option = $("<option>")
                     .text(optionValue)
                     .addClass("option")
@@ -693,36 +668,14 @@ jQuery.noConflict();
           dropDown.trigger("change");
         } else {
           dropDownTitle.text(initialContent.searchName);
-          // console.log(initialContent);
-          // let checkValue = [];
-          // records.forEach((item) => {
-          //   // if (!item[initialContent.searchTarget].value) return;
-          //   let value = item[initialContent.searchTarget]?.value;
-          //   if (!value) return;
-          //   let valuesCheckBox = Array.isArray(value) ? value : [value];
-          //   valuesCheckBox.forEach((value) => {
-          //     if (!checkValue.includes(value)) {
-          //       checkValue.push(value);
-          //       const initialOption = $("<option>")
-          //         .text(value)
-          //         .addClass("option")
-          //         .attr("value", value)
-          //         .attr("fieldCode", initialContent.searchTarget);
-          //       dropDown.append(initialOption);
-          //     }
-          //   })
-          // });
-
           $.each(DETFIELDlIST, (index, data) => {
             let fieldList = data.fieldList;
-            console.log("fieldList", fieldList);
             $.each(fieldList, (index, value) => {
               if (initialContent.searchTarget !== value.var) return;
               let dataValue = value.properties?.options;
               if (!dataValue) return;
               $.each(dataValue, (index, options) => {
                 let optionValue = options.label;
-                console.log("optionValue", optionValue);
                 const initialOption = $("<option>")
                   .text(optionValue)
                   .addClass("option")
@@ -765,12 +718,8 @@ jQuery.noConflict();
         const dropDown = dropDownTitle;
         dropDown.empty();
         dropDown.append($("<option>").text("-----").val(""));
-        const selectedContent = filteredItems.filter(
-          (content) => content.groupName === groupName
-        );
-        const matchingContent = selectedContent.find(
-          (content) => content.searchName === selectedItem
-        );
+        const selectedContent = filteredItems.filter((content) => content.groupName === groupName);
+        const matchingContent = selectedContent.find((content) => content.searchName === selectedItem);
         if (matchingContent) {
           if (matchingContent.masterId > 0) {
             ITEMS[0].forEach((data) => {
@@ -785,14 +734,12 @@ jQuery.noConflict();
           } else {
             $.each(DETFIELDlIST, (index, data) => {
               let fieldList = data.fieldList;
-              console.log("fieldList", fieldList);
               $.each(fieldList, (index, value) => {
                 if (matchingContent.searchTarget !== value.var) return;
                 let dataValue = value.properties?.options;
                 if (!dataValue) return;
                 $.each(dataValue, (index, options) => {
                   let optionValue = options.label;
-                  console.log("optionValue", optionValue);
                   const selectedOption = $("<option>")
                     .text(optionValue)
                     .addClass("option")
@@ -809,9 +756,7 @@ jQuery.noConflict();
         const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
         dropDown.empty();
         dropDown.append($("<option>").text("-----").val(""));
-        const selectedContent = filteredItems.find(
-          (content) => content.searchTarget === selectedItem.searchTarget
-        );
+        const selectedContent = filteredItems.find((content) => content.searchTarget === selectedItem.searchTarget);
         if (selectedContent.masterId > 0) {
           ITEMS[0].forEach((data) => {
             if (data.name && data.code) {
@@ -835,7 +780,6 @@ jQuery.noConflict();
               if (!dataValue) return;
               $.each(dataValue, (index, options) => {
                 let optionValue = options.label;
-                console.log("optionValue", optionValue);
                 const selectedOption = $("<option>")
                   .text(optionValue)
                   .addClass("option")
@@ -1156,12 +1100,12 @@ jQuery.noConflict();
         ? datePickerEnd.val(result[`${dateRange}_end`])
         : "";
 
-      const $separator = $("<span>⁓</span>").addClass("separator-datepicker");
+      const separator = $("<span>⁓</span>").addClass("separator-datepicker");
 
-      const $wrapper = $("<div></div>").addClass("wrapper-datepiker");
-      $wrapper.append(datePickerSatrt).append($separator).append(datePickerEnd);
+      const wrapper = $("<div></div>").addClass("wrapper-datepiker");
+      wrapper.append(datePickerSatrt).append(separator).append(datePickerEnd);
 
-      return $wrapper;
+      return wrapper;
     }
 
     // Create action buttons
@@ -1170,13 +1114,13 @@ jQuery.noConflict();
         .text(text)
         .addClass("kintoneplugin-button-dialog-ok")
         .css({
-          background: setColor.buttonColor,
-          color: setColor.buttonTextColor,
+          background: SETCOLOR.buttonColor,
+          color: SETCOLOR.buttonTextColor,
         })
         .on("click", callback);
     }
 
-    const $searchButton = createButton("Search", () => {
+    const searchButton = createButton("Search", () => {
       let searchInfoList = CONFIG.groupSetting;
       searchProcess(searchInfoList);
     });
@@ -1214,7 +1158,7 @@ jQuery.noConflict();
     });
 
     const elementBtn = $('<div class="element-button"></div>').append(
-      $searchButton,
+      searchButton,
       clearButton
     );
 
@@ -1240,12 +1184,11 @@ jQuery.noConflict();
       let setWidth = searchItem.searchLength
         .match(/^\s*(\d+\s*(rem|px|%))/i)[1]
         .replace(/\s/g, '');
-      console.log("setWidth", setWidth);
       if (!setWidth) return;
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
         const elementInput = $("<div></div>").addClass("search-item").css({
-          color: setColor.titleColor,
+          color: SETCOLOR.titleColor,
         });
 
 
@@ -1297,7 +1240,7 @@ jQuery.noConflict();
             }, 0);
             break;
           case "dropdown_exact":
-            inputElement = createDropDowns(CONFIG, searchItem, setColor);
+            inputElement = createDropDowns(searchItem);
           default:
             inputElement = null;
         }

@@ -55,6 +55,12 @@
   margin-top: 20px;
   outline: none !important;
   box-shadow: none !important;
+  background-color: white;
+}
+
+.kintoneplugin-button-dialog-ok:hover {
+  color: white;
+  background-color: white;
 }
 
 .btnClear {
@@ -78,6 +84,7 @@
 .label {
   margin-bottom: -20px;
   font-size: 15px;
+  /* color: white; */
 }
 
 .kintoneplugin-dropdown {
