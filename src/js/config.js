@@ -503,7 +503,7 @@ jQuery.noConflict();
 				}
 
 				if (!searchName.val()) {
-					errorMessage += `<p>Please enter Search type on Search content row: ${index + 1}</p>`;
+					errorMessage += `<p>Please enter Search name on Search content row: ${index + 1}</p>`;
 					$(searchName).addClass('validation-error');
 					hasError = true;
 				} else {
@@ -558,7 +558,9 @@ jQuery.noConflict();
 							$(targetFields).parent().addClass('validation-error');
 							hasError = true;
 						}
-					} else {
+					} else if (currentGroup.length > 0 && (
+						currentGroup[0].searchType == "dropdown_exact"
+					))  {
 						if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 							$(targetFields).parent().removeClass('validation-error');
 						} else {
@@ -604,6 +606,7 @@ jQuery.noConflict();
 							break;
 					}
 				} else {
+					$(fieldForSearch).parent().removeClass('validation-error');
 					if (currentGroup.length > 0 && currentGroup[0].searchType == "text_initial") {
 						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
@@ -925,14 +928,14 @@ jQuery.noConflict();
 			}
 		})
 
-		$("#name_marker, #group_name, #search_length, #master_id").on("input", function () {
+		$("#name_marker, #group_name, #search_length").on("input", function () {
 			HASUPDATED = false;
 		});
 
 		//input ASCII format only
 		$("#master_id").on("input", function () {
 			HASUPDATED = false;
-			$(this).val($(this).val().replace(/[^\x00-\x7F]/g, ''));
+			$(this).val($(this).val().replace(/[^ -~]/g, ''));
 		});
 
 		$("#search_type").on("change", function () {
