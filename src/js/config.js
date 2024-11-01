@@ -1189,12 +1189,12 @@ jQuery.noConflict();
 
 				if (typeof configStructure === 'object' && !Array.isArray(configStructure)) {
 					if (typeof dataImport !== 'object' || Array.isArray(dataImport)) {
-						errorTexts.push("The data loaded with configuration information is not an object");
+						// errorTexts.push("The data loaded with configuration information is not an object");
 						return false;
 					}
 					for (let key in configStructure) {
 						if (!(key in dataImport)) {
-							errorTexts.push(`${key} Key not found.`);
+							// errorTexts.push(`${key} Key not found.`);
 							return false;
 						}
 						if (!checkType(configStructure[key], dataImport[key])) {
@@ -1214,7 +1214,7 @@ jQuery.noConflict();
 			function checkAllCases(dataImport) {
 				// Check if the object is empty
 				if (Object.keys(dataImport).length === 0) {
-					errorTexts.push(" オブジェクトが未入力です。");
+					// errorTexts.push(" オブジェクトが未入力です。");
 					return false;
 				}
 
@@ -1237,10 +1237,15 @@ jQuery.noConflict();
 					.html(errors) // Use .html() to correctly handle the <br> tags
 					.css("font-size", "14px");
 
+				// await Swal10.fire({
+				// 	icon: "error",
+				// 	title: customClass.prop("outerHTML"), // Get the outerHTML of the jQuery element
+				// 	html: customClassText.prop("outerHTML"),
+				// 	confirmButtonColor: "#3498db",
+				// });
 				await Swal10.fire({
 					icon: "error",
-					title: customClass.prop("outerHTML"), // Get the outerHTML of the jQuery element
-					html: customClassText.prop("outerHTML"),
+					html: customClass.prop("outerHTML"),
 					confirmButtonColor: "#3498db",
 				});
 				return false;
