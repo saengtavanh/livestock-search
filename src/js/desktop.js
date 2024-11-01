@@ -1074,9 +1074,6 @@ jQuery.noConflict();
       })
 
       datePickerSatrt.setAttribute('data-search-type', searchType);
-      datePickerSatrt.addEventListener('change', event => {
-        console.log("Start Date", event.detail.value);
-      });
 
       const datePickerEnd = new Kuc.DatePicker({
         requiredIcon: true,
@@ -1085,24 +1082,19 @@ jQuery.noConflict();
         id: `${dateRange}_end`,
         visible: true,
         disabled: false
-      }).css({
-        "width": width.searchLength || ""
-      });
+      })
 
       datePickerEnd.setAttribute("data-search-type", searchType);
-      datePickerEnd.addEventListener("change", event => {
-        console.log("End Date", event.detail.value);
-      });
 
       result[`${dateRange}_start`] ? datePickerSatrt.val(result[`${dateRange}_start`]) : "";
       result[`${dateRange}_end`] ? datePickerEnd.val(result[`${dateRange}_end`]) : "";
 
-      const $separator = $("<span>⁓</span>").addClass("separator-datepicker");
+      const separator = $("<span>⁓</span>").addClass("separator-datepicker");
 
-      const $wrapper = $("<div></div>").addClass("wrapper-datepiker")
-      $wrapper.append(datePickerSatrt).append($separator).append(datePickerEnd);
+      const wrapper = $("<div></div>").addClass("wrapper-datepiker")
+      wrapper.append(datePickerSatrt).append(separator).append(datePickerEnd);
 
-      return $wrapper;
+      return wrapper;
     }
 
     // Create action buttons
@@ -1113,7 +1105,7 @@ jQuery.noConflict();
       }).on("click", callback);
     }
 
-    const $searchButton = createButton('Search', () => {
+    const searchButton = createButton('Search', () => {
       let searchInfoList = CONFIG.groupSetting;
       searchProcess(searchInfoList);
     });
@@ -1183,7 +1175,7 @@ jQuery.noConflict();
       }
     });
 
-    const elementBtn = $('<div class="element-button"></div>').append($searchButton, clearButton);
+    const elementBtn = $('<div class="element-button"></div>').append(searchButton, clearButton);
 
 
     //TODO: Create Function-------------------------------------------------------------------------
