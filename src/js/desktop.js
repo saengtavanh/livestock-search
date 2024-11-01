@@ -3,7 +3,8 @@ jQuery.noConflict();
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
   if (!CONFIG) return;
   kintone.events.on("app.record.index.show", async (event) => {
-    CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config)
+    CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
+    console.log(CONFIG);
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
     //data test
     window.RsComAPI.getRecords({ app: 255 }).then((dataFromMaster) => {
@@ -45,26 +46,45 @@ jQuery.noConflict();
     });
     //data test
     CONFIG.codeMasterSetting.forEach((setting) => {
-      window.RsComAPI.getRecords({ app: setting.appId, query: setting.typeField })
+      window.RsComAPI.getRecords({
+        app: setting.appId,
+        query: setting.typeField,
+      })
         .then((dataFromMaster) => {
           console.log(dataFromMaster);
-          const codeAndName = dataFromMaster.map(record => ({
+          const codeAndName = dataFromMaster.map((record) => ({
             code: record.code.value,
-            name: record.name.value
+            name: record.name.value,
           }));
 
           const dataToStore = {
             AppId: setting.appId,
             ApiToken: setting.apiToken,
             codeAndName: codeAndName,
-            condition: setting.typeField
+            condition: setting.typeField,
           };
-          sessionStorage.setItem(`bokMst${setting.masterId}`, JSON.stringify(dataToStore));
+          sessionStorage.setItem(
+            `bokMst${setting.masterId}`,
+            JSON.stringify(dataToStore)
+          );
         })
         .catch((error) => {
           console.error("Error fetching records:", error);
         });
     });
+
+    //get data in the session storage
+    let CODEMASTER = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      let key = sessionStorage.key(i);
+      const numberId = key.match(/\d+/);
+      if (numberId) {
+        const numericKey = numberId[0];
+        const data = sessionStorage.getItem(key);
+        const CodeMasterData = JSON.parse(data);
+        CODEMASTER.push({ numericKey, ...CodeMasterData });
+      }
+    }
 
     let SETCOLOR = CONFIG.colorSetting;
     let queryForDropdow = "";
@@ -80,18 +100,6 @@ jQuery.noConflict();
     elements.forEach((element) => {
       element.style.display = "none";
     });
-
-    // getItem sessionStorage
-    function getDataFromSessionStorage(key) {
-      const data = sessionStorage.getItem(key);
-      return data ? JSON.parse(data) : null;
-    }
-    const storedData = getDataFromSessionStorage("bokMst1");
-    let coseMaster = storedData != null ? storedData.codeAndName : null;
-    let ITEMS = [];
-    if (coseMaster !== null) {
-      ITEMS.push(coseMaster);
-    }
 
     const urlObj = new URL(window.location.href);
 
@@ -379,27 +387,27 @@ jQuery.noConflict();
           ).val();
           queryChild += queryChild
             ? `${query ? " and " : ""}` +
-            " or (" +
-            field +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '"' +
-            ")"
+              " or (" +
+              field +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '"' +
+              ")"
             : "(" + field + " " + ">=" + ' "' + startValue + '"' + ")";
         } else if (endValue && startValue == "") {
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}end`).val();
           queryChild += queryChild
             ? `${query ? " and " : ""}` +
-            " or (" +
-            field +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            ")"
+              " or (" +
+              field +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              ")"
             : "or (" + field + " " + "<=" + ' "' + endValue + '"' + ")";
         } else if (startValue && endValue) {
           bokTermsGet[`${replacedText}_start`] = $(
@@ -408,35 +416,35 @@ jQuery.noConflict();
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
           queryChild += queryChild
             ? +" or ((" +
-            field +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '")' +
-            " and (" +
-            field +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            "))"
+              field +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '")' +
+              " and (" +
+              field +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))"
             : "((" +
-            field +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '")' +
-            " and (" +
-            field +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            "))";
+              field +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '")' +
+              " and (" +
+              field +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))";
         }
       });
       let queryFinal;
@@ -485,7 +493,9 @@ jQuery.noConflict();
 
     // Create dropdowns based on the configuration
     function createDropDowns(display) {
-      let relatedContent = CONFIG.searchContent.filter((content) => content.groupName === display.groupName);
+      let relatedContent = CONFIG.searchContent.filter(
+        (content) => content.groupName === display.groupName
+      );
       // Only show content if `name_marker` is not empty
       if (display.nameMarker && relatedContent.length === 0) return;
 
@@ -522,21 +532,18 @@ jQuery.noConflict();
       }
     }
 
-    function handleDropDownTitleClick(
-      display,
-      relatedContent,
-      dropDownTitle,
-      dropDown
-    ) {
-      if (display.nameMarker === "") {
-        dropDownTitle.css({ cursor: "pointer" });
+    function handleDropDownTitleClick(display, dropDownTitle, dropDown) {
+      if (display.nameMarker === "-----") {
         const existingMenu = $(".custom-context-menu");
         if (existingMenu.length > 0) {
           existingMenu.remove();
         }
 
         // Filter items based on the group name
-        const filteredItems = CONFIG.searchContent.filter((content) => content.groupName === display.groupName && !display.nameMarker);
+        const filteredItems = CONFIG.searchContent.filter(
+          (content) =>
+            content.groupName === display.groupName && !display.nameMarker
+        );
         console.log("filteredItems", filteredItems);
         const customContextMenu = $("<div></div>")
           .addClass("custom-context-menu")
@@ -611,27 +618,44 @@ jQuery.noConflict();
         .attr("id", `${NameDropdown}`)
         .css({ width: display.searchLength });
       dropDown.append($("<option>").text("-----").val(""));
-      let filteredRecords = CONFIG.searchContent.filter((item) => item.groupName === display.groupName);
+      let filteredRecords = CONFIG.searchContent.filter(
+        (item) => item.groupName === display.groupName
+      );
 
       if (display.nameMarker) {
-        if (filteredRecords[0]?.masterId > 0) {
+        let checkValue = [];
+        if (filteredRecords[0]?.masterId !== "-----") {
           filteredRecords.forEach((item) => {
-            ITEMS[0].forEach((data) => {
-              if (data.code && data.name) {
-                const option = $("<option>")
-                  .text(data.name)
-                  .addClass("option")
-                  .attr("value", data.code)
-                  .attr("fieldCode", item.searchTarget);
-                dropDown.append(option);
+            if (!CODEMASTER) return;
+            $.each(CODEMASTER, (index, data) => {
+              if (item.masterId === data.numericKey) {
+                let valueData = data.codeAndName;
+                let valueCheck = Array.isArray(valueData)
+                  ? valueData
+                  : [valueData];
+                $.each(valueCheck, (index, data) => {
+                  const existsData = checkValue.some(
+                    (entry) => entry.code === data.code
+                  );
+                  if (!existsData) {
+                    checkValue.push({ code: data.code, name: data.name });
+                    const option = $("<option>")
+                      .text(data.name)
+                      .addClass("option")
+                      .attr("value", data.code)
+                      .attr("fieldCode", item.searchTarget);
+                    dropDown.append(option);
+                  }
+                });
               }
             });
           });
         } else {
-          let filteredRecords = CONFIG.searchContent.filter(
-            (item) => item.groupName === display.groupName
-          );
-          //get field 
+          // let filteredRecords = CONFIG.searchContent.filter(
+          //   (item) => item.groupName === display.groupName
+          // );
+          let checkValue = [];
+          //get field
           $.each(filteredRecords, (index, item) => {
             $.each(DETFIELDlIST, (index, data) => {
               let fieldList = data.fieldList;
@@ -640,34 +664,59 @@ jQuery.noConflict();
                 let dataValue = value.properties?.options;
                 if (!dataValue) return;
                 $.each(dataValue, (index, options) => {
-                  let optionValue = options.label;
-                  const option = $("<option>")
-                    .text(optionValue)
-                    .addClass("option")
-                    .attr("value", optionValue)
-                    .attr("fieldCode", item.searchTarget);
-                  dropDown.append(option);
+                  let optionValue = options?.label;
+                  let valuesCheck = Array.isArray(optionValue)
+                    ? optionValue
+                    : [optionValue];
+                  $.each(valuesCheck, (index, value) => {
+                    if (!checkValue.includes(value)) {
+                      checkValue.push(value);
+                      const option = $("<option>")
+                        .text(value)
+                        .addClass("option")
+                        .attr("value", value)
+                        .attr("fieldCode", item.searchTarget);
+                      dropDown.append(option);
+                    }
+                  });
                 });
               });
             });
           });
         }
       } else {
-        if (filteredRecords[0]?.masterId > 0) {
+        if (filteredRecords[0]?.masterId !== "-----") {
+          let checkValue = [];
           dropDownTitle.text(initialContent.searchName);
-          ITEMS[0].forEach((data) => {
-            if (data.code && data.name) {
-              const initialOption = $("<option>")
-                .text(data.name)
-                .addClass("option")
-                .attr("value", data.code)
-                .attr("fieldCode", initialContent.searchTarget);
-              dropDown.append(initialOption);
+          $.each(CODEMASTER, (index, value) => {
+            if (initialContent.masterId === value.numericKey) {
+              let valueData = value.codeAndName;
+              let valueCheck = Array.isArray(valueData)
+                ? valueData
+                : [valueData];
+              $.each(valueCheck, (index, data) => {
+                const existsData = checkValue.some(
+                  (entry) => entry.code === data.code
+                );
+                if (!existsData) {
+                  checkValue.push({
+                    code: data.code,
+                    name: data.name,
+                  });
+                  const initialOption = $("<option>")
+                    .text(data.name)
+                    .addClass("option")
+                    .attr("value", data.code)
+                    .attr("fieldCode", initialContent.searchTarget);
+                  dropDown.append(initialOption);
+                }
+              });
             }
           });
           dropDown.trigger("change");
         } else {
           dropDownTitle.text(initialContent.searchName);
+          let checkValue = [];
           $.each(DETFIELDlIST, (index, data) => {
             let fieldList = data.fieldList;
             $.each(fieldList, (index, value) => {
@@ -675,13 +724,20 @@ jQuery.noConflict();
               let dataValue = value.properties?.options;
               if (!dataValue) return;
               $.each(dataValue, (index, options) => {
-                let optionValue = options.label;
-                const initialOption = $("<option>")
-                  .text(optionValue)
-                  .addClass("option")
-                  .attr("value", optionValue)
-                  .attr("fieldCode", initialContent.searchTarget);
-                dropDown.append(initialOption);
+                let optionValue = options?.label;
+                let valuesCheck = Array.isArray(optionValue)
+                  ? optionValue
+                  : [optionValue];
+                $.each(valuesCheck, (index, value) => {
+                  if (!checkValue.includes(value)) {
+                    const initialOption = $("<option>")
+                      .text(optionValue)
+                      .addClass("option")
+                      .attr("value", optionValue)
+                      .attr("fieldCode", initialContent.searchTarget);
+                    dropDown.append(initialOption);
+                  }
+                });
               });
             });
           });
@@ -718,20 +774,43 @@ jQuery.noConflict();
         const dropDown = dropDownTitle;
         dropDown.empty();
         dropDown.append($("<option>").text("-----").val(""));
-        const selectedContent = filteredItems.filter((content) => content.groupName === groupName);
-        const matchingContent = selectedContent.find((content) => content.searchName === selectedItem);
+        const selectedContent = filteredItems.filter(
+          (content) => content.groupName === groupName
+        );
+        const matchingContent = selectedContent.find(
+          (content) => content.searchName === selectedItem
+        );
         if (matchingContent) {
-          if (matchingContent.masterId > 0) {
-            ITEMS[0].forEach((data) => {
-              const selectedOption = $("<option>")
-                .text(data.name)
-                .addClass("option")
-                .attr("value", data.code)
-                .attr("fieldCode", matchingContent.searchTarget);
-              dropDown.append(selectedOption);
+          if (matchingContent.masterId !== "-----") {
+            let checkValue = [];
+            $.each(CODEMASTER, (index, value) => {
+              if (matchingContent.masterId === value.numericKey) {
+                let valueData = value.codeAndName;
+                let valueCheck = Array.isArray(valueData)
+                  ? valueData
+                  : [valueData];
+                $.each(valueCheck, (index, data) => {
+                  const existsData = checkValue.some(
+                    (entry) => entry.code === data.code
+                  );
+                  if (!existsData) {
+                    checkValue.push({
+                      code: data.code,
+                      name: data.name,
+                    });
+                    const selectedOption = $("<option>")
+                      .text(data.name)
+                      .addClass("option")
+                      .attr("value", data.code)
+                      .attr("fieldCode", matchingContent.searchTarget);
+                    dropDown.append(selectedOption);
+                  }
+                });
+              }
             });
             dropDown.trigger("change");
           } else {
+            let checkValue = [];
             $.each(DETFIELDlIST, (index, data) => {
               let fieldList = data.fieldList;
               $.each(fieldList, (index, value) => {
@@ -739,13 +818,21 @@ jQuery.noConflict();
                 let dataValue = value.properties?.options;
                 if (!dataValue) return;
                 $.each(dataValue, (index, options) => {
-                  let optionValue = options.label;
-                  const selectedOption = $("<option>")
-                    .text(optionValue)
-                    .addClass("option")
-                    .attr("value", optionValue)
-                    .attr("fieldCode", matchingContent.searchTarget);
-                  dropDown.append(selectedOption);
+                  let optionValue = options?.label;
+                  let valuesCheck = Array.isArray(optionValue)
+                    ? optionValue
+                    : [optionValue];
+                  $.each(valuesCheck, (index, value) => {
+                    if (!checkValue.includes(value)) {
+                      checkValue.push(value);
+                      const selectedOption = $("<option>")
+                        .text(optionValue)
+                        .addClass("option")
+                        .attr("value", optionValue)
+                        .attr("fieldCode", matchingContent.searchTarget);
+                      dropDown.append(selectedOption);
+                    }
+                  });
                 });
               });
             });
@@ -756,21 +843,39 @@ jQuery.noConflict();
         const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
         dropDown.empty();
         dropDown.append($("<option>").text("-----").val(""));
-        const selectedContent = filteredItems.find((content) => content.searchTarget === selectedItem.searchTarget);
-        if (selectedContent.masterId > 0) {
-          ITEMS[0].forEach((data) => {
-            if (data.name && data.code) {
-              const selectedOption = $("<option>")
-                .text(data.name)
-                .addClass("option")
-                .attr("value", data.code)
-                .attr("fieldCode", selectedContent.searchTarget);
-              dropDown.append(selectedOption);
+        const selectedContent = filteredItems.find(
+          (content) => content.searchTarget === selectedItem.searchTarget
+        );
+        if (selectedContent.masterId !== "-----") {
+          let checkValue = [];
+          $.each(CODEMASTER, (index, data) => {
+            if (selectedContent.masterId === data.numericKey) {
+              let valueData = data.codeAndName;
+              let valueCheck = Array.isArray(valueData)
+                ? valueData
+                : [valueData];
+              $.each(valueCheck, (index, value) => {
+                const existsData = checkValue.some(
+                  (entry) => entry.code === data.name
+                );
+                if (!existsData) {
+                  checkValue.push({
+                    code: data.code,
+                    name: data.name,
+                  });
+                  const selectedOption = $("<option>")
+                    .text(data.name)
+                    .addClass("option")
+                    .attr("value", data.code)
+                    .attr("fieldCode", selectedContent.searchTarget);
+                  dropDown.append(selectedOption);
+                }
+              });
             }
           });
           dropDown.trigger("change");
         } else {
-
+          let checkValue = [];
           $.each(DETFIELDlIST, (index, data) => {
             let fieldList = data.fieldList;
             console.log("fieldList", fieldList);
@@ -779,13 +884,21 @@ jQuery.noConflict();
               let dataValue = value.properties?.options;
               if (!dataValue) return;
               $.each(dataValue, (index, options) => {
-                let optionValue = options.label;
-                const selectedOption = $("<option>")
-                  .text(optionValue)
-                  .addClass("option")
-                  .attr("value", optionValue)
-                  .attr("fieldCode", selectedItem.searchTarget);
-                dropDown.append(selectedOption);
+                let optionValue = options?.label;
+                let valuesCheck = Array.isArray(optionValue)
+                  ? optionValue
+                  : [optionValue];
+                $.each(valuesCheck, (index, value) => {
+                  if (!checkValue.includes(value)) {
+                    checkValue.push(value);
+                    const selectedOption = $("<option>")
+                      .text(optionValue)
+                      .addClass("option")
+                      .attr("value", optionValue)
+                      .attr("fieldCode", selectedItem.searchTarget);
+                    dropDown.append(selectedOption);
+                  }
+                });
               });
             });
           });
@@ -1078,7 +1191,7 @@ jQuery.noConflict();
         id: `${dateRange}_start`,
         visible: true,
         disabled: false,
-      })
+      });
 
       datePickerSatrt.setAttribute("data-search-type", searchType);
 
@@ -1089,7 +1202,7 @@ jQuery.noConflict();
         id: `${dateRange}_end`,
         visible: true,
         disabled: false,
-      })
+      });
 
       datePickerEnd.setAttribute("data-search-type", searchType);
 
@@ -1180,17 +1293,15 @@ jQuery.noConflict();
             : searchItemTarget.searchTarget
         );
       });
-      //get with css in config
-      let setWidth = searchItem.searchLength
-        .match(/^\s*(\d+\s*(rem|px|%))/i)[1]
-        .replace(/\s/g, '');
-      if (!setWidth) return;
+      let matchResult = searchItem.searchLength?.match(
+        /^\s*(\d+\s*(rem|px|%))/i
+      );
+      let setWidth = matchResult ? matchResult[1].replace(/\s/g, "") : "1px";
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
         const elementInput = $("<div></div>").addClass("search-item").css({
           color: SETCOLOR.titleColor,
         });
-
 
         let inputElement;
         switch (searchType) {
