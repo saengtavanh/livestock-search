@@ -1157,11 +1157,11 @@ jQuery.noConflict();
         CONFIG.groupSetting.forEach((searchItem) => {
           let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
           const getId = $(`#${getIdElement}`);
-          const getIdStart = $(`#${getIdElement}_start`);
-          const getIdEnd = $(`#${getIdElement}_end`);
-          if (getId.length) getId.val("");
-          if (getIdStart.length) getIdStart.val("");
-          if (getIdEnd.length) getIdEnd.val("");
+          // const getIdStart = $(`#${getIdElement}_start`);
+          // const getIdEnd = $(`#${getIdElement}_end`);
+          // if (getId.length) getId.val("");
+          // if (getIdStart.length) getIdStart.val("");
+          // if (getIdEnd.length) getIdEnd.val("");
           if (getId.hasClass("kintoneplugin-dropdown")) {
             const dropdownId = getId.attr("id");
             const labelValue = getId.closest(".search-item").find(".custom-dropdownTitle").text().trim();
