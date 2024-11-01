@@ -139,3 +139,11 @@
   min-width: 100px;
   color: black;
 }
+
+.custom-confirm-button {
+  color: #f7f9fa !important;
+}
+
+.custom-cancel-button {
+  color:  #3498db!important;
+}

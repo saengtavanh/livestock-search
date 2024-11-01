@@ -97,14 +97,18 @@ jQuery.noConflict();
       const data = sessionStorage.getItem(key);
       return data ? JSON.parse(data) : null;
     }
-    const storedData = getDataFromSessionStorage("bokMst1");
     
-    let coseMaster = storedData != null ? storedData.codeAndName : null;
     let ITEMS = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      const storedData = getDataFromSessionStorage(key);
+      if (storedData && storedData.codeAndName) {
+        ITEMS.push(storedData.codeAndName);
+      }
+    }
 
-    if (coseMaster !== null) {
-      ITEMS.push(coseMaster);
-    }
+    console.log("ITEMS =======================", ITEMS[0]);
+    
 
     // // if (!CONFIG) return;
     // console.log(window.location.href);
@@ -156,12 +160,16 @@ jQuery.noConflict();
       let queryChild = "";
 
       searchInfoList.forEach((searchInfo) => {
-        if ($(`#${searchInfo.groupName}`).is('select')) {
-          let selectedValue = $(`#${searchInfo.groupName} option:selected`).val();
-          let dropdownId = searchInfo.groupName;
-          let labelText = $(`#${searchInfo.groupName}`).prev('label').text();
+        let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
+        console.log("🚀 ~ searchInfoList.forEach ~ groupNameSlit:", groupNameSlit)
+        
+        if ($(`#${groupNameSlit}`).is('select')) {
+          let selectedValue = $(`#${groupNameSlit} option:selected`).val();
+          let dropdownId = groupNameSlit;
+          let labelText = $(`#${groupNameSlit}`).prev('label').text();
           if (selectedValue) {
               bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelText);
+              console.log("🚀 ~ searchInfoList.forEach ~ bokTermsObject:", bokTermsObject)
               if (!dropDownChange) {
                 
                   if (searchInfo.groupName == labelText && searchInfo.nameMarker && searchInfo.searchType == "dropdown_exact") {
@@ -215,7 +223,7 @@ jQuery.noConflict();
             query += buildNumberRangeQuery(searchInfo, query);
             break;
           case "date_exact":
-            query += buildDateExactQuery(searchInfo, query);
+            query += buildNumberExactQuery(searchInfo, query);
             break;
           case "date_range":
             query += buildNumberRangeQuery(searchInfo, query);
@@ -231,6 +239,20 @@ jQuery.noConflict();
     function transformString(input) {
       let characters = input.split("");
       let transformed = "_, " + characters.join(",");
+
+      return transformed;
+    }
+
+    function transformStringPartial(input) {
+      let characters = input.split("");
+      let transformed = characters.join(",");
+
+      return transformed;
+    }
+    
+    function transformStringExact(input) {
+      let characters = input.split("");
+      let transformed = "_, " + characters.join(",") + ",_";
 
       return transformed;
     }
@@ -278,7 +300,7 @@ jQuery.noConflict();
 
       if ($(`#${replacedText}`).length) {
         if ($(`#${replacedText}`).val()) {
-          searchValue = transformString($(`#${replacedText}`).val());
+          searchValue = transformStringPartial($(`#${replacedText}`).val());
           bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
@@ -309,7 +331,7 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
-          searchValue = transformString($(`#${replacedText}`).val());
+          searchValue = transformStringExact($(`#${replacedText}`).val());
           bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
@@ -422,6 +444,7 @@ jQuery.noConflict();
         }
 
       });
+
       let queryFinal
       if (queryChild) {
         queryFinal = `${query ? " and " : ""}` +queryChild;
@@ -479,7 +502,7 @@ jQuery.noConflict();
             cursor: display.nameMarker ? "default" : "pointer",
             color: SETCOLOR?.titleColor
           }).on("click", function () {
-            handleDropDownTitleClick(display, relatedContent, dropDownTitle, dropDown);
+            handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle, dropDown);
           });
         const dropDown = createDropDown(display, records, relatedContent[0], dropDownTitle);
         const DropdownAll = $("<div></div>").addClass("search-item").append(dropDownTitle, dropDown);
@@ -487,15 +510,15 @@ jQuery.noConflict();
       }
     }
 
-
-    function handleDropDownTitleClick(display, dropDownTitle, dropDown) {
+//ERROR
+    function handleDropDownTitleClick(display, CONFIG, relatedContent, dropDownTitle, dropDown) {
       if (display.nameMarker === "") {
-        dropDownTitle.css({ cursor: "pointer" });
+        // dropDownTitle.css({ cursor: "pointer" });
         const existingMenu = $(".custom-context-menu");
         if (existingMenu.length > 0) {
           existingMenu.remove();
         }
-
+        
         // Filter items based on the group name
         const filteredItems = CONFIG.searchContent.filter(content => content.groupName === display.groupName && !display.nameMarker);
         console.log("filteredItems", filteredItems);
@@ -617,7 +640,7 @@ jQuery.noConflict();
             dropDown.append(initialOption);
           }
         });
-        dropDown.trigger("change");
+        // dropDown.trigger("change");
       } else {
           dropDownTitle.text(initialContent.searchName);
           $.each(DETFIELDlIST, (index, data) => {
@@ -637,7 +660,7 @@ jQuery.noConflict();
               });
             });
           });
-          dropDown.trigger("change");
+          // dropDown.trigger("change");
         }
       }
       dropDown.on('change', (e) => {
@@ -647,6 +670,7 @@ jQuery.noConflict();
         const getDropdownId = dropDown.attr("id");
         const dropdownId = getDropdownId.replace(/_/g, " ");
         const labelValue = dropDown.closest(".search-item").find(".custom-dropdownTitle").text().trim();
+        // debugger
         queryDropdown(selectedValue, fieldCode, dropdownId, labelValue);
       });
 
@@ -664,7 +688,6 @@ jQuery.noConflict();
         if (matchingContent) {
           if (matchingContent.masterId > 0) {
             ITEMS[0].forEach(data => {
-              console.log("+++++++++++++++++++++++++++++", data)
               const selectedOption = $("<option>")
                 .text(data.name)
                 .addClass('option')
@@ -691,7 +714,7 @@ jQuery.noConflict();
                 });
               });
             });
-            dropDown.trigger("change");
+            // dropDown.trigger("change");
           }
         }
       } else {
@@ -711,7 +734,7 @@ jQuery.noConflict();
               dropDown.append(selectedOption);
             }
           });
-          dropDown.trigger("change");
+          // dropDown.trigger("change");
         } else {
           $.each(DETFIELDlIST, (index, data) => {
             let fieldList = data.fieldList;
@@ -731,7 +754,7 @@ jQuery.noConflict();
               });
             });
           });
-          dropDown.trigger("change");
+          // dropDown.trigger("change");
         }
       }
     }
@@ -746,6 +769,7 @@ jQuery.noConflict();
     }
 
     async function queryDropdown(selectedValue, fieldCode, dropdownId, labelValue) {
+      
 
       let selectedId = dropdownId;
       let queryChild;
@@ -789,7 +813,7 @@ jQuery.noConflict();
           query = `${query ? " and " : ""}(${field.target_field[0]} in ("${selectedValue}"))`;
         }
       } else if (field.groupName == selectedId && field.nameMarker == '') {
-          query = `${query ? " and " : ""}(${fieldCode} = "${selectedValue}")`;
+          query = `${query ? " and " : ""}(${fieldCode} in ("${selectedValue}"))`;
       }
     });
 
@@ -820,7 +844,6 @@ jQuery.noConflict();
         let bokTermObj;
         try {
           bokTermObj = JSON.parse(wrappedBokTerms);
-          console.log("🚀 ~ queryDropdown ~ bokTermObj:", bokTermObj)
         } catch (error) {
           console.error('Error parsing bokTerm:', error);
           bokTermObj = {}; // initialize as an empty object in case of error
@@ -828,7 +851,6 @@ jQuery.noConflict();
 
         console.log("fieldCode=====>", fieldCode);
           if (!selectedValue || !fieldCode) {
-            // if selected == "-----";
             Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
               console.log("key ====", bokTermsObj);
               searchInfoList.forEach((field) => {
@@ -897,7 +919,7 @@ jQuery.noConflict();
                     query += `${query ? " and " : ""}(${field.target_field[0]} in ("${bokTermsObj.value}"))`;
                   }
                 } else if (field.groupName == selectedId && field.nameMarker == '') {
-                    query += `${query ? " and " : ""}(${fieldCode} = "${bokTermsObj.value}")`;
+                    query += `${query ? " and " : ""}(${fieldCode} in ("${bokTermsObj.value}"))`;
                 }
               }
               
@@ -942,7 +964,7 @@ jQuery.noConflict();
         }
         Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
           CONFIG.groupSetting.forEach(searchItem => {
-            if (searchItem.groupName === key) {
+            if (searchItem.groupName === key.replace("_", " ")) {
               if (searchItem.nameMarker == "") {
                 let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                 const getId = $(`#${getIdElement}`);
@@ -1146,14 +1168,17 @@ jQuery.noConflict();
         CONFIG.groupSetting.forEach((searchItem) => {
           let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
           const getId = $(`#${getIdElement}`);
-          // const getIdStart = $(`#${getIdElement}_start`);
-          // const getIdEnd = $(`#${getIdElement}_end`);
-          // if (getId.length) getId.val("");
-          // if (getIdStart.length) getIdStart.val("");
-          // if (getIdEnd.length) getIdEnd.val("");
+          
           if (getId.hasClass("kintoneplugin-dropdown")) {
             const dropdownId = getId.attr("id");
             const labelValue = getId.closest(".search-item").find(".custom-dropdownTitle").text().trim();
+            // Clear any entries in bokTermObj that don't match dropdownId
+            Object.keys(bokTermObj).forEach(key => {
+              if (key !== dropdownId) {
+                delete bokTermObj[key];
+              }
+            });
+            // Add or update the matching dropdown entry in bokTermObj
             if (dropdownId && dropdownId in bokTermObj) {
               bokTermObj[dropdownId].value = "-----";
               bokTermObj[dropdownId].active = labelValue;
@@ -1162,8 +1187,8 @@ jQuery.noConflict();
                 value: "-----",
                 active: labelValue,
               };
-            }
-          }
+            }
+          }
         });
         const currentUrlBase = window.location.href.match(/\S+\//)[0];
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
