@@ -996,8 +996,6 @@ jQuery.noConflict();
         inputElement.val(result[initialText]);
       }
 
-      // Return the input element for further use
-      console.log(inputElement.val());
       return inputElement;
     }
 
@@ -1058,7 +1056,6 @@ jQuery.noConflict();
       })
 
       datePicker.setAttribute('data-search-type', searchType);
-      datePicker.addEventListener('change', event => console.log("DatePicker", event.detail.value));
       return datePicker;
     }
 
