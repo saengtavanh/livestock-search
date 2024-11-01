@@ -525,50 +525,6 @@ jQuery.noConflict();
 				} else {
 					let fieldType = $(element).find('#search_target option:selected').attr('type');
 					$(targetFields).parent().removeClass('validation-error');
-					if (currentGroup.length > 0 && (currentGroup[0].searchType == "number_range" || currentGroup[0].searchType == "number_exact")) {
-						if (fieldType == "NUMBER" || fieldType == "CALC") {
-							$(targetFields).parent().removeClass('validation-error');
-						} else {
-							errorMessage += `<p>Field "${targetFields.val()}" is not number type.</p>`;
-							$(targetFields).parent().addClass('validation-error');
-							hasError = true;
-						}
-					} else if (currentGroup.length > 0 && (
-						currentGroup[0].searchType == "text_initial" ||
-						currentGroup[0].searchType == "text_patial" ||
-						currentGroup[0].searchType == "text_exact" ||
-						currentGroup[0].searchType == "multi_text_initial" ||
-						currentGroup[0].searchType == "multi_text_patial"
-					)) {
-						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
-							$(targetFields).parent().removeClass('validation-error');
-						} else {
-							errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
-							$(targetFields).parent().addClass('validation-error');
-							hasError = true;
-						}
-					} else if (currentGroup.length > 0 && (
-						currentGroup[0].searchType == "date_exact" ||
-						currentGroup[0].searchType == "date_range"
-					)) {
-						if (fieldType == "DATE" || fieldType == "DATETIME") {
-							$(targetFields).parent().removeClass('validation-error');
-						} else {
-							errorMessage += `<p>Field "${targetFields.val()}" is not type date.</p>`;
-							$(targetFields).parent().addClass('validation-error');
-							hasError = true;
-						}
-					} else if (currentGroup.length > 0 && (
-						currentGroup[0].searchType == "dropdown_exact"
-					))  {
-						if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
-							$(targetFields).parent().removeClass('validation-error');
-						} else {
-							errorMessage += `<p>Field "${targetFields.val()}" is not support for search type dropdown.</p>`;
-							$(targetFields).parent().addClass('validation-error');
-							hasError = true;
-						}
-					}
 
 					if (masterId.val() != "-----"){
 						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER"){
@@ -577,6 +533,52 @@ jQuery.noConflict();
 							errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
 							$(targetFields).parent().addClass('validation-error');
 							hasError = true;
+						}
+						
+					}else {
+						if (currentGroup.length > 0 && (currentGroup[0].searchType == "number_range" || currentGroup[0].searchType == "number_exact")) {
+							if (fieldType == "NUMBER" || fieldType == "CALC") {
+								$(targetFields).parent().removeClass('validation-error');
+							} else {
+								errorMessage += `<p>Field "${targetFields.val()}" is not number type.</p>`;
+								$(targetFields).parent().addClass('validation-error');
+								hasError = true;
+							}
+						} else if (currentGroup.length > 0 && (
+							currentGroup[0].searchType == "text_initial" ||
+							currentGroup[0].searchType == "text_patial" ||
+							currentGroup[0].searchType == "text_exact" ||
+							currentGroup[0].searchType == "multi_text_initial" ||
+							currentGroup[0].searchType == "multi_text_patial"
+						)) {
+							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
+								$(targetFields).parent().removeClass('validation-error');
+							} else {
+								errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
+								$(targetFields).parent().addClass('validation-error');
+								hasError = true;
+							}
+						} else if (currentGroup.length > 0 && (
+							currentGroup[0].searchType == "date_exact" ||
+							currentGroup[0].searchType == "date_range"
+						)) {
+							if (fieldType == "DATE" || fieldType == "DATETIME") {
+								$(targetFields).parent().removeClass('validation-error');
+							} else {
+								errorMessage += `<p>Field "${targetFields.val()}" is not type date.</p>`;
+								$(targetFields).parent().addClass('validation-error');
+								hasError = true;
+							}
+						} else if (currentGroup.length > 0 && (
+							currentGroup[0].searchType == "dropdown_exact"
+						))  {
+							if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
+								$(targetFields).parent().removeClass('validation-error');
+							} else {
+								errorMessage += `<p>Field "${targetFields.val()}" is not support for search type dropdown.</p>`;
+								$(targetFields).parent().addClass('validation-error');
+								hasError = true;
+							}
 						}
 					}
 				}
