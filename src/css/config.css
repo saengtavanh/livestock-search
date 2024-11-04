@@ -548,3 +548,7 @@ select:disabled {
   box-shadow: none;
   background-color: #c8d6dd;
 }
+
+.item label {
+  font-size: 14px;
+}
