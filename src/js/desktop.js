@@ -514,6 +514,7 @@ jQuery.noConflict();
           .on("click", function () {
             handleDropDownTitleClick(
               display,
+              CONFIG,
               relatedContent,
               dropDownTitle,
               dropDown
@@ -532,8 +533,14 @@ jQuery.noConflict();
       }
     }
 
-    function handleDropDownTitleClick(display, dropDownTitle, dropDown) {
-      if (display.nameMarker === "-----") {
+    function handleDropDownTitleClick(
+      display,
+      CONFIG,
+      relatedContent,
+      dropDownTitle,
+      dropDown
+    ) {
+      if (display.nameMarker === "") {
         const existingMenu = $(".custom-context-menu");
         if (existingMenu.length > 0) {
           existingMenu.remove();
@@ -548,6 +555,7 @@ jQuery.noConflict();
         const customContextMenu = $("<div></div>")
           .addClass("custom-context-menu")
           .css({
+            width: "150px",
             display: "flex",
             "flex-direction": "column",
             "align-items": "center",
@@ -563,7 +571,7 @@ jQuery.noConflict();
         console.log(offset);
         customContextMenu.css({
           top: offset.top + dropDownTitle.outerHeight() - 250,
-          left: offset.left - customContextMenu.outerWidth() + 90,
+          left: offset.left - customContextMenu.outerWidth() + 270,
         });
 
         // Dynamically create buttons using Kuc.Button for each item in the list
@@ -573,7 +581,7 @@ jQuery.noConflict();
           const hoverBtn = new Kuc.Button({
             text: buttonLabel,
             type: "normal",
-            className: "class-btn",
+            className: "class-btn-pop-up",
             id: targetField,
           });
           $(hoverBtn).css({
@@ -582,6 +590,7 @@ jQuery.noConflict();
           });
 
           customContextMenu.append(hoverBtn);
+          // customContextMenu.append(hoverBtn);
           $(hoverBtn).on("click", async () => {
             const selectedItem = filteredItems[index]; // Get the selected item by index
             dropDownTitle.text(selectedItem.searchName);
@@ -651,9 +660,9 @@ jQuery.noConflict();
             });
           });
         } else {
-          // let filteredRecords = CONFIG.searchContent.filter(
-          //   (item) => item.groupName === display.groupName
-          // );
+          let filteredRecords = CONFIG.searchContent.filter(
+            (item) => item.groupName === display.groupName
+          );
           let checkValue = [];
           //get field
           $.each(filteredRecords, (index, item) => {
@@ -780,16 +789,19 @@ jQuery.noConflict();
         const matchingContent = selectedContent.find(
           (content) => content.searchName === selectedItem
         );
+        console.log("matchingContent", matchingContent);
         if (matchingContent) {
           if (matchingContent.masterId !== "-----") {
             let checkValue = [];
             $.each(CODEMASTER, (index, value) => {
+              console.log("value00000", value);
               if (matchingContent.masterId === value.numericKey) {
-                let valueData = value.codeAndName;
+                let valueData = value?.codeAndName;
                 let valueCheck = Array.isArray(valueData)
                   ? valueData
                   : [valueData];
                 $.each(valueCheck, (index, data) => {
+                  console.log("data00000", data);
                   const existsData = checkValue.some(
                     (entry) => entry.code === data.code
                   );
@@ -849,24 +861,26 @@ jQuery.noConflict();
         if (selectedContent.masterId !== "-----") {
           let checkValue = [];
           $.each(CODEMASTER, (index, data) => {
+            console.log("index", data);
             if (selectedContent.masterId === data.numericKey) {
-              let valueData = data.codeAndName;
+              let valueData = data?.codeAndName;
               let valueCheck = Array.isArray(valueData)
                 ? valueData
                 : [valueData];
               $.each(valueCheck, (index, value) => {
+                console.log("value=======", value);
                 const existsData = checkValue.some(
-                  (entry) => entry.code === data.name
+                  (entry) => entry.code === value.code
                 );
                 if (!existsData) {
                   checkValue.push({
-                    code: data.code,
-                    name: data.name,
+                    code: value.code,
+                    name: value.name,
                   });
                   const selectedOption = $("<option>")
-                    .text(data.name)
+                    .text(value.name)
                     .addClass("option")
-                    .attr("value", data.code)
+                    .attr("value", value.code)
                     .attr("fieldCode", selectedContent.searchTarget);
                   dropDown.append(selectedOption);
                 }
@@ -1302,7 +1316,6 @@ jQuery.noConflict();
         const elementInput = $("<div></div>").addClass("search-item").css({
           color: SETCOLOR.titleColor,
         });
-
         let inputElement;
         switch (searchType) {
           case "text_initial":

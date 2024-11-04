@@ -132,10 +132,18 @@
   font-size: 15px;
 }
 
-.class-btn .kuc-button-1-18-0__button {
+.class-btn-pop-up .kuc-button-1-18-0__button {
   font-size: 15px;
-  width: 20px;
   height: 35px;
   min-width: 100px;
+  max-width: 250px;    
+  width: 100%;         
   color: black;
+  white-space: nowrap;  
+  text-align: center; 
+  text-overflow: ellipsis;
+  overflow: hidden; 
+  padding: 0 10px; 
+  margin: 2px 0; 
+  display: block;
 }
