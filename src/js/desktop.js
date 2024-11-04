@@ -311,10 +311,15 @@ jQuery.noConflict();
       if (searchValue) {
         if (searchInfo.target_field.length > 1) {
           searchInfo.target_field.forEach((field) => {
+            const isLastIndex = index === searchInfo.target_field.length - 1;
             if (queryChild) {
-              queryChild += `or (${field} like "${searchValue}")`;
+              if (isLastIndex) {
+                queryChild += `or (${field} like "${searchValue}"))`;
+              } else {
+                queryChild += `or (${field} like "${searchValue}")`;
+              }
             } else {
-              queryChild = `${query ? " and " : ""}(${field} like "${searchValue}") `;
+              queryChild = `${query ? " and " : ""}((${field} like "${searchValue}") `;
             }
           })
         } else if ((searchInfo.target_field.length = 1)) {
@@ -412,12 +417,18 @@ jQuery.noConflict();
 
       if (searchValue) {
         if (searchInfo.target_field.length > 1) {
-          searchInfo.target_field.forEach((field) => {
+          searchInfo.target_field.forEach((field , index) => {
+            const isLastIndex = index === searchInfo.target_field.length - 1;
+
             if (queryChild) {
-              queryChild += `or (${field} = "${searchValue}")`
+              if (isLastIndex) {
+                queryChild += `or (${field} = "${searchValue}"))`
+              } else {
+                queryChild += `or (${field} = "${searchValue}")`
+              }
             } else {
-              queryChild = `${query ? " and " : ""}(${field} = "${searchValue}") `;
-            }
+              queryChild = `${query ? " and " : ""}((${field} = "${searchValue}") `;
+            } 
           })
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} = ${searchValue})`;
@@ -906,7 +917,7 @@ jQuery.noConflict();
       if (queryForDropdow) {
         query = `${query ? " and" : ""} ${queryForDropdow}`;
      }
-     console.log("searchInfoList :::::::::::::::::::", searchInfoList);
+
     searchInfoList.forEach((field, index) => {
       if (field.groupName == selectedId && field.nameMarker) {
         if (field.target_field.length > 1) {
@@ -915,9 +926,9 @@ jQuery.noConflict();
 
             if (queryChild) {
               if (isLastIndex) {
-                queryChild += `or (${fieldCode} in ("${selectedValue}")))`;
+                queryChild += ` or (${fieldCode} in ("${selectedValue}")))`;
               } else {
-                queryChild += `or (${fieldCode} in ("${selectedValue}"))`;
+                queryChild += ` or (${fieldCode} in ("${selectedValue}"))`;
               }
             } else {
               queryChild = `((${fieldCode} in ("${selectedValue}")) `;
@@ -1001,9 +1012,9 @@ jQuery.noConflict();
               
                           if (queryForCheck) {
                             if (isLastIndex) {
-                              queryForCheck += `or (${field} = "${valueForCheck}"))`;
+                              queryForCheck += ` or (${field} = "${valueForCheck}"))`;
                             } else {
-                              queryForCheck += `or (${field} = "${valueForCheck}")`;
+                              queryForCheck += ` or (${field} = "${valueForCheck}")`;
                             }
                           } else {
                             queryForCheck = `((${field} = "${valueForCheck}")`;
@@ -1024,9 +1035,9 @@ jQuery.noConflict();
               
                           if (queryForCheck) {
                             if (isLastIndex) {
-                              queryForCheck += `or (${field} like "${valueForCheck}"))`;
+                              queryForCheck += ` or (${field} like "${valueForCheck}"))`;
                             } else {
-                              queryForCheck += `or (${field} like "${valueForCheck}")`;
+                              queryForCheck += ` or (${field} like "${valueForCheck}")`;
                             }
                           } else {
                             queryForCheck = `((${field} like "${valueForCheck}")`;
@@ -1345,7 +1356,7 @@ jQuery.noConflict();
         querySuccess = encodeURIComponent(query)
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
         const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
-        // window.location.href = updatedUrl;
+        window.location.href = updatedUrl;
       }
     };
 
