@@ -1099,12 +1099,9 @@ jQuery.noConflict();
       result[`${dateRange}_end`]
         ? datePickerEnd.val(result[`${dateRange}_end`])
         : "";
-
       const separator = $("<span>⁓</span>").addClass("separator-datepicker");
-
       const wrapper = $("<div></div>").addClass("wrapper-datepiker");
       wrapper.append(datePickerSatrt).append(separator).append(datePickerEnd);
-
       return wrapper;
     }
 
