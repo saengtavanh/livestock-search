@@ -151,6 +151,7 @@ jQuery.noConflict();
     };
 
     let getValueConditionAndBuildQuery = function (searchInfoList, dropDownChange) {
+      debugger
       let query = "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
@@ -405,6 +406,7 @@ jQuery.noConflict();
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
           searchValue = $(`#${replacedText}`).val();
+          bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
 
@@ -424,12 +426,12 @@ jQuery.noConflict();
       }
       return '';
     };
-
+    
     let buildNumberRangeQuery = function (searchInfo, query) {
       let queryChild = "";
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
-      const startValue = $(`#${replacedText}_start`).length && $(`#${replacedText}_start`).val();
-      const endValue = $(`#${replacedText}_end`).length && $(`#${replacedText}_end`).val();
+      const startValue = $(`#${replacedText}_start`).val();
+      const endValue = $(`#${replacedText}_end`).val();
 
       searchInfo.target_field.forEach((field) => {
         if (startValue && endValue == '') {
@@ -916,7 +918,8 @@ jQuery.noConflict();
       }
     });
 
-      bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelValue);
+      bokTermsObject = {...bokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelValue)}
+      console.log("🚀 ~ queryDropdown ~ bokTermsObject:", bokTermsObject)
       let joinObject = { ...bokTermsGet, ...bokTermsObject };
       
       const currentUrlBase = window.location.href.match(/\S+\//)[0];
@@ -955,6 +958,7 @@ jQuery.noConflict();
             let checkHaveEndtData = "";
             let startNew = "";
             let endNew = "";
+
             Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
               console.log("key ====", key);
               searchInfoList.forEach((field) => {
@@ -962,7 +966,6 @@ jQuery.noConflict();
                                                                       field.searchType == "text_initial" ||
                                                                        field.searchType == "text_exact" ||
                                                                        field.searchType == "number_exact") ) {
-                  console.log("bokTermsObj.active>>>>>>>", bokTermsObj);
                   if (!$(`#${key}`).val()) {
                     let valueForCheck;
                     if (field.searchType == "text_patial" || field.searchType == "multi_text_patial") {
@@ -976,26 +979,51 @@ jQuery.noConflict();
                     }
                     
                     let queryForCheck;
-                    if (field.target_field.length > 1) {
-                      field.target_field.forEach((field, index) => {
-                        const isLastIndex = index === field.target_field.length - 1;
-            
-                        if (queryForCheck) {
-                          if (isLastIndex) {
-                            queryForCheck += `or (${field} like "${valueForCheck}"))`;
+                    if (field.searchType == "number_exact") {
+                      if (field.target_field.length > 1) {
+                        field.target_field.forEach((field, index) => {
+                          const isLastIndex = index === field.target_field.length - 1;
+              
+                          if (queryForCheck) {
+                            if (isLastIndex) {
+                              queryForCheck += `or (${field} = "${valueForCheck}"))`;
+                            } else {
+                              queryForCheck += `or (${field} = "${valueForCheck}")`;
+                            }
                           } else {
-                            queryForCheck += `or (${field} like "${valueForCheck}")`;
+                            queryForCheck = `((${field} = "${valueForCheck}")`;
                           }
-                        } else {
-                          queryForCheck = `((${field} like "${valueForCheck}")`;
-                        }
-                      });
-                    } else if ((field.target_field.length = 1)) {
-                      queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
-                      changeToArray = changeToArray.filter(item => item !== queryForCheck);
-                          let string = changeToArray.join(' and ');
-                          delete bokTermObj[key];
-                          query = string;
+                        });
+                      } else if ((field.target_field.length = 1)) {
+                        queryForCheck = `(${field.target_field} = "${valueForCheck}")`;
+                        changeToArray = changeToArray.filter(item => item !== queryForCheck);
+                            let string = changeToArray.join(' and ');
+                            delete bokTermObj[key];
+                            query = string;
+                      }
+
+                    } else {
+                      if (field.target_field.length > 1) {
+                        field.target_field.forEach((field, index) => {
+                          const isLastIndex = index === field.target_field.length - 1;
+              
+                          if (queryForCheck) {
+                            if (isLastIndex) {
+                              queryForCheck += `or (${field} like "${valueForCheck}"))`;
+                            } else {
+                              queryForCheck += `or (${field} like "${valueForCheck}")`;
+                            }
+                          } else {
+                            queryForCheck = `((${field} like "${valueForCheck}")`;
+                          }
+                        });
+                      } else if ((field.target_field.length = 1)) {
+                        queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
+                        changeToArray = changeToArray.filter(item => item !== queryForCheck);
+                            let string = changeToArray.join(' and ');
+                            delete bokTermObj[key];
+                            query = string;
+                      }
                     }
 
                   }
@@ -1021,7 +1049,7 @@ jQuery.noConflict();
                     } else {
                       endData = bokTermsObj;
                     }
-
+                    
                     if (!$(`#${key}`).val()) {
                       delete bokTermObj[key];
                     } else {
@@ -1106,8 +1134,6 @@ jQuery.noConflict();
                         let string = filteredArray.join(' and ');
                         delete bokTermObj[selectedId];
                         query = string;
-                        console.log("idddddd", selectedId);
-                        console.log("bokTermObj", bokTermObj);
                         
                         
                     } else {
@@ -1274,8 +1300,8 @@ jQuery.noConflict();
         
         querySuccess = encodeURIComponent(query)
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-        const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${mergedBokTerms}`;
-        // window.location.href = updatedUrl;
+        const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
+        window.location.href = updatedUrl;
       }
     };
 
@@ -1294,6 +1320,7 @@ jQuery.noConflict();
           console.error('Error parsing bokTerm:', error);
           return; // Exit if there's an error parsing
         }
+
         Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
           CONFIG.groupSetting.forEach(searchItem => {
             if (searchItem.groupName === key.replace("_", " ")) {
@@ -1363,7 +1390,7 @@ jQuery.noConflict();
       })
 
       InputNumber.css("width", width);
-      result[`${initialNumber}`] ? start.val(result[`${initialNumber}`]) : "";
+      result[`${initialNumber}`] ? InputNumber.val(result[`${initialNumber}`]) : "";
       
       return InputNumber;
     }
