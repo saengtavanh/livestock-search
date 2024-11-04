@@ -92,24 +92,19 @@ jQuery.noConflict();
       );
     });
 
-    // getItem sessionStorage 
-    function getDataFromSessionStorage(key) {
-      const data = sessionStorage.getItem(key);
-      return data ? JSON.parse(data) : null;
-    }
+     //get data in the session storage
+     let CODEMASTER = [];
+     for (let i = 0; i < sessionStorage.length; i++) {
+       let key = sessionStorage.key(i);
+       const numberId = key.match(/\d+/);
+       if (numberId) {
+         const numericKey = numberId[0];
+         const data = sessionStorage.getItem(key);
+         const CodeMasterData = JSON.parse(data);
+         CODEMASTER.push({ numericKey, ...CodeMasterData });
+       }
+     } 
     
-    let ITEMS = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      const storedData = getDataFromSessionStorage(key);
-      if (storedData && storedData.codeAndName) {
-        ITEMS.push(storedData.codeAndName);
-      }
-    }
-
-    console.log("ITEMS =======================", ITEMS[0]);
-    
-
     // // if (!CONFIG) return;
     // console.log(window.location.href);
     const urlObj = new URL(window.location.href);
@@ -158,6 +153,8 @@ jQuery.noConflict();
     let getValueConditionAndBuildQuery = function (searchInfoList, dropDownChange) {
       let query = "";
       let queryChild = "";
+      let searchContent = CONFIG.searchContent;
+      let mergedBokTermsObject = {}
 
       searchInfoList.forEach((searchInfo) => {
         let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
@@ -168,11 +165,13 @@ jQuery.noConflict();
           let dropdownId = groupNameSlit;
           let labelText = $(`#${groupNameSlit}`).prev('label').text();
           if (selectedValue) {
-              bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelText);
+            
+              // bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelText);
               console.log("🚀 ~ searchInfoList.forEach ~ bokTermsObject:", bokTermsObject)
+              mergedBokTermsObject = {...mergedBokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelText)}
               if (!dropDownChange) {
                 
-                  if (searchInfo.groupName == labelText && searchInfo.nameMarker && searchInfo.searchType == "dropdown_exact") {
+                  if (searchInfo.groupName == groupNameSlit.replace("_", " ") && searchInfo.nameMarker && searchInfo.searchType == "dropdown_exact") {
                     if (searchInfo.target_field.length > 1) {
                       searchInfo.target_field.forEach((fieldCode, index) => {
                         const isLastIndex = index === searchInfo.target_field.length - 1;
@@ -191,8 +190,9 @@ jQuery.noConflict();
                     } else {
                       query += `${query ? " and " : ""}(${searchInfo.target_field[0]} in ("${selectedValue}"))`;
                     }
-                  } else if (searchInfo.groupName == selectedId && searchInfo.nameMarker == '' && searchInfo.searchType == "dropdown_exact") {
-                      query += `${query ? " and " : ""}(${fieldCode} in ("${selectedValue}"))`;
+                  } else if (searchInfo.groupName == groupNameSlit.replace("_", " ") && searchInfo.nameMarker == '' && searchInfo.searchType == "dropdown_exact") {
+                    let getTargetField = searchContent.filter(item => item.searchName == labelText);
+                    query += `${query ? " and " : ""}(${getTargetField[0].searchTarget} in ("${selectedValue}"))`;
                   }
               }
           } 
@@ -232,6 +232,8 @@ jQuery.noConflict();
             break;
         }
       });
+
+      bokTermsObject = mergedBokTermsObject;
 
       return query;
     };
@@ -432,14 +434,14 @@ jQuery.noConflict();
       searchInfo.target_field.forEach((field) => {
         if (startValue && endValue == '') {
           bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
-            queryChild += queryChild ? `${query ? " and " : ""}` + " or (" + field + ' ' + ">=" + ' "' + startValue + '"' + ")" : "(" + field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + ">=" + ' "' + startValue + '"' + "))" : "((" + field + ' ' + ">=" + ' "' + startValue + '"' + ")";
         } else if (endValue && startValue == '') {
-          bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}end`).val();
-          queryChild += queryChild ? `${query ? " and " : ""}` + " or (" + field + ' ' + "<=" + ' "' + endValue + '"' + ")" : "or (" + field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+          bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
+          queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" : "((" + field + ' ' + "<=" + ' "' + endValue + '"' + ")";
         } else if (startValue && endValue) {
           bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-          queryChild += queryChild ?  + " or ((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" :
+          queryChild += queryChild ?  " or ((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" :
             "((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))";
         }
 
@@ -589,24 +591,40 @@ jQuery.noConflict();
       let filteredRecords = CONFIG.searchContent.filter(item => item.groupName === display.groupName);
 
       if (display.nameMarker) {
-        if (filteredRecords[0]?.masterId > 0) {
-          filteredRecords.forEach(item => {
-            ITEMS[0].forEach(data => {
-              if (data.code && data.name) {
-                const option = $("<option>")
-                  .text(data.name)
-                  .addClass("option")
-                  .attr("value", data.code)
-                  .attr("fieldCode", item.searchTarget);
-                dropDown.append(option);
+        let checkValue = [];
+        if (filteredRecords[0]?.masterId !== "-----") {
+          filteredRecords.forEach((item) => {
+            if (!CODEMASTER) return;
+            $.each(CODEMASTER, (index, data) => {
+              if (item.masterId === data.numericKey) {
+                let valueData = data.codeAndName;
+                let valueCheck = Array.isArray(valueData)
+                  ? valueData
+                  : [valueData];
+                $.each(valueCheck, (index, data) => {
+                  const existsData = checkValue.some(
+                    (entry) => entry.code === data.code
+                  );
+                  if (!existsData) {
+                    checkValue.push({ code: data.code, name: data.name });
+                    const option = $("<option>")
+                      .text(data.name)
+                      .addClass("option")
+                      .attr("value", data.code)
+                      .attr("fieldCode", item.searchTarget);
+                    dropDown.append(option);
+                  }
+                });
               }
             });
           });
         } else {
-          let filteredRecords = CONFIG.searchContent.filter(
-            (item) => item.groupName === display.groupName
-          );
+          // let filteredRecords = CONFIG.searchContent.filter(
+          //   (item) => item.groupName === display.groupName
+          // );
           //get field 
+          let checkValue = [];
+          //get field
           $.each(filteredRecords, (index, item) => {
             $.each(DETFIELDlIST, (index, data) => {
               let fieldList = data.fieldList;
@@ -615,34 +633,59 @@ jQuery.noConflict();
                 let dataValue = value.properties?.options;
                 if (!dataValue) return;
                 $.each(dataValue, (index, options) => {
-                  let optionValue = options.label;
-                  const option = $("<option>")
-                    .text(optionValue)
-                    .addClass("option")
-                    .attr("value", optionValue)
-                    .attr("fieldCode", item.searchTarget);
-                  dropDown.append(option);
+                  let optionValue = options?.label;
+                  let valuesCheck = Array.isArray(optionValue)
+                    ? optionValue
+                    : [optionValue];
+                  $.each(valuesCheck, (index, value) => {
+                    if (!checkValue.includes(value)) {
+                      checkValue.push(value);
+                      const option = $("<option>")
+                        .text(value)
+                        .addClass("option")
+                        .attr("value", value)
+                        .attr("fieldCode", item.searchTarget);
+                      dropDown.append(option);
+                    }
+                  });
                 });
               });
             });
           });
         }
       } else {
-        if (filteredRecords[0]?.masterId > 0) {
-        dropDownTitle.text(initialContent.searchName);
-        ITEMS[0].forEach(data => {
-          if (data.code && data.name) {
-            const initialOption = $("<option>")
-              .text(data.name)
-              .addClass("option")
-              .attr("value", data.code)
-              .attr("fieldCode", initialContent.searchTarget);
-            dropDown.append(initialOption);
-          }
-        });
+        if (filteredRecords[0]?.masterId !== "-----") {
+          let checkValue = [];
+          dropDownTitle.text(initialContent.searchName);
+          $.each(CODEMASTER, (index, value) => {
+            if (initialContent.masterId === value.numericKey) {
+              let valueData = value.codeAndName;
+              let valueCheck = Array.isArray(valueData)
+                ? valueData
+                : [valueData];
+              $.each(valueCheck, (index, data) => {
+                const existsData = checkValue.some(
+                  (entry) => entry.code === data.code
+                );
+                if (!existsData) {
+                  checkValue.push({
+                    code: data.code,
+                    name: data.name,
+                  });
+                  const initialOption = $("<option>")
+                    .text(data.name)
+                    .addClass("option")
+                    .attr("value", data.code)
+                    .attr("fieldCode", initialContent.searchTarget);
+                  dropDown.append(initialOption);
+                }
+              });
+            }
+          });
         // dropDown.trigger("change");
       } else {
           dropDownTitle.text(initialContent.searchName);
+          let checkValue = [];
           $.each(DETFIELDlIST, (index, data) => {
             let fieldList = data.fieldList;
             $.each(fieldList, (index, value) => {
@@ -650,13 +693,20 @@ jQuery.noConflict();
               let dataValue = value.properties?.options;
               if (!dataValue) return;
               $.each(dataValue, (index, options) => {
-                let optionValue = options.label;
-                const initialOption = $("<option>")
-                  .text(optionValue)
-                  .addClass("option")
-                  .attr("value", optionValue)
-                  .attr("fieldCode", initialContent.searchTarget);
-                dropDown.append(initialOption);
+                let optionValue = options?.label;
+                let valuesCheck = Array.isArray(optionValue)
+                  ? optionValue
+                  : [optionValue];
+                $.each(valuesCheck, (index, value) => {
+                  if (!checkValue.includes(value)) {
+                    const initialOption = $("<option>")
+                      .text(optionValue)
+                      .addClass("option")
+                      .attr("value", optionValue)
+                      .attr("fieldCode", initialContent.searchTarget);
+                    dropDown.append(initialOption);
+                  }
+                });
               });
             });
           });
@@ -686,17 +736,37 @@ jQuery.noConflict();
         const selectedContent = filteredItems.filter(content => content.groupName === groupName);
         const matchingContent = selectedContent.find(content => content.searchName === selectedItem);
         if (matchingContent) {
-          if (matchingContent.masterId > 0) {
-            ITEMS[0].forEach(data => {
-              const selectedOption = $("<option>")
-                .text(data.name)
-                .addClass('option')
-                .attr('value', data.code)
-                .attr('fieldCode', matchingContent.searchTarget);
-              dropDown.append(selectedOption);
+          if (matchingContent.masterId !== "-----") {
+            let checkValue = [];
+            $.each(CODEMASTER, (index, value) => {
+              if (matchingContent.masterId === value.numericKey) {
+                let valueData = value.codeAndName;
+                let valueCheck = Array.isArray(valueData)
+                  ? valueData
+                  : [valueData];
+                $.each(valueCheck, (index, data) => {
+                  const existsData = checkValue.some(
+                    (entry) => entry.code === data.code
+                  );
+                  if (!existsData) {
+                    checkValue.push({
+                      code: data.code,
+                      name: data.name,
+                    });
+                    const selectedOption = $("<option>")
+                      .text(data.name)
+                      .addClass("option")
+                      .attr("value", data.code)
+                      .attr("fieldCode", matchingContent.searchTarget);
+                    dropDown.append(selectedOption);
+                  }
+                });
+              }
             });
+
             dropDown.trigger('change');
           } else {
+            let checkValue = [];
             $.each(DETFIELDlIST, (index, data) => {
               let fieldList = data.fieldList;
               $.each(fieldList, (index, value) => {
@@ -704,13 +774,21 @@ jQuery.noConflict();
                 let dataValue = value.properties?.options;
                 if (!dataValue) return;
                 $.each(dataValue, (index, options) => {
-                  let optionValue = options.label;
-                  const selectedOption = $("<option>")
-                    .text(optionValue)
-                    .addClass("option")
-                    .attr("value", optionValue)
-                    .attr("fieldCode", matchingContent.searchTarget);
-                  dropDown.append(selectedOption);
+                  let optionValue = options?.label;
+                  let valuesCheck = Array.isArray(optionValue)
+                    ? optionValue
+                    : [optionValue];
+                  $.each(valuesCheck, (index, value) => {
+                    if (!checkValue.includes(value)) {
+                      checkValue.push(value);
+                      const selectedOption = $("<option>")
+                        .text(optionValue)
+                        .addClass("option")
+                        .attr("value", optionValue)
+                        .attr("fieldCode", matchingContent.searchTarget);
+                      dropDown.append(selectedOption);
+                    }
+                  });
                 });
               });
             });
@@ -722,20 +800,36 @@ jQuery.noConflict();
         dropDown.empty();
         dropDown.append($("<option>").text("-----").val(""));
         const selectedContent = filteredItems.find(content => content.searchTarget === selectedItem.searchTarget);
-        if (selectedContent.masterId > 0) {
-          ITEMS[0].forEach(data => {
-            console.log("CodeMaster", data)
-            if (data.name && data.code) {
-              const selectedOption = $("<option>")
-                .text(data.name)
-                .addClass("option")
-                .attr("value", data.code)
-                .attr("fieldCode", selectedContent.searchTarget);
-              dropDown.append(selectedOption);
+        if (selectedContent.masterId !== "-----") {
+          let checkValue = [];
+          $.each(CODEMASTER, (index, data) => {
+            if (selectedContent.masterId === data.numericKey) {
+              let valueData = data.codeAndName;
+              let valueCheck = Array.isArray(valueData)
+                ? valueData
+                : [valueData];
+              $.each(valueCheck, (index, value) => {
+                const existsData = checkValue.some(
+                  (entry) => entry.code === value.code
+                );
+                if (!existsData) {
+                  checkValue.push({
+                    code: value.code,
+                    name: value.name,
+                  });
+                  const selectedOption = $("<option>")
+                    .text(value.name)
+                    .addClass("option")
+                    .attr("value", value.code)
+                    .attr("fieldCode", selectedContent.searchTarget);
+                  dropDown.append(selectedOption);
+                }
+              });
             }
           });
           // dropDown.trigger("change");
         } else {
+          let checkValue = [];
           $.each(DETFIELDlIST, (index, data) => {
             let fieldList = data.fieldList;
             console.log("fieldList", fieldList);
@@ -744,13 +838,21 @@ jQuery.noConflict();
               let dataValue = value.properties?.options;
               if (!dataValue) return;
               $.each(dataValue, (index, options) => {
-                let optionValue = options.label;
-                const selectedOption = $("<option>")
-                  .text(optionValue)
-                  .addClass("option")
-                  .attr("value", optionValue)
-                  .attr("fieldCode", selectedItem.searchTarget);
-                dropDown.append(selectedOption);
+                let optionValue = options?.label;
+                let valuesCheck = Array.isArray(optionValue)
+                  ? optionValue
+                  : [optionValue];
+                $.each(valuesCheck, (index, value) => {
+                  if (!checkValue.includes(value)) {
+                    checkValue.push(value);
+                    const selectedOption = $("<option>")
+                      .text(optionValue)
+                      .addClass("option")
+                      .attr("value", optionValue)
+                      .attr("fieldCode", selectedItem.searchTarget);
+                    dropDown.append(selectedOption);
+                  }
+                });
               });
             });
           });
@@ -769,12 +871,11 @@ jQuery.noConflict();
     }
 
     async function queryDropdown(selectedValue, fieldCode, dropdownId, labelValue) {
-      
-
-      let selectedId = dropdownId;
+      let selectedId = dropdownId.replace("_", " ");
       let queryChild;
       let query;
       let searchInfoList = CONFIG.groupSetting;
+      let searchContent = CONFIG.searchContent;
 
       let urlObjDropdown = new URL(window.location.href);
       let getQueryFromUrl = urlObjDropdown.searchParams.get('query');
@@ -790,9 +891,7 @@ jQuery.noConflict();
         query = `${query ? " and" : ""} ${queryForDropdow}`;
      }
      console.log("searchInfoList :::::::::::::::::::", searchInfoList);
-     
     searchInfoList.forEach((field, index) => {
-      queryChild = "";
       if (field.groupName == selectedId && field.nameMarker) {
         if (field.target_field.length > 1) {
           field.target_field.forEach((fieldCode, index) => {
@@ -848,12 +947,151 @@ jQuery.noConflict();
           console.error('Error parsing bokTerm:', error);
           bokTermObj = {}; // initialize as an empty object in case of error
         }
-
-        console.log("fieldCode=====>", fieldCode);
           if (!selectedValue || !fieldCode) {
+            let queryChildRank = "";
+            let startData = "";
+            let endData = "";
+            let checkHaveStartData = "";
+            let checkHaveEndtData = "";
+            let startNew = "";
+            let endNew = "";
             Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
-              console.log("key ====", bokTermsObj);
+              console.log("key ====", key);
               searchInfoList.forEach((field) => {
+                if ((field.groupName.replace(/\s+/g, "_") == key) && (field.searchType == "text_patial" ||
+                                                                      field.searchType == "text_initial" ||
+                                                                       field.searchType == "text_exact" ||
+                                                                       field.searchType == "number_exact") ) {
+                  console.log("bokTermsObj.active>>>>>>>", bokTermsObj);
+                  if (!$(`#${key}`).val()) {
+                    let valueForCheck;
+                    if (field.searchType == "text_patial" || field.searchType == "multi_text_patial") {
+                      valueForCheck = transformStringPartial(bokTermsObj);
+                    } else if (field.searchType == "text_initial" || field.searchType == "multi_text_initial") {
+                      valueForCheck = transformString(bokTermsObj);
+                    } else if (field.searchType == "text_exact" || field.searchType == "number_exact") {
+                      valueForCheck = transformString(bokTermsObj);
+                    } else {
+                      valueForCheck = bokTermsObj;
+                    }
+                    
+                    let queryForCheck;
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((field, index) => {
+                        const isLastIndex = index === field.target_field.length - 1;
+            
+                        if (queryForCheck) {
+                          if (isLastIndex) {
+                            queryForCheck += `or (${field} like "${valueForCheck}"))`;
+                          } else {
+                            queryForCheck += `or (${field} like "${valueForCheck}")`;
+                          }
+                        } else {
+                          queryForCheck = `((${field} like "${valueForCheck}")`;
+                        }
+                      });
+                    } else if ((field.target_field.length = 1)) {
+                      queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
+                      changeToArray = changeToArray.filter(item => item !== queryForCheck);
+                          let string = changeToArray.join(' and ');
+                          delete bokTermObj[key];
+                          query = string;
+                    }
+
+                  }
+                }
+
+                if (field.searchType == "number_range" || field.searchType == "date_range") {
+                  let getGroupId;
+                  const parts = key.split("_");
+                  const isLastPartStart = parts[parts.length - 1] === "start";
+
+                  if (!checkHaveStartData && isLastPartStart) {
+                    console.log("KHAO:");
+                    
+                    checkHaveStartData = 1;
+                    getGroupId = key.replace(/_start$/, "");
+                  } else {
+                    getGroupId = key.replace(/_end$/, "");
+                    checkHaveEndtData = 1;
+                  }
+                  
+                  if (field.groupName == getGroupId.replace("_", " ")) {
+                    
+                    
+                    if (isLastPartStart) {
+                      startData = bokTermsObj;
+                      endData = ''
+                    } else {
+                      endData = bokTermsObj;
+                    }
+
+                    if (!$(`#${key}`).val()) {
+                      delete bokTermObj[key];
+                    } else {
+                      if (isLastPartStart) {
+                        console.log("KHAO:2");
+                        
+                        startNew = $(`#${key}`).val();
+                      } else {
+                        endNew = $(`#${key}`).val()
+                      }
+                    }
+
+                    field.target_field.forEach((fields) => {
+                      if (startData && endData == '') {
+                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startData + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startData + '"' + ")";
+                      } else if (endData && startData == '') {
+                        queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" : "((" + fields + ' ' + "<=" + ' "' + endData + '"' + ")";
+                      } else if (startData && endData) {
+                        queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" :
+                          "((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))";
+                      }
+                    });
+
+                    let changeQueryToArray = queryChildRank.split(/ and /)
+                    console.log("🚀 ~ searchInfoList.forEach ~ changeQueryToArray:", changeQueryToArray)
+                    
+                    if (checkHaveStartData && checkHaveEndtData) {
+                      changeToArray = changeToArray.filter(item => !changeQueryToArray.includes(item));
+                      console.log("🚀 ~ searchInfoList.forEach ~ changeToArray:", changeToArray)
+                      checkHaveStartData = "";
+                      checkHaveEndtData = "";
+                      queryChildRank = "";
+                      
+                      field.target_field.forEach((fields) => {
+                        if (startNew && endNew == '') {
+                            queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")" : "(" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")";
+                        } else if (endNew && startNew == '') {
+                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endNew + '"' + ")" : "or (" + fields + ' ' + "<=" + ' "' + endNew + '"' + ")";
+                        } else if (startNew && endNew) {
+                          queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))" :
+                            "((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))";
+                        }
+                      });
+
+                      if (queryChildRank) {
+                        changeToArray = queryChildRank.split(/ and /);
+                      }
+
+                        let string = changeToArray.join(' and ');
+                        query = string;
+                        query = queryChildRank;
+                        startNew = "";
+                        endNew = "";
+                    } else if (checkHaveStartData && !checkHaveEndtData) {
+                      changeToArray = changeToArray.filter(item => !changeQueryToArray.includes(item));
+                    } else if (!checkHaveStartData && checkHaveEndtData) {
+                      changeToArray = changeToArray.filter(item => !changeQueryToArray.includes(item));
+                    }
+
+                    queryChildRank = "";
+
+                    console.log("changeToArray+", changeToArray);
+                  }
+                }
+
+                console.log("🚀 ~ searchInfoList.forEach ~ field:", field)
                 if (field.groupName == selectedId) {
                   if (field.groupName == bokTermsObj.active && field.nameMarker && field.searchType == "dropdown_exact") {
                     if (field.target_field.length > 1) {
@@ -869,36 +1107,128 @@ jQuery.noConflict();
                           queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
                         }
                       });
-                        // query += `${query ? " and " : ""}${queryChild}`;
+
                         let filteredArray = changeToArray.filter(item => item !== queryChild);
                         let string = filteredArray.join(' and ');
                         delete bokTermObj[selectedId];
                         query = string;
+                        console.log("idddddd", selectedId);
+                        console.log("bokTermObj", bokTermObj);
+                        
                         
                     } else {
                       // query += `${query ? " and " : ""}(${field.target_field[0]} like "${bokTermsObj.value}")`;
+                      console.log("queryChild:::1", queryChild);
                       let filteredArray = changeToArray.filter(item => item !== `(${field.target_field[0]} in ("${bokTermsObj.value}"))`);
                       let string = filteredArray.join(' and ');
                       delete bokTermObj[selectedId];
                       query = string;
+                      console.log("🚀 ~ searchInfoList.forEach ~ query:", query)
                     }
-                  } else if (field.groupName == selectedId && field.nameMarker == '') {
-                      let filteredArray = changeToArray.filter(item => item !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
+                  } else if (field.groupName == selectedId && field.nameMarker == '' && field.searchType == "dropdown_exact") {
+                    let filteredArray
+
+                    // let filteredArray = changeToArray.filter(item => item.trim !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((fieldCode, index) => {
+                          queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
+
+                        if (changeToArray.includes(queryChild)) {
+                          changeToArray = changeToArray.filter(item => item !== queryChild);
+                        } else {
+                          filteredArray = changeToArray
+                        }
+                      });
+                        let string = filteredArray.join(' and ');
+                        delete bokTermObj[selectedId];
+                        query = string;
+                    } else {
+                      let changeToArray = changeToArray.filter(item => item !== `(${field.target_field[0]} in ("${bokTermsObj.value}"))`);
+                      let string = changeToArray.join(' and ');
+                      delete bokTermObj[selectedId];
+                      query = string;
+                      console.log("🚀 ~ searchInfoList.forEach ~ query:", query)
+                    }
+                  } 
+                }
+
+                if (field.groupName.replace(/\s+/g, "_") == key) {
+                  
+                  if (field.groupName == selectedId && field.nameMarker && field.searchType == "dropdown_exact") {
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((fieldCode, index) => {
+                        const isLastIndex = index === field.target_field.length - 1;
+                        if (queryChild) {
+                          if (isLastIndex) {
+                            queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+                          } else {
+                            queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+                          }
+                        } else {
+                          queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+                        }
+                      });
+
+                        let filteredArray = changeToArray.filter(item => item !== queryChild);
+                        let string = filteredArray.join(' and ');
+                        delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                        query = string;
+                    } else {
+                      // query += `${query ? " and " : ""}(${field.target_field[0]} like "${bokTermsObj.value}")`;
+                      console.log("queryChild:::1", queryChild);
+                      let filteredArray = changeToArray.filter(item => item !== `(${field.target_field[0]} in ("${bokTermsObj.value}"))`);
                       let string = filteredArray.join(' and ');
                       delete bokTermObj[selectedId];
                       query = string;
-                  }
+                      console.log("🚀 ~ searchInfoList.forEach ~ query:", query)
+                    }
+                  } else if (field.groupName == selectedId && field.nameMarker == '' && field.searchType == "dropdown_exact") {
+                    let filteredArray
+
+                    // let filteredArray = changeToArray.filter(item => item.trim !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((fieldCode, index) => {
+                          queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
+
+                        if (changeToArray.includes(queryChild)) {
+                          changeToArray = changeToArray.filter(item => item !== queryChild);
+                        } else {
+                          filteredArray = changeToArray
+                        }
+                      });
+                      
+                        let string = filteredArray.join(' and ');
+                        delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                        query = string;
+                    } else {
+                      let changeToArray = changeToArray.filter(item => item !== `(${field.target_field[0]} in ("${bokTermsObj.value}"))`);
+                      let string = changeToArray.join(' and ');
+                      delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                      query = string;
+                      console.log("🚀 ~ searchInfoList.forEach ~ query:", query)
+                    }
+                  } 
                 }
                 
               })
               console.log("queryChild::::::::::::", queryChild);
+              console.log("query::::::::::::", query);
             });
 
         } else {
 
           Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
-            console.log("key ====", bokTermsObj);
+            console.log("key ====>>>>", bokTermsObj);
             searchInfoList.forEach((field) => {
+              console.log("🚀 ~ searchInfoList.forEach ~ field:", field)
+              console.log("bokTermsObj.active>>>>>>>", key);
+              if (field.groupName.replace(/\s+/g, "_") == key) {
+                console.log("bokTermsObj.active>>>>>>>", bokTermsObj.active);
+                if (!$(`#${key}`).val()) {
+                  delete bokTermObj[key];
+                }
+              }
+              
               if (field.groupName != selectedId) {
                 if (field.groupName == bokTermsObj.active && field.nameMarker && field.searchType == "dropdown_exact") {
                   if (field.target_field.length > 1) {
@@ -919,7 +1249,12 @@ jQuery.noConflict();
                     query += `${query ? " and " : ""}(${field.target_field[0]} in ("${bokTermsObj.value}"))`;
                   }
                 } else if (field.groupName == selectedId && field.nameMarker == '') {
+
                     query += `${query ? " and " : ""}(${fieldCode} in ("${bokTermsObj.value}"))`;
+        
+                } else if (field.groupName == key && field.nameMarker == '' && field.searchType == "dropdown_exact") {
+                  let getTargetField = searchContent.filter(item => item.searchName == bokTermsObj.active);
+                    query += `${query ? " and " : ""}(${getTargetField[0].searchTarget} in ("${bokTermsObj.value}"))`;
                 }
               }
               
@@ -940,10 +1275,13 @@ jQuery.noConflict();
 
         }
 
+        console.log("mergedBokTerms:::::", bokTermObj);
+        console.log("queryyyyyy2222:::::", query);
+        
         querySuccess = encodeURIComponent(query)
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
         const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${mergedBokTerms}`;
-        window.location.href = updatedUrl;
+        // window.location.href = updatedUrl;
       }
     };
 
@@ -1031,6 +1369,7 @@ jQuery.noConflict();
       })
 
       InputNumber.css("width", width);
+      result[`${initialNumber}`] ? start.val(result[`${initialNumber}`]) : "";
       
       return InputNumber;
     }
@@ -1074,7 +1413,8 @@ jQuery.noConflict();
         className: 'options-class-date',
         id: dateInput,
         visible: true,
-        disabled: false
+        disabled: false,
+        value: result[`${dateInput}`] ? result[`${dateInput}`] : ""
       })
 
       datePicker.setAttribute('data-search-type', searchType);
@@ -1089,7 +1429,8 @@ jQuery.noConflict();
         className: 'options-class-date',
         id: `${dateRange}_start`,
         visible: true,
-        disabled: false
+        disabled: false,
+        value: result[`${dateRange}_start`] ? result[`${dateRange}_start`] : ""
       })
 
       datePickerSatrt.setAttribute('data-search-type', searchType);
@@ -1100,13 +1441,14 @@ jQuery.noConflict();
         className: "options-class-date",
         id: `${dateRange}_end`,
         visible: true,
-        disabled: false
+        disabled: false,
+        value: result[`${dateRange}_end`] ? result[`${dateRange}_end`] : ""
       })
 
       datePickerEnd.setAttribute("data-search-type", searchType);
 
-      result[`${dateRange}_start`] ? datePickerSatrt.val(result[`${dateRange}_start`]) : "";
-      result[`${dateRange}_end`] ? datePickerEnd.val(result[`${dateRange}_end`]) : "";
+      result[`${dateRange}_start`] ? $(`#${dateRange}_start`).val(result[`${dateRange}_start`]) : "";
+      result[`${dateRange}_end`] ? $(`#${dateRange}_end`).val(result[`${dateRange}_end`]) : "";
 
       const separator = $("<span>⁓</span>").addClass("separator-datepicker");
 
