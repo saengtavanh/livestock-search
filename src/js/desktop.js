@@ -433,21 +433,35 @@ jQuery.noConflict();
       const startValue = $(`#${replacedText}_start`).val();
       const endValue = $(`#${replacedText}_end`).val();
 
-      searchInfo.target_field.forEach((field) => {
+      if (searchInfo.target_field > 1) {
+        searchInfo.target_field.forEach((field) => {
+          if (startValue && endValue == '') {
+            bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+              queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + ">=" + ' "' + startValue + '"' + "))" : "((" + field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+          } else if (endValue && startValue == '') {
+            bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
+            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" : "((" + field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+          } else if (startValue && endValue) {
+            bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+            bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
+            queryChild += queryChild ?  " or ((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" :
+              "((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))";
+          }
+        });
+      } else {
         if (startValue && endValue == '') {
           bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
-            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + ">=" + ' "' + startValue + '"' + "))" : "((" + field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '"' + ")" : "(" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '"' + ")";
         } else if (endValue && startValue == '') {
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-          queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" : "((" + field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+          queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + ")" : "(" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + ")";
         } else if (startValue && endValue) {
           bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-          queryChild += queryChild ?  " or ((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" :
-            "((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))";
+          queryChild += queryChild ?  " or ((" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '")' + " and (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + "))" :
+            "((" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '")' + " and (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + "))";
         }
-
-      });
+      }
 
       let queryFinal
       if (queryChild) {
@@ -958,6 +972,7 @@ jQuery.noConflict();
             let checkHaveEndtData = "";
             let startNew = "";
             let endNew = "";
+            let Current_Date_id = "";
 
             Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
               console.log("key ====", key);
@@ -1037,16 +1052,29 @@ jQuery.noConflict();
                   if (!checkHaveStartData && isLastPartStart) {
                     checkHaveStartData = 1;
                     getGroupId = key.replace(/_start$/, "");
+                    Current_Date_id = getGroupId;
+                  } else if (checkHaveStartData && isLastPartStart) {
+                    getGroupId = key.replace(/_start$/, "");
+                    checkHaveStartData = "";
+                    Current_Date_id = getGroupId;
+                  } else if (checkHaveStartData && !isLastPartStart) {
+                    getGroupId = key.replace(/_end$/, "");
+                    if (Current_Date_id != getGroupId) {
+                      startData = "";
+                    }
                   } else {
                     getGroupId = key.replace(/_end$/, "");
                     checkHaveEndtData = 1;
                   }
+
                   
                   if (field.groupName == getGroupId.replace("_", " ")) {
-                    if (isLastPartStart) {
+                    if (isLastPartStart && checkHaveStartData) {
                       startData = bokTermsObj;
-                      endData = ''
-                    } else {
+                    }  else {
+                      if (Current_Date_id != getGroupId) {
+                        startData = "";
+                      }
                       endData = bokTermsObj;
                     }
                     
@@ -1060,16 +1088,28 @@ jQuery.noConflict();
                       }
                     }
 
-                    field.target_field.forEach((fields) => {
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((fields) => {
+                        if (startData && endData == '') {
+                            queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startData + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startData + '"' + ")";
+                        } else if (endData && startData == '') {
+                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" : "((" + fields + ' ' + "<=" + ' "' + endData + '"' + ")";
+                        } else if (startData && endData) {
+                          queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" :
+                            "((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))";
+                        }
+                      });
+                    } else {
                       if (startData && endData == '') {
-                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startData + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startData + '"' + ")";
+                        queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '"' + ")" : "(" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '"' + ")";
                       } else if (endData && startData == '') {
-                        queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" : "((" + fields + ' ' + "<=" + ' "' + endData + '"' + ")";
+                        queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + ")" : "(" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + ")";
                       } else if (startData && endData) {
-                        queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" :
-                          "((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))";
+                        queryChildRank += queryChildRank ?  " or ((" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + "))" :
+                          "((" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + "))";
                       }
-                    });
+                    }
+
 
                     let changeQueryToArray = queryChildRank.split(/ and /)
                     console.log("🚀 ~ searchInfoList.forEach ~ changeQueryToArray:", changeQueryToArray)
@@ -1102,7 +1142,12 @@ jQuery.noConflict();
                         startNew = "";
                         endNew = "";
                     } else if (checkHaveStartData && !checkHaveEndtData) {
+                      console.log("changeQueryToArray++++", changeQueryToArray);
+                      
                       changeToArray = changeToArray.filter(item => !changeQueryToArray.includes(item));
+                      console.log("🚀 ~ searchInfoList.forEach ~ changeToArray:", changeToArray)
+                      console.log("filter::::::::");
+                      
                     } else if (!checkHaveStartData && checkHaveEndtData) {
                       changeToArray = changeToArray.filter(item => !changeQueryToArray.includes(item));
                     }
@@ -1113,7 +1158,6 @@ jQuery.noConflict();
                   }
                 }
 
-                console.log("🚀 ~ searchInfoList.forEach ~ field:", field)
                 if (field.groupName == selectedId) {
                   if (field.groupName == bokTermsObj.active && field.nameMarker && field.searchType == "dropdown_exact") {
                     if (field.target_field.length > 1) {
@@ -1301,7 +1345,7 @@ jQuery.noConflict();
         querySuccess = encodeURIComponent(query)
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
         const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
-        window.location.href = updatedUrl;
+        // window.location.href = updatedUrl;
       }
     };
 
