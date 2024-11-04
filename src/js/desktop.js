@@ -1007,8 +1007,6 @@ jQuery.noConflict();
                   const isLastPartStart = parts[parts.length - 1] === "start";
 
                   if (!checkHaveStartData && isLastPartStart) {
-                    console.log("KHAO:");
-                    
                     checkHaveStartData = 1;
                     getGroupId = key.replace(/_start$/, "");
                   } else {
@@ -1017,8 +1015,6 @@ jQuery.noConflict();
                   }
                   
                   if (field.groupName == getGroupId.replace("_", " ")) {
-                    
-                    
                     if (isLastPartStart) {
                       startData = bokTermsObj;
                       endData = ''
@@ -1030,8 +1026,6 @@ jQuery.noConflict();
                       delete bokTermObj[key];
                     } else {
                       if (isLastPartStart) {
-                        console.log("KHAO:2");
-                        
                         startNew = $(`#${key}`).val();
                       } else {
                         endNew = $(`#${key}`).val()
