@@ -816,16 +816,16 @@ jQuery.noConflict();
 			} else {
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
-				// let searchType = currentGroup[0].searchType;
-				// console.log('current group: ' , currentGroup);
-				// if (searchType != "text_initial" || searchType != "text_patial" || searchType != "text_exact"|| searchType != "multi_text_initial" || searchType != "multi_text_patial"){
-				// 	return Swal10.fire({
-				//     position: 'center',
-				//     icon: 'error',
-				//     text: "this group name does not support recreation",
-				//     showConfirmButton: true,
-				//   })
-				// }
+				let searchType = currentGroup[0].searchType;
+				console.log('current group: ' , currentGroup);
+				if (searchType != "text_initial" || searchType != "text_patial" || searchType != "text_exact"|| searchType != "multi_text_initial" || searchType != "multi_text_patial"){
+					return Swal10.fire({
+				    position: 'center',
+				    icon: 'error',
+				    text: "this group name does not support recreation",
+				    showConfirmButton: true,
+				  })
+				}
 			}
 
 			//check target field
