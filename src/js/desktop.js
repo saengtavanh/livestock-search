@@ -3,10 +3,69 @@ jQuery.noConflict();
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
+
+  async function setSessionStorageItems(configSettings) {
+    for (const setting of configSettings) {
+      try {
+        const dataFromMaster = await window.RsComAPI.getRecords({
+          app: setting.appId,
+          query: setting.typeField,
+        });
+
+        const codeAndName = dataFromMaster.map((record) => ({
+          code: record.code.value,
+          name: record.name.value,
+        }));
+
+        const dataToStore = {
+          AppId: setting.appId,
+          ApiToken: setting.apiToken,
+          codeAndName: codeAndName,
+          condition: setting.typeField,
+        };
+
+        sessionStorage.setItem(
+          `bokMst${setting.masterId}`,
+          JSON.stringify(dataToStore)
+        );
+      } catch (error) {
+        console.error("Error fetching records:", error);
+      }
+    }
+  }
+
+  async function getCodeMasterData() {
+    let CODEMASTER = [];
+
+    // for (const key of Array.from({ length: sessionStorage.length }, (_, i) => sessionStorage.key(i))) {
+    //   const numberId = key.match(/\d+/);
+
+    //   if (numberId) {
+    //     const numericKey = numberId[0];
+    //     const data = sessionStorage.getItem(key);
+    //     const CodeMasterData = JSON.parse(data);
+    //     CODEMASTER.push({ numericKey, ...CodeMasterData });
+    //   }
+    // }
+
+    for (const key of Object.keys(sessionStorage)) {
+      const numberId = key.match(/\d+/);
+
+      if (numberId) {
+        const numericKey = numberId[0];
+        const data = sessionStorage.getItem(key);
+        const CodeMasterData = JSON.parse(data);
+        CODEMASTER.push({ numericKey, ...CodeMasterData });
+      }
+    }
+
+    return CODEMASTER;
+  }
+
   kintone.events.on("app.record.index.show", async (event) => {
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
-    //data test
+
     window.RsComAPI.getRecords({ app: 234 }).then((dataFromMaster) => {
       sessionStorage.setItem("kintoneRecords", JSON.stringify(dataFromMaster));
       sessionStorage.setItem(
@@ -44,33 +103,51 @@ jQuery.noConflict();
       );
     });
 
-    CONFIG.codeMasterSetting.forEach((setting) => {
-      window.RsComAPI.getRecords({
-        app: setting.appId,
-        query: setting.typeField,
-      })
-        .then((dataFromMaster) => {
-          const codeAndName = dataFromMaster.map((record) => ({
-            code: record.code.value,
-            name: record.name.value,
-          }));
+    // CONFIG.codeMasterSetting.forEach((setting) => {
+    //   window.RsComAPI.getRecords({
+    //     app: setting.appId,
+    //     query: setting.typeField,
+    //   })
+    //     .then((dataFromMaster) => {
+    //       const codeAndName = dataFromMaster.map((record) => ({
+    //         code: record.code.value,
+    //         name: record.name.value,
+    //       }));
 
-          const dataToStore = {
-            AppId: setting.appId,
-            ApiToken: setting.apiToken,
-            codeAndName: codeAndName,
-            condition: setting.typeField,
-          };
-          sessionStorage.setItem(
-            `bokMst${setting.masterId}`,
-            JSON.stringify(dataToStore)
-          );
-        })
-        .catch((error) => {
-          console.error("Error fetching records:", error);
-        });
-    });
+    //       const dataToStore = {
+    //         AppId: setting.appId,
+    //         ApiToken: setting.apiToken,
+    //         codeAndName: codeAndName,
+    //         condition: setting.typeField,
+    //       };
+    //       sessionStorage.setItem(
+    //         `bokMst${setting.masterId}`,
+    //         JSON.stringify(dataToStore)
+    //       );
+    //     })
+    //     .catch((error) => {
+    //       console.error("Error fetching records:", error);
+    //     });
+    // });
 
+    // get data in the session storage
+    // let CODEMASTER = [];
+    // for (let i = 0; i < sessionStorage.length; i++) {
+    //   let key = sessionStorage.key(i);
+    //   const numberId = key.match(/\d+/);
+    //   //check key ID
+    //   if (numberId) {
+    //     const numericKey = numberId[0];
+    //     const data = sessionStorage.getItem(key);
+    //     const CodeMasterData = JSON.parse(data);
+    //     CODEMASTER.push({ numericKey, ...CodeMasterData });
+    //   }
+    // }
+
+    await setSessionStorageItems(CONFIG.codeMasterSetting);
+    const CODEMASTER = await getCodeMasterData();
+
+    console.log("CODEMASTER", CODEMASTER);
     let SETCOLOR = CONFIG.colorSetting;
     let queryForDropdow = "";
     let queryAll = "";
@@ -97,20 +174,6 @@ jQuery.noConflict();
         true
       );
     });
-
-    //get data in the session storage
-    let CODEMASTER = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      let key = sessionStorage.key(i);
-      const numberId = key.match(/\d+/);
-      //check key ID
-      if (numberId) {
-        const numericKey = numberId[0];
-        const data = sessionStorage.getItem(key);
-        const CodeMasterData = JSON.parse(data);
-        CODEMASTER.push({ numericKey, ...CodeMasterData });
-      }
-    }
 
     const urlObj = new URL(window.location.href);
 
@@ -333,7 +396,7 @@ jQuery.noConflict();
             } else {
               queryChild = `${query ? " and " : ""}((${field} like "${searchValue}") `;
             }
-          })
+          });
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
         }
@@ -364,7 +427,7 @@ jQuery.noConflict();
             } else {
               queryChild = `${query ? " and " : ""}(${field} like "${searchValue}") `;
             }
-          })
+          });
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
         }
@@ -418,25 +481,25 @@ jQuery.noConflict();
 
       if (searchValue) {
         if (searchInfo.target_field.length > 1) {
-          searchInfo.target_field.forEach((field , index) => {
+          searchInfo.target_field.forEach((field, index) => {
             const isLastIndex = index === searchInfo.target_field.length - 1;
 
             if (queryChild) {
               if (isLastIndex) {
-                queryChild += `or (${field} = "${searchValue}"))`
+                queryChild += `or (${field} = "${searchValue}"))`;
               } else {
-                queryChild += `or (${field} = "${searchValue}")`
+                queryChild += `or (${field} = "${searchValue}")`;
               }
             } else {
               queryChild = `${query ? " and " : ""}((${field} = "${searchValue}") `;
-            } 
-          })
+            }
+          });
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} = "${searchValue}")`;
         }
         return queryChild;
       }
-      return '';
+      return "";
     };
 
     let buildNumberRangeQuery = function (searchInfo, query) {
@@ -447,31 +510,155 @@ jQuery.noConflict();
 
       if (searchInfo.target_field > 1) {
         searchInfo.target_field.forEach((field) => {
-          if (startValue && endValue == '') {
-            bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
-              queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + ">=" + ' "' + startValue + '"' + "))" : "((" + field + ' ' + ">=" + ' "' + startValue + '"' + ")";
-          } else if (endValue && startValue == '') {
-            bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" : "((" + field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+          if (startValue && endValue == "") {
+            bokTermsGet[`${replacedText}_start`] = $(
+              `#${replacedText}_start`
+            ).val();
+            queryChild += queryChild
+              ? `${query && !queryChild ? " and " : ""}` +
+                " or (" +
+                field +
+                " " +
+                ">=" +
+                ' "' +
+                startValue +
+                '"' +
+                "))"
+              : "((" + field + " " + ">=" + ' "' + startValue + '"' + ")";
+          } else if (endValue && startValue == "") {
+            bokTermsGet[`${replacedText}_end`] = $(
+              `#${replacedText}_end`
+            ).val();
+            queryChild += queryChild
+              ? `${query && !queryChild ? " and " : ""}` +
+                " or (" +
+                field +
+                " " +
+                "<=" +
+                ' "' +
+                endValue +
+                '"' +
+                "))"
+              : "((" + field + " " + "<=" + ' "' + endValue + '"' + ")";
           } else if (startValue && endValue) {
-            bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
-            bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-            queryChild += queryChild ?  " or ((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" :
-              "((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))";
+            bokTermsGet[`${replacedText}_start`] = $(
+              `#${replacedText}_start`
+            ).val();
+            bokTermsGet[`${replacedText}_end`] = $(
+              `#${replacedText}_end`
+            ).val();
+            queryChild += queryChild
+              ? " or ((" +
+                field +
+                " " +
+                ">=" +
+                ' "' +
+                startValue +
+                '")' +
+                " and (" +
+                field +
+                " " +
+                "<=" +
+                ' "' +
+                endValue +
+                '"' +
+                "))"
+              : "((" +
+                field +
+                " " +
+                ">=" +
+                ' "' +
+                startValue +
+                '")' +
+                " and (" +
+                field +
+                " " +
+                "<=" +
+                ' "' +
+                endValue +
+                '"' +
+                "))";
           }
         });
       } else {
-        if (startValue && endValue == '') {
-          bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
-            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '"' + ")" : "(" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '"' + ")";
-        } else if (endValue && startValue == '') {
+        if (startValue && endValue == "") {
+          bokTermsGet[`${replacedText}_start`] = $(
+            `#${replacedText}_start`
+          ).val();
+          queryChild += queryChild
+            ? `${query && !queryChild ? " and " : ""}` +
+              " or (" +
+              searchInfo.target_field[0] +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '"' +
+              ")"
+            : "(" +
+              searchInfo.target_field[0] +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '"' +
+              ")";
+        } else if (endValue && startValue == "") {
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-          queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + ")" : "(" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + ")";
+          queryChild += queryChild
+            ? `${query && !queryChild ? " and " : ""}` +
+              " or (" +
+              searchInfo.target_field[0] +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              ")"
+            : "(" +
+              searchInfo.target_field[0] +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              ")";
         } else if (startValue && endValue) {
-          bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+          bokTermsGet[`${replacedText}_start`] = $(
+            `#${replacedText}_start`
+          ).val();
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-          queryChild += queryChild ?  " or ((" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '")' + " and (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + "))" :
-            "((" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '")' + " and (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + "))";
+          queryChild += queryChild
+            ? " or ((" +
+              searchInfo.target_field[0] +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '")' +
+              " and (" +
+              searchInfo.target_field[0] +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))"
+            : "((" +
+              searchInfo.target_field[0] +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '")' +
+              " and (" +
+              searchInfo.target_field[0] +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))";
         }
       }
 
@@ -981,7 +1168,10 @@ jQuery.noConflict();
         }
       });
 
-      bokTermsObject = {...bokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelValue)}
+      bokTermsObject = {
+        ...bokTermsObject,
+        ...createBokTermsObject(selectedValue, dropdownId, labelValue),
+      };
       let joinObject = { ...bokTermsGet, ...bokTermsObject };
 
       const currentUrlBase = window.location.href.match(/\S+\//)[0];
@@ -1059,8 +1249,9 @@ jQuery.noConflict();
                   if (field.searchType == "number_exact") {
                     if (field.target_field.length > 1) {
                       field.target_field.forEach((field, index) => {
-                        const isLastIndex = index === field.target_field.length - 1;
-            
+                        const isLastIndex =
+                          index === field.target_field.length - 1;
+
                         if (queryForCheck) {
                           if (isLastIndex) {
                             queryForCheck += `or (${field} = "${valueForCheck}"))`;
@@ -1073,16 +1264,19 @@ jQuery.noConflict();
                       });
                     } else if ((field.target_field.length = 1)) {
                       queryForCheck = `(${field.target_field} = "${valueForCheck}")`;
-                      changeToArray = changeToArray.filter(item => item !== queryForCheck);
-                          let string = changeToArray.join(' and ');
-                          delete bokTermObj[key];
-                          query = string;
+                      changeToArray = changeToArray.filter(
+                        (item) => item !== queryForCheck
+                      );
+                      let string = changeToArray.join(" and ");
+                      delete bokTermObj[key];
+                      query = string;
                     }
                   } else {
                     if (field.target_field.length > 1) {
                       field.target_field.forEach((field, index) => {
-                        const isLastIndex = index === field.target_field.length - 1;
-            
+                        const isLastIndex =
+                          index === field.target_field.length - 1;
+
                         if (queryForCheck) {
                           if (isLastIndex) {
                             queryForCheck += `or (${field} like "${valueForCheck}"))`;
@@ -1095,10 +1289,12 @@ jQuery.noConflict();
                       });
                     } else if ((field.target_field.length = 1)) {
                       queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
-                      changeToArray = changeToArray.filter(item => item !== queryForCheck);
-                          let string = changeToArray.join(' and ');
-                          delete bokTermObj[key];
-                          query = string;
+                      changeToArray = changeToArray.filter(
+                        (item) => item !== queryForCheck
+                      );
+                      let string = changeToArray.join(" and ");
+                      delete bokTermObj[key];
+                      query = string;
                     }
                   }
                 }
@@ -1149,43 +1345,231 @@ jQuery.noConflict();
 
                   if (field.target_field.length > 1) {
                     field.target_field.forEach((fields) => {
-                      if (startData && endData == '') {
-                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startData + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startData + '"' + ")";
-                      } else if (endData && startData == '') {
-                        queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" : "((" + fields + ' ' + "<=" + ' "' + endData + '"' + ")";
+                      if (startData && endData == "") {
+                        queryChildRank += queryChildRank
+                          ? " or (" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startData +
+                            '"' +
+                            "))"
+                          : "((" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startData +
+                            '"' +
+                            ")";
+                      } else if (endData && startData == "") {
+                        queryChildRank += queryChildRank
+                          ? " or (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endData +
+                            '"' +
+                            "))"
+                          : "((" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endData +
+                            '"' +
+                            ")";
                       } else if (startData && endData) {
-                        queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" :
-                          "((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))";
+                        queryChildRank += queryChildRank
+                          ? " or ((" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startData +
+                            '")' +
+                            " and (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endData +
+                            '"' +
+                            "))"
+                          : "((" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startData +
+                            '")' +
+                            " and (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endData +
+                            '"' +
+                            "))";
                       }
                     });
                   } else {
-                    if (startData && endData == '') {
-                      queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '"' + ")" : "(" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '"' + ")";
-                    } else if (endData && startData == '') {
-                      queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + ")" : "(" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + ")";
+                    if (startData && endData == "") {
+                      queryChildRank += queryChildRank
+                        ? " or (" +
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '"' +
+                          ")"
+                        : "(" +
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '"' +
+                          ")";
+                    } else if (endData && startData == "") {
+                      queryChildRank += queryChildRank
+                        ? " or (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          ")"
+                        : "(" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          ")";
                     } else if (startData && endData) {
-                      queryChildRank += queryChildRank ?  " or ((" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + "))" :
-                        "((" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + "))";
+                      queryChildRank += queryChildRank
+                        ? " or ((" +
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '")' +
+                          " and (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          "))"
+                        : "((" +
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '")' +
+                          " and (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          "))";
                     }
                   }
 
-                    //copy code
+                  //copy code
                   let changeQueryToArray = queryChildRank.split(/ and /);
                   if (checkHaveStartData && checkHaveEndtData) {
-                    changeToArray = changeToArray.filter(item => !changeQueryToArray.includes(item));
-                    console.log("🚀 ~ searchInfoList.forEach ~ changeToArray:", changeToArray)
+                    changeToArray = changeToArray.filter(
+                      (item) => !changeQueryToArray.includes(item)
+                    );
+                    console.log(
+                      "🚀 ~ searchInfoList.forEach ~ changeToArray:",
+                      changeToArray
+                    );
                     checkHaveStartData = "";
                     checkHaveEndtData = "";
                     queryChildRank = "";
-                    
+
                     field.target_field.forEach((fields) => {
-                      if (startNew && endNew == '') {
-                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")" : "(" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")";
-                      } else if (endNew && startNew == '') {
-                        queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endNew + '"' + ")" : "or (" + fields + ' ' + "<=" + ' "' + endNew + '"' + ")";
+                      if (startNew && endNew == "") {
+                        queryChildRank += queryChildRank
+                          ? " or (" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '"' +
+                            ")"
+                          : "(" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '"' +
+                            ")";
+                      } else if (endNew && startNew == "") {
+                        queryChildRank += queryChildRank
+                          ? " or (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            ")"
+                          : "or (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            ")";
                       } else if (startNew && endNew) {
-                        queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))" :
-                          "((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))";
+                        queryChildRank += queryChildRank
+                          ? " or ((" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '")' +
+                            " and (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            "))"
+                          : "((" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '")' +
+                            " and (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            "))";
                       }
                     });
 
@@ -1538,12 +1922,14 @@ jQuery.noConflict();
         type: "number",
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
-        "id": initialNumber
-      })
+        id: initialNumber,
+      });
 
       InputNumber.css("width", width);
-      result[`${initialNumber}`] ? InputNumber.val(result[`${initialNumber}`]) : "";
-      
+      result[`${initialNumber}`]
+        ? InputNumber.val(result[`${initialNumber}`])
+        : "";
+
       return InputNumber;
     }
 
@@ -1713,7 +2099,11 @@ jQuery.noConflict();
       );
       afterFilter.forEach((searchItemTarget) => {
         Titlename = nameMarker ? nameMarker : searchItemTarget.searchName || "";
-        setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
+        setSearchTarget.push(
+          searchItemTarget.fieldForSearch != "-----"
+            ? searchItemTarget.fieldForSearch
+            : searchItemTarget.searchTarget
+        );
       });
       //css
       let matchResult = searchItem.searchLength?.match(

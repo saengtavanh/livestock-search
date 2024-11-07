@@ -47,13 +47,13 @@
   font-size: 15px;
   min-Width: 20px;
   margin-Left: 1px;
-  color: white;
+  color: rgb(12, 1, 1);
   border: none !important;
   cursor: pointer;
   margin-top: 20px;
   outline: none !important;
   box-shadow: none !important;
-  background-color: white;
+  background-color: #f5f5f5;
   border-radius: 5px;
 }
 
@@ -61,25 +61,25 @@
   font-size: 15px;
   min-Width: 65px;
   margin-Left: 1px;
-  color: white;
+  color: rgb(12, 1, 1);
   border: none !important;
   cursor: pointer;
   margin-top: 20px;
   outline: none !important;
   box-shadow: none !important;
-  background-color: white;
+  background-color: #f5f5f5;
   border-radius: 5px;
 }
 
 .kintoneplugin-button-dialog-ok:hover {
-  color: white;
-  background-color: white;
+  color: rgb(12, 1, 1);
+  background-color: #f5f5f5;
 }
 
 .btnClear {
   font-size: 15px;
   min-Width: 15px;
-  color: white;
+  color: rgb(12, 1, 1);
   border: none;
   cursor: pointer;
   margin-top: 20px;
