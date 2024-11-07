@@ -609,7 +609,7 @@ jQuery.noConflict();
 					}
 				} else {
 					$(fieldForSearch).parent().removeClass('validation-error');
-					if (currentGroup.length > 0 && currentGroup[0].searchType == "text_initial") {
+					if (currentGroup.length > 0 && (currentGroup[0].searchType == "text_initial" || currentGroup[0].searchType == "multi_text_initial")) {
 						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
