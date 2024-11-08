@@ -609,7 +609,7 @@ jQuery.noConflict();
 					}
 				} else {
 					$(fieldForSearch).parent().removeClass('validation-error');
-					if (currentGroup.length > 0 && currentGroup[0].searchType == "text_initial") {
+					if (currentGroup.length > 0 && (currentGroup[0].searchType == "text_initial" || currentGroup[0].searchType == "multi_text_initial")) {
 						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
@@ -816,16 +816,16 @@ jQuery.noConflict();
 			} else {
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
-				// let searchType = currentGroup[0].searchType;
-				// console.log('current group: ' , currentGroup);
-				// if (searchType != "text_initial" || searchType != "text_patial" || searchType != "text_exact"|| searchType != "multi_text_initial" || searchType != "multi_text_patial"){
-				// 	return Swal10.fire({
-				//     position: 'center',
-				//     icon: 'error',
-				//     text: "this group name does not support recreation",
-				//     showConfirmButton: true,
-				//   })
-				// }
+				let searchType = currentGroup[0].searchType;
+				console.log('current group: ' , currentGroup);
+				if (searchType != "text_initial" || searchType != "text_patial" || searchType != "text_exact"|| searchType != "multi_text_initial" || searchType != "multi_text_patial"){
+					return Swal10.fire({
+				    position: 'center',
+				    icon: 'error',
+				    text: "this group name does not support recreation",
+				    showConfirmButton: true,
+				  })
+				}
 			}
 
 			//check target field
