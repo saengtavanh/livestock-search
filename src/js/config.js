@@ -276,7 +276,7 @@ jQuery.noConflict();
 		checkRow();
 		checkRecreateButton();
 		checkMasterId();
-	}
+	}  
 	//check recreate button function
 	function checkRecreateButton() {
 		$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function (index) {
