@@ -157,7 +157,6 @@ jQuery.noConflict();
 	}
 
 	async function setValueToTable(getConfig) {
-		console.log('getConfig', getConfig);
 		getConfig.groupSetting.forEach((item) => {
 			let rowForClone = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-tspace tr:last-child").after(rowForClone);
@@ -786,7 +785,6 @@ jQuery.noConflict();
 
 		$("button#recreate-button").on('click', async function () {
 			let data = await getData();
-			console.log('data', data);
 			let currentRow = $(this).closest('tr');
 			let targetField = $(currentRow).find('select#search_target').val();
 			let groupName = $(currentRow).find('select#group_name_ref').val();
@@ -818,7 +816,6 @@ jQuery.noConflict();
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
 				let searchType = currentGroup[0].searchType;
-				console.log('current group: ' , currentGroup);
 				if (searchType != "text_initial" && searchType != "text_patial" && searchType != "text_exact"&& searchType != "multi_text_initial" && searchType != "multi_text_patial"){
 					return Swal10.fire({
 				    position: 'center',
@@ -841,7 +838,6 @@ jQuery.noConflict();
 			} else {
 				$(currentRow).find('select#search_target').parent().removeClass('validation-error');
 				let fieldType = $(currentRow).find('select#search_target option:selected').attr('type');
-				console.log('field type: ' + fieldType);
 				if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
 					$(currentRow).find('select#search_target').parent().removeClass('validation-error');
 				} else {
