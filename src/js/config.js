@@ -173,6 +173,7 @@ jQuery.noConflict();
 			let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
 			let appId = item.appId;
+			if (!appId) continue;
 			let apiToken = item.apiToken;
 			let body = { app: appId };
 			if (apiToken) body.token = apiToken;
@@ -424,64 +425,64 @@ jQuery.noConflict();
 			}
 		}
 
-		// const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
-		// //code master table
-		// for (const [index, element] of codeMasterTable.entries()) {
-		// 	let appId = $(element).find('#app_id');
-		// 	let masterId = $(element).find('#master_id');
-		// 	let condition = $(element).find('#type_field');
-		// 	let code = $(element).find('#code_field');
-		// 	let name = $(element).find('#name_field');
-		// 	if (!masterId.val()) {
-		// 		errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
-		// 		$(masterId).addClass('validation-error');
-		// 		hasError = true;
-		// 	} else {
-		// 		// $(masterId).removeClass('validation-error');
-		// 		if (!masterIdArray.includes(masterId.val().trim())) {
-		// 			$(masterId).removeClass('validation-error');
-		// 			masterIdArray.push(masterId.val());
-		// 		} else {
-		// 			$(masterId).addClass('validation-error');
-		// 			errorMessage += `<p>Master ID "${masterId.val()}" already exists.</p>`;
-		// 			hasError = true;
-		// 		}
-		// 	}
+		const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
+		//code master table
+		for (const [index, element] of codeMasterTable.entries()) {
+			let appId = $(element).find('#app_id');
+			let masterId = $(element).find('#master_id');
+			let condition = $(element).find('#type_field');
+			let code = $(element).find('#code_field');
+			let name = $(element).find('#name_field');
+			if (!masterId.val()) {
+				// errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
+				// $(masterId).addClass('validation-error');
+				// hasError = true;
+			} else {
+				// $(masterId).removeClass('validation-error');
+				if (!masterIdArray.includes(masterId.val().trim())) {
+					$(masterId).removeClass('validation-error');
+					masterIdArray.push(masterId.val());
+				} else {
+					$(masterId).addClass('validation-error');
+					errorMessage += `<p>Master ID "${masterId.val()}" already exists.</p>`;
+					hasError = true;
+				}
+			}
 
-		// 	if (!appId.val()) {
-		// 		errorMessage += `<p>Please enter App ID on Code master difinition row: ${index + 1}</p>`;
-		// 		$(appId).addClass('validation-error');
-		// 		hasError = true;
-		// 	} else {
-		// 		$(appId).removeClass('validation-error');
-		// 	}
+			// if (!appId.val()) {
+			// 	errorMessage += `<p>Please enter App ID on Code master difinition row: ${index + 1}</p>`;
+			// 	$(appId).addClass('validation-error');
+			// 	hasError = true;
+			// } else {
+			// 	$(appId).removeClass('validation-error');
+			// }
 
-		// 	if (!condition.val()) {
-		// 		errorMessage += `<p>Please enter Condition on Code master difinition row: ${index + 1}</p>`;
-		// 		$(condition).addClass('validation-error');
-		// 		hasError = true;
-		// 	} else {
-		// 		$(condition).removeClass('validation-error');
-		// 	}
+			// if (!condition.val()) {
+			// 	errorMessage += `<p>Please enter Condition on Code master difinition row: ${index + 1}</p>`;
+			// 	$(condition).addClass('validation-error');
+			// 	hasError = true;
+			// } else {
+			// 	$(condition).removeClass('validation-error');
+			// }
 
-		// 	if (code.val() == "-----") {
-		// 		errorMessage += `<p>Please select Code on Code master difinition row: ${index + 1}</p>`;
-		// 		$(code).parent().addClass('validation-error');
-		// 		hasError = true;
-		// 	} else {
-		// 		$(code).parent().removeClass('validation-error');
-		// 	}
+			// if (code.val() == "-----") {
+			// 	errorMessage += `<p>Please select Code on Code master difinition row: ${index + 1}</p>`;
+			// 	$(code).parent().addClass('validation-error');
+			// 	hasError = true;
+			// } else {
+			// 	$(code).parent().removeClass('validation-error');
+			// }
 
-		// 	if (name.val() == "-----") {
-		// 		errorMessage += `<p>Please select Name on Code master difinition row: ${index + 1}</p>`;
-		// 		$(name).parent().addClass('validation-error');
-		// 		hasError = true;
-		// 	} else {
-		// 		$(name).parent().removeClass('validation-error');
-		// 	}
+			// if (name.val() == "-----") {
+			// 	errorMessage += `<p>Please select Name on Code master difinition row: ${index + 1}</p>`;
+			// 	$(name).parent().addClass('validation-error');
+			// 	hasError = true;
+			// } else {
+			// 	$(name).parent().removeClass('validation-error');
+			// }
 
 
-		// }
+		}
 		if (condition == "save" || condition == "export") {
 			const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
 			let searchNameArray = [];
@@ -575,7 +576,7 @@ jQuery.noConflict();
 							if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not support for search type dropdown.</p>`;
+								errorMessage += `<p>Field "${targetFields.val()}" is not support for this type.</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -818,7 +819,7 @@ jQuery.noConflict();
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
 				let searchType = currentGroup[0].searchType;
 				console.log('current group: ' , currentGroup);
-				if (searchType != "text_initial" || searchType != "text_patial" || searchType != "text_exact"|| searchType != "multi_text_initial" || searchType != "multi_text_patial"){
+				if (searchType != "text_initial" && searchType != "text_patial" && searchType != "text_exact"&& searchType != "multi_text_initial" && searchType != "multi_text_patial"){
 					return Swal10.fire({
 				    position: 'center',
 				    icon: 'error',
@@ -986,8 +987,8 @@ jQuery.noConflict();
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
-				confirmButtonText: "Yes",
-				cancelButtonText: "No",
+				confirmButtonText: "OK",
+				cancelButtonText: "Cancel",
 				customClass: {
 					confirmButton: 'custom-confirm-button',
 					cancelButton: 'custom-cancel-button'
