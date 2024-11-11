@@ -1146,7 +1146,7 @@ jQuery.noConflict();
               }
 
               if (
-                (field.groupName.replace(/\s+/g, "_") == changeKeyValue) &&
+                (field.groupName.replace(/\s+/g, "_") == afterchangeKeyValue) &&
                 (field.searchType == "number_range" ||
                   field.searchType == "date_range")
               ) {
