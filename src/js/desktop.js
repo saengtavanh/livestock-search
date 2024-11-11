@@ -107,10 +107,8 @@ jQuery.noConflict();
 
     let elements = document.querySelectorAll(".recordlist-edit-gaia");
     elements.forEach((element) => {
-      element.remove()
-    });
-    console.log(elements);
-    
+      element.remove();
+    });    
 
     const recordRows = document.querySelectorAll(".recordlist-row-gaia");
     recordRows.forEach((row) => {

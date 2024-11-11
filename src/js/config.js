@@ -424,64 +424,64 @@ jQuery.noConflict();
 			}
 		}
 
-		const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
-		//code master table
-		for (const [index, element] of codeMasterTable.entries()) {
-			let appId = $(element).find('#app_id');
-			let masterId = $(element).find('#master_id');
-			let condition = $(element).find('#type_field');
-			let code = $(element).find('#code_field');
-			let name = $(element).find('#name_field');
-			if (!masterId.val()) {
-				errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
-				$(masterId).addClass('validation-error');
-				hasError = true;
-			} else {
-				// $(masterId).removeClass('validation-error');
-				if (!masterIdArray.includes(masterId.val().trim())) {
-					$(masterId).removeClass('validation-error');
-					masterIdArray.push(masterId.val());
-				} else {
-					$(masterId).addClass('validation-error');
-					errorMessage += `<p>Master ID "${masterId.val()}" already exists.</p>`;
-					hasError = true;
-				}
-			}
+		// const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
+		// //code master table
+		// for (const [index, element] of codeMasterTable.entries()) {
+		// 	let appId = $(element).find('#app_id');
+		// 	let masterId = $(element).find('#master_id');
+		// 	let condition = $(element).find('#type_field');
+		// 	let code = $(element).find('#code_field');
+		// 	let name = $(element).find('#name_field');
+		// 	if (!masterId.val()) {
+		// 		errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
+		// 		$(masterId).addClass('validation-error');
+		// 		hasError = true;
+		// 	} else {
+		// 		// $(masterId).removeClass('validation-error');
+		// 		if (!masterIdArray.includes(masterId.val().trim())) {
+		// 			$(masterId).removeClass('validation-error');
+		// 			masterIdArray.push(masterId.val());
+		// 		} else {
+		// 			$(masterId).addClass('validation-error');
+		// 			errorMessage += `<p>Master ID "${masterId.val()}" already exists.</p>`;
+		// 			hasError = true;
+		// 		}
+		// 	}
 
-			if (!appId.val()) {
-				errorMessage += `<p>Please enter App ID on Code master difinition row: ${index + 1}</p>`;
-				$(appId).addClass('validation-error');
-				hasError = true;
-			} else {
-				$(appId).removeClass('validation-error');
-			}
+		// 	if (!appId.val()) {
+		// 		errorMessage += `<p>Please enter App ID on Code master difinition row: ${index + 1}</p>`;
+		// 		$(appId).addClass('validation-error');
+		// 		hasError = true;
+		// 	} else {
+		// 		$(appId).removeClass('validation-error');
+		// 	}
 
-			if (!condition.val()) {
-				errorMessage += `<p>Please enter Condition on Code master difinition row: ${index + 1}</p>`;
-				$(condition).addClass('validation-error');
-				hasError = true;
-			} else {
-				$(condition).removeClass('validation-error');
-			}
+		// 	if (!condition.val()) {
+		// 		errorMessage += `<p>Please enter Condition on Code master difinition row: ${index + 1}</p>`;
+		// 		$(condition).addClass('validation-error');
+		// 		hasError = true;
+		// 	} else {
+		// 		$(condition).removeClass('validation-error');
+		// 	}
 
-			if (code.val() == "-----") {
-				errorMessage += `<p>Please select Code on Code master difinition row: ${index + 1}</p>`;
-				$(code).parent().addClass('validation-error');
-				hasError = true;
-			} else {
-				$(code).parent().removeClass('validation-error');
-			}
+		// 	if (code.val() == "-----") {
+		// 		errorMessage += `<p>Please select Code on Code master difinition row: ${index + 1}</p>`;
+		// 		$(code).parent().addClass('validation-error');
+		// 		hasError = true;
+		// 	} else {
+		// 		$(code).parent().removeClass('validation-error');
+		// 	}
 
-			if (name.val() == "-----") {
-				errorMessage += `<p>Please select Name on Code master difinition row: ${index + 1}</p>`;
-				$(name).parent().addClass('validation-error');
-				hasError = true;
-			} else {
-				$(name).parent().removeClass('validation-error');
-			}
+		// 	if (name.val() == "-----") {
+		// 		errorMessage += `<p>Please select Name on Code master difinition row: ${index + 1}</p>`;
+		// 		$(name).parent().addClass('validation-error');
+		// 		hasError = true;
+		// 	} else {
+		// 		$(name).parent().removeClass('validation-error');
+		// 	}
 
 
-		}
+		// }
 		if (condition == "save" || condition == "export") {
 			const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
 			let searchNameArray = [];
@@ -494,13 +494,13 @@ jQuery.noConflict();
 				let masterId = $(element).find('#master_id_ref');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
 
-				if (groupName.val() == "-----") {
-					errorMessage += `<p>Please select Group name on Search content row: ${index + 1}</p>`;
-					$(groupName).parent().addClass('validation-error');
-					hasError = true;
-				} else {
-					$(groupName).parent().removeClass('validation-error');
-				}
+				// if (groupName.val() == "-----") {
+				// 	errorMessage += `<p>Please select Group name on Search content row: ${index + 1}</p>`;
+				// 	$(groupName).parent().addClass('validation-error');
+				// 	hasError = true;
+				// } else {
+				// 	$(groupName).parent().removeClass('validation-error');
+				// }
 
 				if (!searchName.val()) {
 					errorMessage += `<p>Please enter Search name on Search content row: ${index + 1}</p>`;
@@ -949,7 +949,7 @@ jQuery.noConflict();
 
 		$("input#app_id").on("input", function () {
 			$(this).val($(this).val().replace(/[^0-9]/g, ''));
-			HASLOADDATA = false;
+			// HASLOADDATA = false;
 		});
 
 		$("input#group_name, input#search_length").on("input", function () {
@@ -962,17 +962,18 @@ jQuery.noConflict();
 			for (let row of codeMasterTable) {
 				let appId = $(row).find('#app_id').val();
 				if (!appId) {
-					$(row).find('#app_id').addClass('validation-error');
+					// $(row).find('#app_id').addClass('validation-error');
 					Swal10.fire({
 						position: "center",
-						icon: "error",
+						icon: "warning",
 						text: "App ID has not been entered",
 						showConfirmButton: true,
 					});
 					hasError = true;
-				} else {
-					$(row).find('#app_id').removeClass('validation-error');
-				}
+				} 
+				// else {
+				// 	$(row).find('#app_id').removeClass('validation-error');
+				// }
 			}
 			return hasError;
 		}
