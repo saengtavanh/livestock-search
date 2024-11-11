@@ -6,27 +6,34 @@ jQuery.noConflict();
   async function setSessionStorageItems(configSettings) {
     for (const setting of configSettings) {
       try {
-        const dataFromMaster = await window.RsComAPI.getRecords({
-          app: setting.appId,
-          query: setting.typeField,
-        });
+        if (setting.appId !== "") {
+          const dataFromMaster = await window.RsComAPI.getRecords({
+            app: setting.appId,
+            query: setting.typeField,
+          });
   
-        const codeAndName = dataFromMaster.map((record) => ({
-          code: record.code.value,
-          name: record.name.value,
-        }));
+          const codeAndName = dataFromMaster.map((record) => ({
+            code: record.code.value,
+            name: record.name.value,
+          }));
   
-        const dataToStore = {
-          AppId: setting.appId,
-          ApiToken: setting.apiToken,
-          codeAndName: codeAndName,
-          condition: setting.typeField,
-        };
+          const dataToStore = {
+            AppId: setting.appId,
+            ApiToken: setting.apiToken,
+            codeAndName: codeAndName,
+            condition: setting.typeField,
+          };
   
-        sessionStorage.setItem(
-          `bokMst${setting.masterId}`,
-          JSON.stringify(dataToStore)
-        );
+          sessionStorage.setItem(
+            `bokMst${setting.masterId}`,
+            JSON.stringify(dataToStore)
+          );
+        } else {
+          sessionStorage.setItem(
+            `bokMst${setting.masterId}`,
+            JSON.stringify([])
+          );
+        }
       } catch (error) {
         console.error("Error fetching records:", error);
       }
@@ -36,10 +43,10 @@ jQuery.noConflict();
 
   async function getCodeMasterData() {
     let CODEMASTER = [];
-  
+
     for (const key of Array.from({ length: sessionStorage.length }, (_, i) => sessionStorage.key(i))) {
       const numberId = key.match(/\d+/);
-  
+
       if (numberId) {
         const numericKey = numberId[0];
         const data = sessionStorage.getItem(key);
@@ -47,12 +54,14 @@ jQuery.noConflict();
         CODEMASTER.push({ numericKey, ...CodeMasterData });
       }
     }
-  
+
     return CODEMASTER;
   }
   kintone.events.on("app.record.index.show", async (event) => {
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
+    let CodeMaster = CONFIG.codeMasterSetting;
+
     //data test
     // window.RsComAPI.getRecords({ app: 234 }).then((dataFromMaster) => {
     //   sessionStorage.setItem("kintoneRecords", JSON.stringify(dataFromMaster));
@@ -93,7 +102,7 @@ jQuery.noConflict();
     await setSessionStorageItems(CONFIG.codeMasterSetting);
     const CODEMASTER = await getCodeMasterData();
 
-    
+
 
     let SETCOLOR = CONFIG.colorSetting;
     let queryForDropdow = "";
@@ -122,8 +131,8 @@ jQuery.noConflict();
       );
     });
 
-    
-    
+
+
 
     const urlObj = new URL(window.location.href);
 
@@ -526,7 +535,7 @@ jQuery.noConflict();
         const dropDownTitle = $("<label>")
           .text(
             display.nameMarker
-              ? display.groupName
+              ? display.nameMarker
               : relatedContent[0].searchName
           )
           .addClass("custom-dropdownTitle")
@@ -656,13 +665,15 @@ jQuery.noConflict();
       );
 
       if (display.nameMarker) {
-        let checkValue = [];
         if (filteredRecords[0]?.masterId !== "-----") {
+          
+          let checkValue = [];
           filteredRecords.forEach((item) => {
-            if (!CODEMASTER) return;
+            // if (!CODEMASTER) return;
             $.each(CODEMASTER, (index, data) => {
               if (item.masterId === data.numericKey) {
                 let valueData = data.codeAndName;
+                if (!valueData) return;
                 let valueCheck = Array.isArray(valueData)
                   ? valueData
                   : [valueData];
@@ -715,11 +726,13 @@ jQuery.noConflict();
         }
       } else {
         if (filteredRecords[0]?.masterId !== "-----") {
+          
           let checkValue = [];
           dropDownTitle.text(initialContent.searchName);
           $.each(CODEMASTER, (index, value) => {
             if (initialContent.masterId === value.numericKey) {
               let valueData = value.codeAndName;
+              if (!valueData) return;
               let valueCheck = Array.isArray(valueData)
                 ? valueData
                 : [valueData];
@@ -810,10 +823,12 @@ jQuery.noConflict();
         );
         if (matchingContent) {
           if (matchingContent.masterId !== "-----") {
+            
             let checkValue = [];
             $.each(CODEMASTER, (index, value) => {
               if (matchingContent.masterId === value.numericKey) {
                 let valueData = value.codeAndName;
+                if (!valueData) return;
                 let valueCheck = Array.isArray(valueData)
                   ? valueData
                   : [valueData];
@@ -875,10 +890,12 @@ jQuery.noConflict();
           (content) => content.searchTarget === selectedItem.searchTarget
         );
         if (selectedContent.masterId !== "-----") {
+          
           let checkValue = [];
           $.each(CODEMASTER, (index, data) => {
             if (selectedContent.masterId === data.numericKey) {
               let valueData = data.codeAndName;
+              if (!valueData) return;
               let valueCheck = Array.isArray(valueData)
                 ? valueData
                 : [valueData];
@@ -1130,7 +1147,7 @@ jQuery.noConflict();
               if (
                 (field.groupName.replace(/\s+/g, "_") == changeKeyValue) &&
                 (field.searchType == "number_range" ||
-                field.searchType == "date_range")
+                  field.searchType == "date_range")
               ) {
                 let getGroupId;
                 const parts = key.split("_");
@@ -1205,23 +1222,23 @@ jQuery.noConflict();
                     if (field.target_field.length > 1) {
                       field.target_field.forEach((fields) => {
                         if (startNew && endNew == '') {
-                            queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startNew + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")";
+                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startNew + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")";
                         } else if (endNew && startNew == '') {
                           queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))" : " or ((" + fields + ' ' + "<=" + ' "' + endNew + '"' + ")";
                         } else if (startNew && endNew) {
-                          queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))" :
+                          queryChildRank += queryChildRank ? " or ((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))" :
                             "((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))";
                         }
                       });
                     } else {
                       if (startNew && endNew == '') {
-                            queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '"' + ")" : "(" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '"' + ")";
-                        } else if (endNew && startNew == '') {
-                          queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + ")" : "or (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + ")";
-                        } else if (startNew && endNew) {
-                          queryChildRank += queryChildRank ?  " or ((" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + "))" :
-                            "((" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + "))";
-                        }
+                        queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '"' + ")" : "(" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '"' + ")";
+                      } else if (endNew && startNew == '') {
+                        queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + ")" : "or (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + ")";
+                      } else if (startNew && endNew) {
+                        queryChildRank += queryChildRank ? " or ((" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + "))" :
+                          "((" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + "))";
+                      }
                     }
 
                     if (queryChildRank) {
@@ -1746,7 +1763,7 @@ jQuery.noConflict();
         (searchItem) => searchItem.groupName == groupName
       );
       afterFilter.forEach((searchItemTarget) => {
-        Titlename = nameMarker ? nameMarker : searchItemTarget.searchName || "";
+        Titlename = nameMarker ? nameMarker : searchItemTarget.searchName;
         setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
       });
       //css
