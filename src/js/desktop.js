@@ -1511,7 +1511,7 @@ jQuery.noConflict();
               if (searchItem.nameMarker == "") {
                 let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                 const getId = $(`#${getIdElement}`);
-                const trimmedActive = bokTermsObj.active.trim();
+                const trimmedActive = bokTermsObj.active ? bokTermsObj.active.trim() : "";
                 getId
                   .closest(".search-item")
                   .find(".custom-dropdownTitle")
