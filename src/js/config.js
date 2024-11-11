@@ -1134,6 +1134,10 @@ jQuery.noConflict();
 
 		// function check structure and data import
 		async function compareConfigStructures(dataImport) {
+			if (dataImport.groupSetting && dataImport.groupSetting.length <= 0) return false;
+			if (dataImport.codeMasterSetting && dataImport.codeMasterSetting.length <= 0) return false;
+			if (dataImport.searchContent && dataImport.searchContent.length <= 0) return false;
+			if (dataImport.colorSetting && dataImport.colorSetting.length <= 0) return false;
 			let errorTexts = [];
 			let configStructure = {
 				groupSetting: [

@@ -524,7 +524,7 @@ jQuery.noConflict();
     };
 
     // Create dropdowns based on the configuration
-    function createDropDowns(display) {
+    function createDropDowns(display, setWidth) {
       let relatedContent = CONFIG.searchContent.filter(
         (content) => content.groupName === display.groupName
       );
@@ -554,6 +554,7 @@ jQuery.noConflict();
           });
         const dropDown = createDropDown(
           display,
+          setWidth,
           records,
           relatedContent[0],
           dropDownTitle
@@ -653,12 +654,12 @@ jQuery.noConflict();
       }
     }
     // Create dropdown element
-    function createDropDown(display, records, initialContent, dropDownTitle) {
+    function createDropDown(display, setWidth, records, initialContent, dropDownTitle) {
       const NameDropdown = display.groupName.replace(/\s+/g, "_");
       const dropDown = $("<select>")
         .addClass("kintoneplugin-dropdown")
         .attr("id", `${NameDropdown}`)
-        .css({ width: display.searchLength });
+        .css({ width: setWidth });
       dropDown.append($("<option>").text("-----").val(""));
       let filteredRecords = CONFIG.searchContent.filter(
         (item) => item.groupName === display.groupName
@@ -1770,7 +1771,7 @@ jQuery.noConflict();
       let matchResult = searchItem.searchLength?.match(
         /^\s*(\d+\s*(rem|px|%))/i
       );
-      let setWidth = matchResult ? matchResult[1].replace(/\s/g, "") : "1px";
+      let setWidth = matchResult ? matchResult[1].replace(/\s/g, "") : "10px";
 
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
@@ -1826,7 +1827,7 @@ jQuery.noConflict();
             }, 0);
             break;
           case "dropdown_exact":
-            inputElement = createDropDowns(searchItem);
+            inputElement = createDropDowns(searchItem, setWidth);
           default:
             inputElement = null;
         }
