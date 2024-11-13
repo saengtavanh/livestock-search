@@ -526,16 +526,16 @@ jQuery.noConflict();
 					let fieldType = $(element).find('#search_target option:selected').attr('type');
 					$(targetFields).parent().removeClass('validation-error');
 
-					if (masterId.val() != "-----"){
-						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER"){
+					if (masterId.val() != "-----") {
+						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER") {
 							$(targetFields).parent().removeClass('validation-error');
-						}else {
+						} else {
 							errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
 							$(targetFields).parent().addClass('validation-error');
 							hasError = true;
 						}
-						
-					}else {
+
+					} else {
 						if (currentGroup.length > 0 && (currentGroup[0].searchType == "number_range" || currentGroup[0].searchType == "number_exact")) {
 							if (fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
@@ -571,7 +571,7 @@ jQuery.noConflict();
 							}
 						} else if (currentGroup.length > 0 && (
 							currentGroup[0].searchType == "dropdown_exact"
-						))  {
+						)) {
 							if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
@@ -816,13 +816,13 @@ jQuery.noConflict();
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
 				let searchType = currentGroup[0].searchType;
-				if (searchType != "text_initial" && searchType != "text_patial" && searchType != "text_exact"&& searchType != "multi_text_initial" && searchType != "multi_text_patial"){
+				if (searchType != "text_initial" && searchType != "text_patial" && searchType != "text_exact" && searchType != "multi_text_initial" && searchType != "multi_text_patial") {
 					return Swal10.fire({
-				    position: 'center',
-				    icon: 'error',
-				    text: "this group name does not support recreation",
-				    showConfirmButton: true,
-				  })
+						position: 'center',
+						icon: 'error',
+						text: "this group name does not support recreation",
+						showConfirmButton: true,
+					})
 				}
 			}
 
@@ -967,7 +967,7 @@ jQuery.noConflict();
 						showConfirmButton: true,
 					});
 					hasError = true;
-				} 
+				}
 				// else {
 				// 	$(row).find('#app_id').removeClass('validation-error');
 				// }
@@ -1052,7 +1052,7 @@ jQuery.noConflict();
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
-				confirmButtonText: "Yes",
+				confirmButtonText: "OK",
 				cancelButtonText: "Cancel",
 			}).then(async (result) => {
 				if (result.isConfirmed) {
@@ -1107,6 +1107,14 @@ jQuery.noConflict();
 
 					let checkCompareConfig = await compareConfigStructures(dataImport);
 					if (!checkCompareConfig) {
+						let customClass = $("<div></div>")
+							.text("Failed to load configuration information")
+							.css("font-size", "18px");
+						await Swal10.fire({
+							icon: "error",
+							html: customClass.prop("outerHTML"),
+							confirmButtonColor: "#3498db",
+						});
 						$("#fileInput").val('');
 						return;
 					} else {
@@ -1134,6 +1142,10 @@ jQuery.noConflict();
 
 		// function check structure and data import
 		async function compareConfigStructures(dataImport) {
+			if (dataImport.groupSetting && dataImport.groupSetting.length <= 0) return false;
+			if (dataImport.codeMasterSetting && dataImport.codeMasterSetting.length <= 0) return false;
+			if (dataImport.searchContent && dataImport.searchContent.length <= 0) return false;
+			if (dataImport.colorSetting && dataImport.colorSetting.length <= 0) return false;
 			let errorTexts = [];
 			let configStructure = {
 				groupSetting: [
@@ -1225,29 +1237,7 @@ jQuery.noConflict();
 			}
 
 			let isValid = checkAllCases(dataImport);
-			if (!isValid) {
-				let customClass = $("<div></div>")
-					.text("Failed to load configuration information")
-					.css("font-size", "18px");
-
-				let errors = errorTexts.join("<br>");
-				let customClassText = $("<div></div>")
-					.html(errors) // Use .html() to correctly handle the <br> tags
-					.css("font-size", "14px");
-
-				// await Swal10.fire({
-				// 	icon: "error",
-				// 	title: customClass.prop("outerHTML"), // Get the outerHTML of the jQuery element
-				// 	html: customClassText.prop("outerHTML"),
-				// 	confirmButtonColor: "#3498db",
-				// });
-				await Swal10.fire({
-					icon: "error",
-					html: customClass.prop("outerHTML"),
-					confirmButtonColor: "#3498db",
-				});
-				return false;
-			}
+			if (!isValid) return false;
 			return true;
 		}
 	});

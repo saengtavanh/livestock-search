@@ -123,6 +123,10 @@
   border-radius: 5px;
 }
 
+  kuc-date-picker-1-18-0{
+    width: 0 !important;
+  }
+
 .kintoneplugin-input-text {
   margin-top: 0.3px;
   height: 35px;
