@@ -182,9 +182,15 @@ jQuery.noConflict();
       let query = "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
+      let checkFieldForSearch = [];
       let mergedBokTermsObject = {};
-
+      
       searchInfoList.forEach((searchInfo) => {
+        checkFieldForSearch = searchContent.filter((item) => item.groupName == searchInfo.groupName);
+        if (checkFieldForSearch && checkFieldForSearch[0].fieldForSearch) {
+          console.log("checkFieldForSearch", checkFieldForSearch[0].fieldForSearch);
+          searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
+        }
         let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
         if ($(`#${groupNameSlit}`).is("select")) {
           let selectedValue = $(`#${groupNameSlit} option:selected`).val();
@@ -364,7 +370,6 @@ jQuery.noConflict();
       }
       return "";
     };
-
     let buildTextExactQuery = function (searchInfo, query) {
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
       let queryChild;
@@ -373,11 +378,14 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
-          searchValue = transformStringExact($(`#${replacedText}`).val());
+          if (searchInfo.fieldForSearch !== "-----") {
+            searchValue = transformStringExact($(`#${replacedText}`).val());
+          } else {
+            searchValue = $(`#${replacedText}`).val();
+          }
           bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
-
       if (searchValue) {
         if (searchInfo.target_field.length > 1) {
           searchInfo.target_field.forEach((field) => {
@@ -1056,8 +1064,12 @@ jQuery.noConflict();
           let startNew = "";
           let endNew = "";
           let Current_Date_id = "";
+          let checkFieldForSearchForDropDown;
+          
           Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
+            //DODO
             searchInfoList.forEach((field) => {
+              checkFieldForSearchForDropDown = searchContent.filter((item) => item.groupName == field.groupName.replace(/\s+/g, "_"));
               if (
                 field.groupName.replace(/\s+/g, "_") == key &&
                 (field.searchType == "text_patial" ||
@@ -1081,7 +1093,11 @@ jQuery.noConflict();
                     field.searchType == "text_exact" ||
                     field.searchType == "number_exact"
                   ) {
-                    valueForCheck = transformString(bokTermsObj);
+                    if (checkFieldForSearchForDropDown[0].fieldForSearch !== "-----") {
+                      valueForCheck = transformStringExact(bokTermsObj);
+                    } else {
+                      valueForCheck = bokTermsObj;
+                    }
                   } else {
                     valueForCheck = bokTermsObj;
                   }
@@ -1511,7 +1527,7 @@ jQuery.noConflict();
               if (searchItem.nameMarker == "") {
                 let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                 const getId = $(`#${getIdElement}`);
-                const trimmedActive = bokTermsObj.active.trim();
+                const trimmedActive = bokTermsObj.active ? bokTermsObj.active.trim() : "";
                 getId
                   .closest(".search-item")
                   .find(".custom-dropdownTitle")
