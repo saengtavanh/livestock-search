@@ -59,9 +59,36 @@ jQuery.noConflict();
     return CODEMASTER;
   }
   kintone.events.on("app.record.index.show", async (event) => {
+    // console.log(event.viewId);
+
+    // let viewId = GETVIEW.views.View1.id;
+    // const condition = GETVIEW.views.View1.filterCond;
+    // let fieldCode = condition ? condition.split("=")[0].trim() : null;
+    // let value = condition ? condition.split("=")[1].trim() : null;
+    // let decodedFieldCode = encodeURIComponent(fieldCode);
+    // console.log("object", decodedFieldCode);
+    // console.log(`view= ${viewId}&q=${decodedFieldCode}${value}`);
+    let GETVIEW = await kintone.api("/k/v1/app/views.json", "GET", {
+      app: kintone.app.getId(),
+    });
+
+    async function conditionView(GETVIEW) {
+      for (const key in GETVIEW.views) {
+        if (GETVIEW.views.hasOwnProperty(key)) {
+          let view = GETVIEW.views[key];
+          let viewId = view.id;
+          let condition = view.filterCond;
+          console.log("name view:", key);
+          console.log("View condition:", condition);
+          console.log("viewId:", viewId);
+        }
+      }
+    }
+
+    conditionView(GETVIEW);
+
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
-    let CodeMaster = CONFIG.codeMasterSetting;
 
     //data test
     // window.RsComAPI.getRecords({ app: 234 }).then((dataFromMaster) => {
@@ -178,9 +205,20 @@ jQuery.noConflict();
       let query = "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
+      let checkFieldForSearch = [];
       let mergedBokTermsObject = {};
 
       searchInfoList.forEach((searchInfo) => {
+        checkFieldForSearch = searchContent.filter(
+          (item) => item.groupName == searchInfo.groupName
+        );
+        if (checkFieldForSearch && checkFieldForSearch[0].fieldForSearch) {
+          console.log(
+            "checkFieldForSearch",
+            checkFieldForSearch[0].fieldForSearch
+          );
+          searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
+        }
         let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
         if ($(`#${groupNameSlit}`).is("select")) {
           let selectedValue = $(`#${groupNameSlit} option:selected`).val();
@@ -360,7 +398,6 @@ jQuery.noConflict();
       }
       return "";
     };
-
     let buildTextExactQuery = function (searchInfo, query) {
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
       let queryChild;
@@ -369,11 +406,14 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
-          searchValue = transformStringExact($(`#${replacedText}`).val());
+          if (searchInfo.fieldForSearch !== "-----") {
+            searchValue = transformStringExact($(`#${replacedText}`).val());
+          } else {
+            searchValue = $(`#${replacedText}`).val();
+          }
           bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
-
       if (searchValue) {
         if (searchInfo.target_field.length > 1) {
           searchInfo.target_field.forEach((field) => {
@@ -400,7 +440,6 @@ jQuery.noConflict();
 
       if (bla) {
         let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${bla}")`;
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
         return queryChild;
       }
       return "";
@@ -415,7 +454,6 @@ jQuery.noConflict();
 
       if (bla) {
         let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${bla}")`;
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
         return queryChild;
       }
       return "";
@@ -1181,8 +1219,14 @@ jQuery.noConflict();
           let startNew = "";
           let endNew = "";
           let Current_Date_id = "";
+          let checkFieldForSearchForDropDown;
+
           Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
+            //DODO
             searchInfoList.forEach((field) => {
+              checkFieldForSearchForDropDown = searchContent.filter(
+                (item) => item.groupName == field.groupName.replace(/\s+/g, "_")
+              );
               if (
                 field.groupName.replace(/\s+/g, "_") == key &&
                 (field.searchType == "text_patial" ||
@@ -1206,7 +1250,14 @@ jQuery.noConflict();
                     field.searchType == "text_exact" ||
                     field.searchType == "number_exact"
                   ) {
-                    valueForCheck = transformString(bokTermsObj);
+                    if (
+                      checkFieldForSearchForDropDown[0].fieldForSearch !==
+                      "-----"
+                    ) {
+                      valueForCheck = transformStringExact(bokTermsObj);
+                    } else {
+                      valueForCheck = bokTermsObj;
+                    }
                   } else {
                     valueForCheck = bokTermsObj;
                   }
