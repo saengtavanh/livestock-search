@@ -35,7 +35,7 @@ jQuery.noConflict();
           );
         }
       } catch (error) {
-        console.error("Error fetching records:", error);
+        return;
       }
     }
   }
@@ -61,6 +61,7 @@ jQuery.noConflict();
   kintone.events.on("app.record.index.show", async (event) => {
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
+    let CodeMaster = CONFIG.codeMasterSetting;
 
     //data test
     // window.RsComAPI.getRecords({ app: 234 }).then((dataFromMaster) => {
@@ -773,7 +774,13 @@ jQuery.noConflict();
       }
     }
     // Create dropdown element
-    function createDropDown(display, setWidth, records, initialContent, dropDownTitle) {
+    function createDropDown(
+      display,
+      setWidth,
+      records,
+      initialContent,
+      dropDownTitle
+    ) {
       const NameDropdown = display.groupName.replace(/\s+/g, "_");
       const dropDown = $("<select>")
         .addClass("kintoneplugin-dropdown")
@@ -813,8 +820,7 @@ jQuery.noConflict();
               }
             });
           });
-        }
-         else {
+        } else {
           let checkValue = [];
           $.each(filteredRecords, (index, item) => {
             $.each(DETFIELDlIST, (index, data) => {
@@ -1272,7 +1278,7 @@ jQuery.noConflict();
               }
 
               if (
-                field.groupName.replace(/\s+/g, "_") == afterchangeKeyValue  &&
+                field.groupName.replace(/\s+/g, "_") == afterchangeKeyValue &&
                 (field.searchType == "number_range" ||
                   field.searchType == "date_range")
               ) {
@@ -1698,7 +1704,7 @@ jQuery.noConflict();
                     delete bokTermObj[selectedId];
                     query = string;
                   } else {
-                    let changeToArray = changeToArray.filter(
+                    changeToArray = changeToArray.filter(
                       (item) =>
                         item !==
                         `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
@@ -1773,7 +1779,7 @@ jQuery.noConflict();
                     delete bokTermObj[selectedId.replace(/\s+/g, "_")];
                     query = string;
                   } else {
-                    let changeToArray = changeToArray.filter(
+                    changeToArray = changeToArray.filter(
                       (item) =>
                         item !==
                         `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
@@ -1883,7 +1889,9 @@ jQuery.noConflict();
               if (searchItem.nameMarker == "") {
                 let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                 const getId = $(`#${getIdElement}`);
-                const trimmedActive = bokTermsObj.active.trim();
+                const trimmedActive = bokTermsObj.active
+                  ? bokTermsObj.active.trim()
+                  : "";
                 getId
                   .closest(".search-item")
                   .find(".custom-dropdownTitle")
