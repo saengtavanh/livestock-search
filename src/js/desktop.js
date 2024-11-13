@@ -3,6 +3,13 @@ jQuery.noConflict();
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
+  // get field from kintone app.
+	let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
+		app: kintone.app.getId()
+	});
+  console.log('GETVIEWS', GETVIEWS);
+  console.log('filter condition', GETVIEWS.views.View1.filterCond);
+
   async function setSessionStorageItems(configSettings) {
     for (const setting of configSettings) {
       try {
