@@ -37,7 +37,7 @@ jQuery.noConflict();
 
 			const buttons = $elm.append('<div class="cp-disp">' +
 				'<button type="button" id="cp-submit">OK</button>' +
-				'<button type="button" id="cp-cancel">Cancel</button>' +
+				'<button type="button" id="cp-cancel">キャンセル</button>' +
 				'</div>');
 
 			buttons.on('click', '#cp-submit', (e) => {
@@ -381,7 +381,7 @@ jQuery.noConflict();
 			Swal10.fire({
 				position: 'center',
 				icon: 'success',
-				text: 'Update data successfully',
+				text: 'データの更新に成功しました。',
 				showConfirmButton: true,
 			});
 
@@ -392,6 +392,8 @@ jQuery.noConflict();
 	async function validation(condition, data) {
 		let hasError = false;
 		let errorMessage = "";
+		let groupSettingError = {};
+		
 		//group setting table
 		let groupSettingTable = $('#kintoneplugin-setting-tspace > tr:gt(0)').toArray();
 		let groupNameArray = [];
@@ -401,7 +403,8 @@ jQuery.noConflict();
 			let groupName = $(element).find('#group_name');
 			let searchType = $(element).find('#search_type');
 			if (searchType.val() == "-----") {
-				errorMessage += `<p>Please select Search type on Group setting row: ${index + 1}</p>`;
+				// errorMessage += `<p>【検索項目表示の定義】<br>検索タイプを選択してください。: ${index + 1}</p>`;
+				groupSettingError.searchType = `<p>検索タイプを選択してください。}</p>`;
 				$(searchType).parent().addClass('validation-error');
 				hasError = true;
 			} else {
@@ -409,7 +412,8 @@ jQuery.noConflict();
 			}
 
 			if (!groupName.val()) {
-				errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
+				// errorMessage += `<p>【検索項目表示の定義】<br>検索対象グループ名を入力してください。: ${index + 1}</p>`;
+				groupSettingError.groupName= `<p>検索対象グループ名を入力してください。</p>`;
 				$(groupName).addClass('validation-error');
 				hasError = true;
 			} else {
@@ -418,10 +422,20 @@ jQuery.noConflict();
 					groupNameArray.push(groupName.val());
 				} else {
 					$(groupName).addClass('validation-error');
-					errorMessage += `<p>The group "${groupName.val()}" already exists.</p>`;
+					// errorMessage += `<p>検索対象グループ名「${groupName.val()}」はすでに存在しています。</p>`;
+					groupSettingError.groupNameExist = groupSettingError.groupNameExist 
+					? groupSettingError.groupNameExist+`<p>検索対象グループ名「${groupName.val()}」はすでに存在しています。</p>`
+					: `<p>検索対象グループ名「${groupName.val()}」はすでに存在しています。</p>`;
 					hasError = true;
 				}
 			}
+		}
+		///////////////////////////////////////////////////////////////
+		if(Object.keys(groupSettingError).length > 0) {
+			errorMessage += `<p>【検索項目表示の定義】</p>
+				${groupSettingError.searchType ? groupSettingError.searchType : ''}
+				${groupSettingError.groupName ? groupSettingError.groupName : ''}
+				${groupSettingError.groupNameExist ? groupSettingError.groupNameExist : ''}`
 		}
 
 		const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
@@ -483,6 +497,7 @@ jQuery.noConflict();
 
 		}
 		if (condition == "save" || condition == "export") {
+			let searchContentError = {};
 			const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
 			let searchNameArray = [];
 			for (const [index, element] of searchContentTable.entries()) {
@@ -503,7 +518,8 @@ jQuery.noConflict();
 				// }
 
 				if (!searchName.val()) {
-					errorMessage += `<p>Please enter Search name on Search content row: ${index + 1}</p>`;
+					// errorMessage += `<p>【検索内容の定義】<br>検索名を入力してください。: ${index + 1}</p>`;
+					searchContentError.searchName = `<p>検索名を入力してください。</p>`;
 					$(searchName).addClass('validation-error');
 					hasError = true;
 				} else {
@@ -513,13 +529,15 @@ jQuery.noConflict();
 						searchNameArray.push(searchName.val());
 					} else {
 						$(searchName).addClass('validation-error');
-						errorMessage += `<p>Search name "${searchName.val()}" already exists.</p>`;
+						// errorMessage += `<p>Search name "${searchName.val()}" already exists.</p>`;
+						errorMessage += `<p>検索名「${searchName.val()}」はすでに存在しています。</p>`;
 						hasError = true;
 					}
 				}
 
 				if (targetFields.val() == "-----") {
-					errorMessage += `<p>Please select Search target field on Search content row: ${index + 1}</p>`;
+					// errorMessage += `<p>【検索内容の定義】<br>検索対象フィールドを選択してください。: ${index + 1}</p>`;
+					searchContentError.targetField = `<p>検索対象フィールドを選択してください。</p>`;
 					$(targetFields).parent().addClass('validation-error');
 					hasError = true;
 				} else {
@@ -530,7 +548,7 @@ jQuery.noConflict();
 						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER") {
 							$(targetFields).parent().removeClass('validation-error');
 						} else {
-							errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
+							errorMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
 							$(targetFields).parent().addClass('validation-error');
 							hasError = true;
 						}
@@ -540,7 +558,7 @@ jQuery.noConflict();
 							if (fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not number type.</p>`;
+								errorMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -554,7 +572,7 @@ jQuery.noConflict();
 							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
+								errorMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -565,7 +583,7 @@ jQuery.noConflict();
 							if (fieldType == "DATE" || fieldType == "DATETIME") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not type date.</p>`;
+								errorMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -575,7 +593,7 @@ jQuery.noConflict();
 							if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not support for this type.</p>`;
+								errorMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -610,12 +628,18 @@ jQuery.noConflict();
 				} else {
 					$(fieldForSearch).parent().removeClass('validation-error');
 					if (currentGroup.length > 0 && (currentGroup[0].searchType == "text_initial" || currentGroup[0].searchType == "multi_text_initial")) {
-						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
+						searchContentError.fieldForSearch = `<p>検索用フィールドを選択してください。</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
 					}
 				}
 
+			}
+			if(searchContentError) {
+				errorMessage += `<p>【検索内容の定義】</p>
+					${searchContentError.searchName ? searchContentError.searchName : ''}
+					${searchContentError.targetField ? searchContentError.targetField : ''}
+					${searchContentError.fieldForSearch ? searchContentError.fieldForSearch : ''}`;
 			}
 		}
 
@@ -695,7 +719,7 @@ jQuery.noConflict();
 			if (HASUPDATED === false) return Swal10.fire({
 				position: 'center',
 				icon: 'warning',
-				text: "please click update button",
+				text: "更新ボタンをクリックしてください。",
 				showConfirmButton: true,
 			})
 			let createConfig = await getData();
@@ -764,7 +788,7 @@ jQuery.noConflict();
 					Swal10.fire({
 						position: 'center',
 						icon: 'success',
-						text: "Load data successfully",
+						text: "データの反映に成功しました。",
 						showConfirmButton: true,
 					})
 					HASLOADDATA = true;
@@ -963,7 +987,7 @@ jQuery.noConflict();
 					Swal10.fire({
 						position: "center",
 						icon: "warning",
-						text: "App ID has not been entered",
+						text: "アプリIDが入力されていません。",
 						showConfirmButton: true,
 					});
 					hasError = true;
@@ -979,12 +1003,12 @@ jQuery.noConflict();
 			Swal10.fire({
 				position: "center",
 				icon: "info",
-				text: "Do you want to exit the plugin configuration?",
+				text: "プラグインの設定を終了しますか？",
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
 				confirmButtonText: "OK",
-				cancelButtonText: "Cancel",
+				cancelButtonText: "キャンセル",
 				customClass: {
 					confirmButton: 'custom-confirm-button',
 					cancelButton: 'custom-cancel-button'
@@ -1048,12 +1072,12 @@ jQuery.noConflict();
 				},
 				position: "center",
 				icon: "info",
-				text: "Do you want to export configuration information?",
+				text: "設定情報を書き出しますか？",
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
 				confirmButtonText: "OK",
-				cancelButtonText: "Cancel",
+				cancelButtonText: "キャンセル",
 			}).then(async (result) => {
 				if (result.isConfirmed) {
 					let hasError = await validation("export", await getData());
@@ -1108,7 +1132,7 @@ jQuery.noConflict();
 					let checkCompareConfig = await compareConfigStructures(dataImport);
 					if (!checkCompareConfig) {
 						let customClass = $("<div></div>")
-							.text("Failed to load configuration information")
+							.text("設定情報の読み込みに失敗しました。")
 							.css("font-size", "18px");
 						await Swal10.fire({
 							icon: "error",
@@ -1122,7 +1146,7 @@ jQuery.noConflict();
 						Swal10.fire({
 							position: 'center',
 							icon: 'success',
-							text: 'Configuration information was successfully imported',
+							text: '設定情報が正常に読み込まれました。',
 							showConfirmButton: true,
 						});
 						$("#fileInput").val('');

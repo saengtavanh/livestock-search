@@ -4,6 +4,7 @@ jQuery.noConflict();
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
   // get field from kintone app.
+  
 	let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
 		app: kintone.app.getId()
 	});
