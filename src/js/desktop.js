@@ -1240,7 +1240,9 @@ jQuery.noConflict();
                         delete bokTermObj[selectedId];
                         query = string;
                     } else {
-                      let changeToArray = changeToArray.filter(item => item !== `(${field.target_field[0]} in ("${bokTermsObj.value}"))`);
+                      console.log("changeToArray::1243", changeToArray);
+                      
+                      changeToArray = changeToArray.filter(item => item !== `(${field.target_field[0]} in ("${bokTermsObj.value}"))`);
                       let string = changeToArray.join(' and ');
                       delete bokTermObj[selectedId];
                       query = string;
@@ -1298,7 +1300,7 @@ jQuery.noConflict();
                         delete bokTermObj[selectedId.replace(/\s+/g, "_")];
                         query = string;
                     } else {
-                      let changeToArray = changeToArray.filter(item => item !== `(${field.target_field[0]} in ("${bokTermsObj.value}"))`);
+                      changeToArray = changeToArray.filter(item => item !== `(${field.target_field[0]} in ("${bokTermsObj.value}"))`);
                       let string = changeToArray.join(' and ');
                       delete bokTermObj[selectedId.replace(/\s+/g, "_")];
                       query = string;
