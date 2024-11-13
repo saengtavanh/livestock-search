@@ -2,12 +2,12 @@ jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
   if (!CONFIG) return;
+  CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
   kintone.events.on("app.record.index.show", async (event) => {
-    CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config)
+    // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
     //data test
-    window.RsComAPI.getRecords({ app: 255 }).then((dataFromMaster) => {
-      console.log(dataFromMaster, "helloooo");
+    window.RsComAPI.getRecords({ app: 234 }).then((dataFromMaster) => {
       sessionStorage.setItem("kintoneRecords", JSON.stringify(dataFromMaster));
       sessionStorage.setItem(
         "dataspace",
@@ -43,23 +43,28 @@ jQuery.noConflict();
         ])
       );
     });
-    //data test
+
     CONFIG.codeMasterSetting.forEach((setting) => {
-      window.RsComAPI.getRecords({ app: setting.appId, query: setting.typeField })
+      window.RsComAPI.getRecords({
+        app: setting.appId,
+        query: setting.typeField,
+      })
         .then((dataFromMaster) => {
-          console.log(dataFromMaster);
-          const codeAndName = dataFromMaster.map(record => ({
+          const codeAndName = dataFromMaster.map((record) => ({
             code: record.code.value,
-            name: record.name.value
+            name: record.name.value,
           }));
 
           const dataToStore = {
             AppId: setting.appId,
             ApiToken: setting.apiToken,
             codeAndName: codeAndName,
-            condition: setting.typeField
+            condition: setting.typeField,
           };
-          sessionStorage.setItem(`bokMst${setting.masterId}`, JSON.stringify(dataToStore));
+          sessionStorage.setItem(
+            `bokMst${setting.masterId}`,
+            JSON.stringify(dataToStore)
+          );
         })
         .catch((error) => {
           console.error("Error fetching records:", error);
@@ -81,16 +86,30 @@ jQuery.noConflict();
       element.style.display = "none";
     });
 
-    // getItem sessionStorage
-    function getDataFromSessionStorage(key) {
-      const data = sessionStorage.getItem(key);
-      return data ? JSON.parse(data) : null;
-    }
-    const storedData = getDataFromSessionStorage("bokMst1");
-    let coseMaster = storedData != null ? storedData.codeAndName : null;
-    let ITEMS = [];
-    if (coseMaster !== null) {
-      ITEMS.push(coseMaster);
+    const recordRows = document.querySelectorAll(".recordlist-row-gaia");
+    recordRows.forEach((row) => {
+      row.addEventListener(
+        "dblclick",
+        function (e) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        },
+        true
+      );
+    });
+
+    //get data in the session storage
+    let CODEMASTER = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      let key = sessionStorage.key(i);
+      const numberId = key.match(/\d+/);
+      //check key ID
+      if (numberId) {
+        const numericKey = numberId[0];
+        const data = sessionStorage.getItem(key);
+        const CodeMasterData = JSON.parse(data);
+        CODEMASTER.push({ numericKey, ...CodeMasterData });
+      }
     }
 
     const urlObj = new URL(window.location.href);
@@ -98,7 +117,6 @@ jQuery.noConflict();
     const bokTerms = urlObj.searchParams.get("bokTerms");
 
     const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{|}/g, "");
-    console.log(decodedBokTerms);
 
     const result = {};
     decodedBokTerms.split(",").forEach((pair) => {
@@ -111,20 +129,16 @@ jQuery.noConflict();
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
     if (!spaceEl)
       throw new Error("The header element is unavailable on this page.");
-    // Check if the custom element already exists to avoid duplicates
 
     if ($(spaceEl).find(".custom-space-el").length > 0) {
-      console.log("Custom element already exists, skipping creation.");
-      return; // Stop if element already exists
+      return;
     }
-    //space Element
     const spaceElement = $(spaceEl);
     const elementsAll = $("<div></div>").addClass("custom-space-el");
 
-    // =========================
     //TODO: FunctionSearch-------------------------------------------------
     let searchProcess = async function (searchInfoList) {
-      let query = await getValueConditionAndBuildQuery(searchInfoList);
+      let query = await getValueConditionAndBuildQuery(searchInfoList, false);
       let queryEscape = encodeURIComponent(query);
       let currentUrlBase = window.location.href.match(/\S+\//)[0];
       if (bokTermsObject) {
@@ -139,21 +153,64 @@ jQuery.noConflict();
       window.location.href = url;
     };
 
-    let getValueConditionAndBuildQuery = function (searchInfoList) {
+    let getValueConditionAndBuildQuery = function (
+      searchInfoList,
+      dropDownChange
+    ) {
       let query = "";
-      searchInfoList.forEach((searchInfo) => {
-        if ($(`#${searchInfo.groupName}`).is("select")) {
-          let selectedValue = $(
-            `#${searchInfo.groupName} option:selected`
-          ).val();
-          let dropdownId = searchInfo.groupName;
-          let labelText = $(`#${searchInfo.groupName}`).prev("label").text();
+      let queryChild = "";
+      let searchContent = CONFIG.searchContent;
+      let mergedBokTermsObject = {};
 
-          bokTermsObject = createBokTermsObject(
-            selectedValue,
-            dropdownId,
-            labelText
-          );
+      searchInfoList.forEach((searchInfo) => {
+        let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
+        if ($(`#${groupNameSlit}`).is("select")) {
+          let selectedValue = $(`#${groupNameSlit} option:selected`).val();
+          let dropdownId = groupNameSlit;
+          let labelText = $(`#${groupNameSlit}`).prev("label").text();
+          if (selectedValue) {
+            // bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelText);
+            mergedBokTermsObject = {
+              ...mergedBokTermsObject,
+              ...createBokTermsObject(selectedValue, dropdownId, labelText),
+            };
+            if (!dropDownChange) {
+              if (
+                searchInfo.groupName == groupNameSlit.replace("_", " ") &&
+                searchInfo.nameMarker &&
+                searchInfo.searchType == "dropdown_exact"
+              ) {
+                if (searchInfo.target_field.length > 1) {
+                  searchInfo.target_field.forEach((fieldCode, index) => {
+                    const isLastIndex =
+                      index === searchInfo.target_field.length - 1;
+
+                    if (queryChild) {
+                      if (isLastIndex) {
+                        queryChild += ` or (${fieldCode} in ("${selectedValue}")))`;
+                      } else {
+                        queryChild += ` or (${fieldCode} in ("${selectedValue}"))`;
+                      }
+                    } else {
+                      queryChild = `((${fieldCode} in ("${selectedValue}")) `;
+                    }
+                  });
+                  query += `${query ? " and " : ""}${queryChild}`;
+                } else {
+                  query += `${query ? " and " : ""}(${searchInfo.target_field[0]} in ("${selectedValue}"))`;
+                }
+              } else if (
+                searchInfo.groupName == groupNameSlit.replace("_", " ") &&
+                searchInfo.nameMarker == "" &&
+                searchInfo.searchType == "dropdown_exact"
+              ) {
+                let getTargetField = searchContent.filter(
+                  (item) => item.searchName == labelText
+                );
+                query += `${query ? " and " : ""}(${getTargetField[0].searchTarget} in ("${selectedValue}"))`;
+              }
+            }
+          }
         }
 
         switch (searchInfo.searchType) {
@@ -179,7 +236,7 @@ jQuery.noConflict();
             query += buildNumberRangeQuery(searchInfo, query);
             break;
           case "date_exact":
-            query += buildDateExactQuery(searchInfo, query);
+            query += buildNumberExactQuery(searchInfo, query);
             break;
           case "date_range":
             query += buildNumberRangeQuery(searchInfo, query);
@@ -189,12 +246,28 @@ jQuery.noConflict();
         }
       });
 
+      bokTermsObject = mergedBokTermsObject;
+
       return query;
     };
 
     function transformString(input) {
       let characters = input.split("");
       let transformed = "_, " + characters.join(",");
+
+      return transformed;
+    }
+
+    function transformStringPartial(input) {
+      let characters = input.split("");
+      let transformed = characters.join(",");
+
+      return transformed;
+    }
+
+    function transformStringExact(input) {
+      let characters = input.split("");
+      let transformed = "_, " + characters.join(",") + ",_";
 
       return transformed;
     }
@@ -242,7 +315,7 @@ jQuery.noConflict();
 
       if ($(`#${replacedText}`).length) {
         if ($(`#${replacedText}`).val()) {
-          searchValue = transformString($(`#${replacedText}`).val());
+          searchValue = transformStringPartial($(`#${replacedText}`).val());
           bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
@@ -250,12 +323,17 @@ jQuery.noConflict();
       if (searchValue) {
         if (searchInfo.target_field.length > 1) {
           searchInfo.target_field.forEach((field) => {
+            const isLastIndex = index === searchInfo.target_field.length - 1;
             if (queryChild) {
-              queryChild += `or (${field} like "${searchValue}")`;
+              if (isLastIndex) {
+                queryChild += `or (${field} like "${searchValue}"))`;
+              } else {
+                queryChild += `or (${field} like "${searchValue}")`;
+              }
             } else {
-              queryChild = `${query ? " and " : ""}(${field} like "${searchValue}") `;
+              queryChild = `${query ? " and " : ""}((${field} like "${searchValue}") `;
             }
-          });
+          })
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
         }
@@ -273,7 +351,7 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
-          searchValue = transformString($(`#${replacedText}`).val());
+          searchValue = transformStringExact($(`#${replacedText}`).val());
           bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
@@ -286,7 +364,7 @@ jQuery.noConflict();
             } else {
               queryChild = `${query ? " and " : ""}(${field} like "${searchValue}") `;
             }
-          });
+          })
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
         }
@@ -296,15 +374,10 @@ jQuery.noConflict();
     };
 
     let buildMultieinitialQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName;
 
       if ($(`#${replacedText}`).length) {
-        console.log("have");
-
         let bla = $(`#${replacedText}`).val();
-        console.log("bla", bla);
       }
 
       if (bla) {
@@ -316,15 +389,10 @@ jQuery.noConflict();
     };
 
     let buildMultiePatialQuery = function (searchInfo, query) {
-      console.log("fff");
-      console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName;
 
       if ($(`#${replacedText}`).length) {
-        console.log("have");
-
         let bla = $(`#${replacedText}`).val();
-        console.log("bla", bla);
       }
 
       if (bla) {
@@ -344,101 +412,69 @@ jQuery.noConflict();
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
           searchValue = $(`#${replacedText}`).val();
+          bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
 
       if (searchValue) {
         if (searchInfo.target_field.length > 1) {
-          searchInfo.target_field.forEach((field) => {
+          searchInfo.target_field.forEach((field , index) => {
+            const isLastIndex = index === searchInfo.target_field.length - 1;
+
             if (queryChild) {
-              queryChild += `or (${field} = "${searchValue}")`;
+              if (isLastIndex) {
+                queryChild += `or (${field} = "${searchValue}"))`
+              } else {
+                queryChild += `or (${field} = "${searchValue}")`
+              }
             } else {
-              queryChild = `${query ? " and " : ""}(${field} = "${searchValue}") `;
-            }
-          });
+              queryChild = `${query ? " and " : ""}((${field} = "${searchValue}") `;
+            } 
+          })
         } else if ((searchInfo.target_field.length = 1)) {
-          queryChild = `${query ? " and " : ""}(${searchInfo.target_field} = ${searchValue})`;
+          queryChild = `${query ? " and " : ""}(${searchInfo.target_field} = "${searchValue}")`;
         }
         return queryChild;
       }
-      return "";
+      return '';
     };
 
     let buildNumberRangeQuery = function (searchInfo, query) {
       let queryChild = "";
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
-      const startValue =
-        $(`#${replacedText}_start`).length && $(`#${replacedText}_start`).val();
-      const endValue =
-        $(`#${replacedText}_end`).length && $(`#${replacedText}_end`).val();
+      const startValue = $(`#${replacedText}_start`).val();
+      const endValue = $(`#${replacedText}_end`).val();
 
-      searchInfo.target_field.forEach((field) => {
-        if (startValue && endValue == "") {
-          bokTermsGet[`${replacedText}_start`] = $(
-            `#${replacedText}_start`
-          ).val();
-          queryChild += queryChild
-            ? `${query ? " and " : ""}` +
-            " or (" +
-            field +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '"' +
-            ")"
-            : "(" + field + " " + ">=" + ' "' + startValue + '"' + ")";
-        } else if (endValue && startValue == "") {
-          bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}end`).val();
-          queryChild += queryChild
-            ? `${query ? " and " : ""}` +
-            " or (" +
-            field +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            ")"
-            : "or (" + field + " " + "<=" + ' "' + endValue + '"' + ")";
-        } else if (startValue && endValue) {
-          bokTermsGet[`${replacedText}_start`] = $(
-            `#${replacedText}_start`
-          ).val();
+      if (searchInfo.target_field > 1) {
+        searchInfo.target_field.forEach((field) => {
+          if (startValue && endValue == '') {
+            bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+              queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + ">=" + ' "' + startValue + '"' + "))" : "((" + field + ' ' + ">=" + ' "' + startValue + '"' + ")";
+          } else if (endValue && startValue == '') {
+            bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
+            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" : "((" + field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+          } else if (startValue && endValue) {
+            bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+            bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
+            queryChild += queryChild ?  " or ((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" :
+              "((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))";
+          }
+        });
+      } else {
+        if (startValue && endValue == '') {
+          bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '"' + ")" : "(" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '"' + ")";
+        } else if (endValue && startValue == '') {
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-          queryChild += queryChild
-            ? +" or ((" +
-            field +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '")' +
-            " and (" +
-            field +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            "))"
-            : "((" +
-            field +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '")' +
-            " and (" +
-            field +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            "))";
+          queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + ")" : "(" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + ")";
+        } else if (startValue && endValue) {
+          bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+          bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
+          queryChild += queryChild ?  " or ((" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '")' + " and (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + "))" :
+            "((" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '")' + " and (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + "))";
         }
-      });
+      }
+
       let queryFinal;
       if (queryChild) {
         queryFinal = `${query ? " and " : ""}` + queryChild;
@@ -449,31 +485,13 @@ jQuery.noConflict();
       return queryFinal;
     };
 
-    let buildDateExactQuery = function (searchInfo, query) {
-      let replacedText = searchInfo.groupName;
-      let date;
-      if ($(`#${replacedText}`).length) {
-        date = $(`#${replacedText}`).val();
-      }
-
-      if (date) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${date}")`;
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
-        return queryChild;
-      }
-      return "";
-    };
-
     let buildDateRangeQuery = function (searchInfo, query) {
       let replacedText = searchInfo.groupName;
       if ($(`#${replacedText}_start`).length) {
         let start = $(`#${replacedText}_start`).val();
       }
       if ($(`#${replacedText}_end`).length) {
-        console.log("have");
-
         let end = $(`#${replacedText}_end`).val();
-        console.log("bla", end);
       }
 
       if (start && end) {
@@ -485,7 +503,9 @@ jQuery.noConflict();
 
     // Create dropdowns based on the configuration
     function createDropDowns(display) {
-      let relatedContent = CONFIG.searchContent.filter((content) => content.groupName === display.groupName);
+      let relatedContent = CONFIG.searchContent.filter(
+        (content) => content.groupName === display.groupName
+      );
       // Only show content if `name_marker` is not empty
       if (display.nameMarker && relatedContent.length === 0) return;
 
@@ -504,6 +524,7 @@ jQuery.noConflict();
           .on("click", function () {
             handleDropDownTitleClick(
               display,
+              CONFIG,
               relatedContent,
               dropDownTitle,
               dropDown
@@ -524,49 +545,55 @@ jQuery.noConflict();
 
     function handleDropDownTitleClick(
       display,
+      CONFIG,
       relatedContent,
       dropDownTitle,
       dropDown
     ) {
       if (display.nameMarker === "") {
-        dropDownTitle.css({ cursor: "pointer" });
+        // dropDownTitle.css({ cursor: "pointer" });
         const existingMenu = $(".custom-context-menu");
         if (existingMenu.length > 0) {
           existingMenu.remove();
         }
 
         // Filter items based on the group name
-        const filteredItems = CONFIG.searchContent.filter((content) => content.groupName === display.groupName && !display.nameMarker);
-        console.log("filteredItems", filteredItems);
+        const filteredItems = CONFIG.searchContent.filter(
+          (content) =>
+            content.groupName === display.groupName && !display.nameMarker
+        );
         const customContextMenu = $("<div></div>")
           .addClass("custom-context-menu")
           .css({
+            width: "150px",
             display: "flex",
             "flex-direction": "column",
             "align-items": "center",
             margin: "5px",
             padding: "10px",
+            borderRadius: "5px",
             "background-color": "#f0f0f0",
             color: "#000",
             position: "absolute",
             zIndex: 1000,
           });
+
         // Position the pop-up to the left of the dropdown title
         const offset = dropDownTitle.offset();
-        console.log(offset);
         customContextMenu.css({
           top: offset.top + dropDownTitle.outerHeight() - 250,
-          left: offset.left - customContextMenu.outerWidth() + 90,
+          left: offset.left - customContextMenu.outerWidth() + 270,
         });
 
         // Dynamically create buttons using Kuc.Button for each item in the list
         filteredItems.forEach((item, index) => {
           const buttonLabel = item.searchName;
           const targetField = filteredItems[index].searchTarget;
+
           const hoverBtn = new Kuc.Button({
             text: buttonLabel,
             type: "normal",
-            className: "class-btn",
+            className: "class-btn-pop-up",
             id: targetField,
           });
           $(hoverBtn).css({
@@ -589,8 +616,8 @@ jQuery.noConflict();
           });
         });
 
-        // Append the custom context menu to the DOM
         elementsAll.append(customContextMenu);
+
         $(document).on("click", function (event) {
           if (
             !customContextMenu.is(event.target) &&
@@ -611,27 +638,40 @@ jQuery.noConflict();
         .attr("id", `${NameDropdown}`)
         .css({ width: display.searchLength });
       dropDown.append($("<option>").text("-----").val(""));
-      let filteredRecords = CONFIG.searchContent.filter((item) => item.groupName === display.groupName);
+      let filteredRecords = CONFIG.searchContent.filter(
+        (item) => item.groupName === display.groupName
+      );
 
       if (display.nameMarker) {
-        if (filteredRecords[0]?.masterId > 0) {
+        let checkValue = [];
+        if (filteredRecords[0]?.masterId !== "-----") {
           filteredRecords.forEach((item) => {
-            ITEMS[0].forEach((data) => {
-              if (data.code && data.name) {
-                const option = $("<option>")
-                  .text(data.name)
-                  .addClass("option")
-                  .attr("value", data.code)
-                  .attr("fieldCode", item.searchTarget);
-                dropDown.append(option);
+            if (!CODEMASTER) return;
+            $.each(CODEMASTER, (index, data) => {
+              if (item.masterId === data.numericKey) {
+                let valueData = data.codeAndName;
+                let valueCheck = Array.isArray(valueData)
+                  ? valueData
+                  : [valueData];
+                $.each(valueCheck, (index, value) => {
+                  const existsData = checkValue.some(
+                    (entry) => entry.code === value.code
+                  );
+                  if (!existsData) {
+                    checkValue.push({ code: value.code, name: value.name });
+                    const option = $("<option>")
+                      .text(value.name)
+                      .addClass("option")
+                      .attr("value", value.code)
+                      .attr("fieldCode", item.searchTarget);
+                    dropDown.append(option);
+                  }
+                });
               }
             });
           });
         } else {
-          let filteredRecords = CONFIG.searchContent.filter(
-            (item) => item.groupName === display.groupName
-          );
-          //get field 
+          let checkValue = [];
           $.each(filteredRecords, (index, item) => {
             $.each(DETFIELDlIST, (index, data) => {
               let fieldList = data.fieldList;
@@ -640,34 +680,58 @@ jQuery.noConflict();
                 let dataValue = value.properties?.options;
                 if (!dataValue) return;
                 $.each(dataValue, (index, options) => {
-                  let optionValue = options.label;
-                  const option = $("<option>")
-                    .text(optionValue)
-                    .addClass("option")
-                    .attr("value", optionValue)
-                    .attr("fieldCode", item.searchTarget);
-                  dropDown.append(option);
+                  let optionValue = options?.label;
+                  let valuesCheck = Array.isArray(optionValue)
+                    ? optionValue
+                    : [optionValue];
+                  $.each(valuesCheck, (index, value) => {
+                    if (!checkValue.includes(value)) {
+                      checkValue.push(value);
+                      const option = $("<option>")
+                        .text(value)
+                        .addClass("option")
+                        .attr("value", value)
+                        .attr("fieldCode", item.searchTarget);
+                      dropDown.append(option);
+                    }
+                  });
                 });
               });
             });
           });
         }
       } else {
-        if (filteredRecords[0]?.masterId > 0) {
+        if (filteredRecords[0]?.masterId !== "-----") {
+          let checkValue = [];
           dropDownTitle.text(initialContent.searchName);
-          ITEMS[0].forEach((data) => {
-            if (data.code && data.name) {
-              const initialOption = $("<option>")
-                .text(data.name)
-                .addClass("option")
-                .attr("value", data.code)
-                .attr("fieldCode", initialContent.searchTarget);
-              dropDown.append(initialOption);
+          $.each(CODEMASTER, (index, value) => {
+            if (initialContent.masterId === value.numericKey) {
+              let valueData = value.codeAndName;
+              let valueCheck = Array.isArray(valueData)
+                ? valueData
+                : [valueData];
+              $.each(valueCheck, (index, data) => {
+                const existsData = checkValue.some(
+                  (entry) => entry.code === data.code
+                );
+                if (!existsData) {
+                  checkValue.push({
+                    code: data.code,
+                    name: data.name,
+                  });
+                  const initialOption = $("<option>")
+                    .text(data.name)
+                    .addClass("option")
+                    .attr("value", data.code)
+                    .attr("fieldCode", initialContent.searchTarget);
+                  dropDown.append(initialOption);
+                }
+              });
             }
           });
-          dropDown.trigger("change");
         } else {
           dropDownTitle.text(initialContent.searchName);
+          let checkValue = [];
           $.each(DETFIELDlIST, (index, data) => {
             let fieldList = data.fieldList;
             $.each(fieldList, (index, value) => {
@@ -675,17 +739,24 @@ jQuery.noConflict();
               let dataValue = value.properties?.options;
               if (!dataValue) return;
               $.each(dataValue, (index, options) => {
-                let optionValue = options.label;
-                const initialOption = $("<option>")
-                  .text(optionValue)
-                  .addClass("option")
-                  .attr("value", optionValue)
-                  .attr("fieldCode", initialContent.searchTarget);
-                dropDown.append(initialOption);
+                let optionValue = options?.label;
+                let valuesCheck = Array.isArray(optionValue)
+                  ? optionValue
+                  : [optionValue];
+                $.each(valuesCheck, (index, item) => {
+                  if (!checkValue.includes(item)) {
+                    checkValue.push(item);
+                    const initialOption = $("<option>")
+                      .text(item)
+                      .addClass("option")
+                      .attr("value", item)
+                      .attr("fieldCode", initialContent.searchTarget);
+                    dropDown.append(initialOption);
+                  }
+                });
               });
             });
           });
-          dropDown.trigger("change");
         }
       }
       dropDown.on("change", (e) => {
@@ -718,20 +789,43 @@ jQuery.noConflict();
         const dropDown = dropDownTitle;
         dropDown.empty();
         dropDown.append($("<option>").text("-----").val(""));
-        const selectedContent = filteredItems.filter((content) => content.groupName === groupName);
-        const matchingContent = selectedContent.find((content) => content.searchName === selectedItem);
+        const selectedContent = filteredItems.filter(
+          (content) => content.groupName === groupName
+        );
+        const matchingContent = selectedContent.find(
+          (content) => content.searchName === selectedItem
+        );
         if (matchingContent) {
-          if (matchingContent.masterId > 0) {
-            ITEMS[0].forEach((data) => {
-              const selectedOption = $("<option>")
-                .text(data.name)
-                .addClass("option")
-                .attr("value", data.code)
-                .attr("fieldCode", matchingContent.searchTarget);
-              dropDown.append(selectedOption);
+          if (matchingContent.masterId !== "-----") {
+            let checkValue = [];
+            $.each(CODEMASTER, (index, value) => {
+              if (matchingContent.masterId === value.numericKey) {
+                let valueData = value.codeAndName;
+                let valueCheck = Array.isArray(valueData)
+                  ? valueData
+                  : [valueData];
+                $.each(valueCheck, (index, data) => {
+                  const existsData = checkValue.some(
+                    (entry) => entry.code === data.code
+                  );
+                  if (!existsData) {
+                    checkValue.push({
+                      code: data.code,
+                      name: data.name,
+                    });
+                    const selectedOption = $("<option>")
+                      .text(data.name)
+                      .addClass("option")
+                      .attr("value", data.code)
+                      .attr("fieldCode", matchingContent.searchTarget);
+                    dropDown.append(selectedOption);
+                  }
+                });
+              }
             });
             dropDown.trigger("change");
           } else {
+            let checkValue = [];
             $.each(DETFIELDlIST, (index, data) => {
               let fieldList = data.fieldList;
               $.each(fieldList, (index, value) => {
@@ -739,57 +833,90 @@ jQuery.noConflict();
                 let dataValue = value.properties?.options;
                 if (!dataValue) return;
                 $.each(dataValue, (index, options) => {
-                  let optionValue = options.label;
-                  const selectedOption = $("<option>")
-                    .text(optionValue)
-                    .addClass("option")
-                    .attr("value", optionValue)
-                    .attr("fieldCode", matchingContent.searchTarget);
-                  dropDown.append(selectedOption);
+                  let optionValue = options?.label;
+                  let valuesCheck = Array.isArray(optionValue)
+                    ? optionValue
+                    : [optionValue];
+                  $.each(valuesCheck, (index, item) => {
+                    if (!checkValue.includes(item)) {
+                      checkValue.push(item);
+                      const selectedOption = $("<option>")
+                        .text(item)
+                        .addClass("option")
+                        .attr("value", item)
+                        .attr("fieldCode", matchingContent.searchTarget);
+                      dropDown.append(selectedOption);
+                    }
+                  });
                 });
               });
             });
-            dropDown.trigger("change");
+            // dropDown.trigger("change");
           }
         }
       } else {
         const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
         dropDown.empty();
         dropDown.append($("<option>").text("-----").val(""));
-        const selectedContent = filteredItems.find((content) => content.searchTarget === selectedItem.searchTarget);
-        if (selectedContent.masterId > 0) {
-          ITEMS[0].forEach((data) => {
-            if (data.name && data.code) {
-              const selectedOption = $("<option>")
-                .text(data.name)
-                .addClass("option")
-                .attr("value", data.code)
-                .attr("fieldCode", selectedContent.searchTarget);
-              dropDown.append(selectedOption);
+        const selectedContent = filteredItems.find(
+          (content) => content.searchTarget === selectedItem.searchTarget
+        );
+        if (selectedContent.masterId !== "-----") {
+          let checkValue = [];
+          $.each(CODEMASTER, (index, data) => {
+            if (selectedContent.masterId === data.numericKey) {
+              let valueData = data.codeAndName;
+              let valueCheck = Array.isArray(valueData)
+                ? valueData
+                : [valueData];
+              $.each(valueCheck, (index, value) => {
+                const existsData = checkValue.some(
+                  (entry) => entry.code === value.code
+                );
+                if (!existsData) {
+                  checkValue.push({
+                    code: value.code,
+                    name: value.name,
+                  });
+                  const selectedOption = $("<option>")
+                    .text(value.name)
+                    .addClass("option")
+                    .attr("value", value.code)
+                    .attr("fieldCode", selectedContent.searchTarget);
+                  dropDown.append(selectedOption);
+                }
+              });
             }
           });
-          dropDown.trigger("change");
+          // dropDown.trigger("change");
         } else {
-
+          let checkValue = [];
           $.each(DETFIELDlIST, (index, data) => {
             let fieldList = data.fieldList;
-            console.log("fieldList", fieldList);
             $.each(fieldList, (index, value) => {
               if (selectedItem.searchTarget !== value.var) return;
               let dataValue = value.properties?.options;
               if (!dataValue) return;
               $.each(dataValue, (index, options) => {
-                let optionValue = options.label;
-                const selectedOption = $("<option>")
-                  .text(optionValue)
-                  .addClass("option")
-                  .attr("value", optionValue)
-                  .attr("fieldCode", selectedItem.searchTarget);
-                dropDown.append(selectedOption);
+                let optionValue = options?.label;
+                let valuesCheck = Array.isArray(optionValue)
+                  ? optionValue
+                  : [optionValue];
+                $.each(valuesCheck, (index, item) => {
+                  if (!checkValue.includes(item)) {
+                    checkValue.push(item);
+                    const selectedOption = $("<option>")
+                      .text(item)
+                      .addClass("option")
+                      .attr("value", item)
+                      .attr("fieldCode", selectedItem.searchTarget);
+                    dropDown.append(selectedOption);
+                  }
+                });
               });
             });
           });
-          dropDown.trigger("change");
+          // dropDown.trigger("change");
         }
       }
     }
@@ -809,68 +936,62 @@ jQuery.noConflict();
       dropdownId,
       labelValue
     ) {
-      // Check if both selectedValue and fieldCode are present
-      if (!selectedValue || !fieldCode) {
-        return;
-      }
-
-      let selectedId = dropdownId;
+      let selectedId = dropdownId.replace("_", " ");
       let queryChild;
       let query;
       let searchInfoList = CONFIG.groupSetting;
+      let searchContent = CONFIG.searchContent;
 
-      let queryInput = await getValueConditionAndBuildQuery(searchInfoList);
+      let urlObjDropdown = new URL(window.location.href);
+      let getQueryFromUrl = urlObjDropdown.searchParams.get("query");
+      let changeToArray;
+      if (getQueryFromUrl) {
+        changeToArray = getQueryFromUrl.split(/ and /);
+      }
+
+      let queryInput = await getValueConditionAndBuildQuery(
+        searchInfoList,
+        true
+      );
       if (queryForDropdow) {
         query = `${query ? " and" : ""} ${queryForDropdow}`;
       }
-
       searchInfoList.forEach((field, index) => {
-        if (field.groupName == selectedId && field.nameMarker != "") {
+        if (field.groupName == selectedId && field.nameMarker) {
           if (field.target_field.length > 1) {
             field.target_field.forEach((fieldCode, index) => {
               const isLastIndex = index === field.target_field.length - 1;
 
               if (queryChild) {
                 if (isLastIndex) {
-                  queryChild += `or (${fieldCode} like "${selectedValue}"))`;
+                  queryChild += `or (${fieldCode} in ("${selectedValue}")))`;
                 } else {
-                  queryChild += `or (${fieldCode} like "${selectedValue}") `;
+                  queryChild += `or (${fieldCode} in ("${selectedValue}"))`;
                 }
               } else {
-                queryChild = `${query ? " and " : ""}((${fieldCode} like "${selectedValue}") `;
+                queryChild = `((${fieldCode} in ("${selectedValue}")) `;
               }
             });
+            query = `${query ? " and " : ""}${queryChild}`;
           } else {
-            query += `${query ? " and " : ""}(${field.target_field} like "${selectedValue}")`;
+            query = `${query ? " and " : ""}(${field.target_field[0]} in ("${selectedValue}"))`;
           }
-          query = `${query ? " and " : ""}${queryChild}`;
         } else if (field.groupName == selectedId && field.nameMarker == "") {
-          if (query) {
-            query += `${query ? " and " : ""}(${fieldCode} = "${selectedValue}")`;
-          } else {
-            query = `${query ? " and " : ""}(${fieldCode} = "${selectedValue}")`;
-          }
+          query = `${query ? " and " : ""}(${fieldCode} in ("${selectedValue}"))`;
         }
       });
 
-      // let query = encodeURIComponent(`${fieldCode} = "${selectedValue}"`);
-      // query = `(${fieldCode} = "${selectedValue}")`;
-      bokTermsObject = createBokTermsObject(
-        selectedValue,
-        dropdownId,
-        labelValue
-      );
+      bokTermsObject = {...bokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelValue)}
       let joinObject = { ...bokTermsGet, ...bokTermsObject };
 
       const currentUrlBase = window.location.href.match(/\S+\//)[0];
       const bokTermsString = JSON.stringify(joinObject);
       const bokTerms = encodeURIComponent(bokTermsString);
-      // const bokTermsString = JSON.stringify(bokTermsObject);
-      // const bokTerms = encodeURIComponent(bokTermsString);
 
       if (queryInput) {
         query += `${query ? " and" : ""} ${queryInput}`;
       }
+
       let querySuccess = encodeURIComponent(query);
 
       const QueryUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
@@ -895,20 +1016,419 @@ jQuery.noConflict();
           console.error("Error parsing bokTerm:", error);
           bokTermObj = {}; // initialize as an empty object in case of error
         }
+        if (!selectedValue || !fieldCode) {
+          let queryChildRank = "";
+          let startData = "";
+          let endData = "";
+          let checkHaveStartData = "";
+          let checkHaveEndtData = "";
+          let startNew = "";
+          let endNew = "";
+          let Current_Date_id = "";
+          Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
+            searchInfoList.forEach((field) => {
+              if (
+                field.groupName.replace(/\s+/g, "_") == key &&
+                (field.searchType == "text_patial" ||
+                  field.searchType == "text_initial" ||
+                  field.searchType == "text_exact" ||
+                  field.searchType == "number_exact")
+              ) {
+                if (!$(`#${key}`).val()) {
+                  let valueForCheck;
+                  if (
+                    field.searchType == "text_patial" ||
+                    field.searchType == "multi_text_patial"
+                  ) {
+                    valueForCheck = transformStringPartial(bokTermsObj);
+                  } else if (
+                    field.searchType == "text_initial" ||
+                    field.searchType == "multi_text_initial"
+                  ) {
+                    valueForCheck = transformString(bokTermsObj);
+                  } else if (
+                    field.searchType == "text_exact" ||
+                    field.searchType == "number_exact"
+                  ) {
+                    valueForCheck = transformString(bokTermsObj);
+                  } else {
+                    valueForCheck = bokTermsObj;
+                  }
 
-        // Update the bokTermObj only if the dropdownId exists
-        if (dropdownId in bokTermObj) {
-          bokTermObj[dropdownId].value = selectedValue;
-          bokTermObj[dropdownId].active = labelValue;
+                  let queryForCheck;
+                  if (field.searchType == "number_exact") {
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((field, index) => {
+                        const isLastIndex = index === field.target_field.length - 1;
+            
+                        if (queryForCheck) {
+                          if (isLastIndex) {
+                            queryForCheck += `or (${field} = "${valueForCheck}"))`;
+                          } else {
+                            queryForCheck += `or (${field} = "${valueForCheck}")`;
+                          }
+                        } else {
+                          queryForCheck = `((${field} = "${valueForCheck}")`;
+                        }
+                      });
+                    } else if ((field.target_field.length = 1)) {
+                      queryForCheck = `(${field.target_field} = "${valueForCheck}")`;
+                      changeToArray = changeToArray.filter(item => item !== queryForCheck);
+                          let string = changeToArray.join(' and ');
+                          delete bokTermObj[key];
+                          query = string;
+                    }
+                  } else {
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((field, index) => {
+                        const isLastIndex = index === field.target_field.length - 1;
+            
+                        if (queryForCheck) {
+                          if (isLastIndex) {
+                            queryForCheck += `or (${field} like "${valueForCheck}"))`;
+                          } else {
+                            queryForCheck += `or (${field} like "${valueForCheck}")`;
+                          }
+                        } else {
+                          queryForCheck = `((${field} like "${valueForCheck}")`;
+                        }
+                      });
+                    } else if ((field.target_field.length = 1)) {
+                      queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
+                      changeToArray = changeToArray.filter(item => item !== queryForCheck);
+                          let string = changeToArray.join(' and ');
+                          delete bokTermObj[key];
+                          query = string;
+                    }
+                  }
+                }
+              }
+
+              if (
+                field.searchType == "number_range" ||
+                field.searchType == "date_range"
+              ) {
+                let getGroupId;
+                const parts = key.split("_");
+                const isLastPartStart = parts[parts.length - 1] === "start";
+
+                if (!checkHaveStartData && isLastPartStart) {
+                  checkHaveStartData = 1;
+                  getGroupId = key.replace(/_start$/, "");
+                  Current_Date_id = getGroupId;
+                } else if (checkHaveStartData && isLastPartStart) {
+                  getGroupId = key.replace(/_start$/, "");
+                  checkHaveStartData = "";
+                  Current_Date_id = getGroupId;
+                } else if (checkHaveStartData && !isLastPartStart) {
+                  getGroupId = key.replace(/_end$/, "");
+                } else {
+                  getGroupId = key.replace(/_end$/, "");
+                  checkHaveEndtData = 1;
+                }
+
+                if (field.groupName == getGroupId.replace("_", " ")) {
+                  if (isLastPartStart) {
+                    startData = bokTermsObj;
+                  } else {
+                    if (Current_Date_id != getGroupId) {
+                      startData = "";
+                    }
+                    endData = bokTermsObj;
+                  }
+
+                  if (!$(`#${key}`).val()) {
+                    delete bokTermObj[key];
+                  } else {
+                    if (isLastPartStart) {
+                      startNew = $(`#${key}`).val();
+                    } else {
+                      endNew = $(`#${key}`).val();
+                    }
+                  }
+
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fields) => {
+                      if (startData && endData == '') {
+                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startData + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startData + '"' + ")";
+                      } else if (endData && startData == '') {
+                        queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" : "((" + fields + ' ' + "<=" + ' "' + endData + '"' + ")";
+                      } else if (startData && endData) {
+                        queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" :
+                          "((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))";
+                      }
+                    });
+                  } else {
+                    if (startData && endData == '') {
+                      queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '"' + ")" : "(" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '"' + ")";
+                    } else if (endData && startData == '') {
+                      queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + ")" : "(" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + ")";
+                    } else if (startData && endData) {
+                      queryChildRank += queryChildRank ?  " or ((" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + "))" :
+                        "((" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + "))";
+                    }
+                  }
+
+                    //copy code
+                  let changeQueryToArray = queryChildRank.split(/ and /);
+                  if (checkHaveStartData && checkHaveEndtData) {
+                    changeToArray = changeToArray.filter(item => !changeQueryToArray.includes(item));
+                    console.log("🚀 ~ searchInfoList.forEach ~ changeToArray:", changeToArray)
+                    checkHaveStartData = "";
+                    checkHaveEndtData = "";
+                    queryChildRank = "";
+                    
+                    field.target_field.forEach((fields) => {
+                      if (startNew && endNew == '') {
+                          queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")" : "(" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")";
+                      } else if (endNew && startNew == '') {
+                        queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endNew + '"' + ")" : "or (" + fields + ' ' + "<=" + ' "' + endNew + '"' + ")";
+                      } else if (startNew && endNew) {
+                        queryChildRank += queryChildRank ?  " or ((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))" :
+                          "((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))";
+                      }
+                    });
+
+                    if (queryChildRank) {
+                      changeToArray = queryChildRank.split(/ and /);
+                    }
+
+                    let string = changeToArray.join(" and ");
+                    query = string;
+                    query = queryChildRank;
+                    startNew = "";
+                    endNew = "";
+                  } else if (checkHaveStartData && !checkHaveEndtData) {
+                    changeToArray = changeToArray.filter(
+                      (item) => !changeQueryToArray.includes(item)
+                    );
+                  } else if (!checkHaveStartData && checkHaveEndtData) {
+                    changeToArray = changeToArray.filter(
+                      (item) => !changeQueryToArray.includes(item)
+                    );
+                  }
+
+                  queryChildRank = "";
+                }
+              }
+
+              if (field.groupName == selectedId) {
+                if (
+                  field.groupName == bokTermsObj.active &&
+                  field.nameMarker &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      const isLastIndex =
+                        index === field.target_field.length - 1;
+                      if (queryChild) {
+                        if (isLastIndex) {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+                        } else {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+                        }
+                      } else {
+                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+                      }
+                    });
+
+                    let filteredArray = changeToArray.filter(
+                      (item) => item !== queryChild
+                    );
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  } else {
+                    // query += `${query ? " and " : ""}(${field.target_field[0]} like "${bokTermsObj.value}")`;
+                    let filteredArray = changeToArray.filter(
+                      (item) =>
+                        item !==
+                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+                    );
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  }
+                } else if (
+                  field.groupName == selectedId &&
+                  field.nameMarker == "" &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  let filteredArray;
+
+                  // let filteredArray = changeToArray.filter(item => item.trim !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
+
+                      if (changeToArray.includes(queryChild)) {
+                        changeToArray = changeToArray.filter(
+                          (item) => item !== queryChild
+                        );
+                      } else {
+                        filteredArray = changeToArray;
+                      }
+                    });
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  } else {
+                    let changeToArray = changeToArray.filter(
+                      (item) =>
+                        item !==
+                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+                    );
+                    let string = changeToArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  }
+                }
+              }
+
+              if (field.groupName.replace(/\s+/g, "_") == key) {
+                if (
+                  field.groupName == selectedId &&
+                  field.nameMarker &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      const isLastIndex =
+                        index === field.target_field.length - 1;
+                      if (queryChild) {
+                        if (isLastIndex) {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+                        } else {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+                        }
+                      } else {
+                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+                      }
+                    });
+
+                    let filteredArray = changeToArray.filter(
+                      (item) => item !== queryChild
+                    );
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                    query = string;
+                  } else {
+                    // query += `${query ? " and " : ""}(${field.target_field[0]} like "${bokTermsObj.value}")`;
+                    let filteredArray = changeToArray.filter(
+                      (item) =>
+                        item !==
+                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+                    );
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  }
+                } else if (
+                  field.groupName == selectedId &&
+                  field.nameMarker == "" &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  let filteredArray;
+
+                  // let filteredArray = changeToArray.filter(item => item.trim !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
+
+                      if (changeToArray.includes(queryChild)) {
+                        changeToArray = changeToArray.filter(
+                          (item) => item !== queryChild
+                        );
+                      } else {
+                        filteredArray = changeToArray;
+                      }
+                    });
+
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                    query = string;
+                  } else {
+                    let changeToArray = changeToArray.filter(
+                      (item) =>
+                        item !==
+                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+                    );
+                    let string = changeToArray.join(" and ");
+                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                    query = string;
+                  }
+                }
+              }
+            });
+          });
         } else {
-          bokTermObj[dropdownId] = {
-            value: selectedValue,
-            active: labelValue,
-          };
+          Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
+            searchInfoList.forEach((field) => {
+              if (field.groupName.replace(/\s+/g, "_") == key) {
+                if (!$(`#${key}`).val()) {
+                  delete bokTermObj[key];
+                }
+              }
+
+              if (field.groupName != selectedId) {
+                if (
+                  field.groupName == bokTermsObj.active &&
+                  field.nameMarker &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      const isLastIndex =
+                        index === field.target_field.length - 1;
+                      if (queryChild) {
+                        if (isLastIndex) {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+                        } else {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+                        }
+                      } else {
+                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+                      }
+                    });
+                    query += `${query ? " and " : ""}${queryChild}`;
+                  } else {
+                    query += `${query ? " and " : ""}(${field.target_field[0]} in ("${bokTermsObj.value}"))`;
+                  }
+                } else if (
+                  field.groupName == selectedId &&
+                  field.nameMarker == ""
+                ) {
+                  query += `${query ? " and " : ""}(${fieldCode} in ("${bokTermsObj.value}"))`;
+                } else if (
+                  field.groupName == key &&
+                  field.nameMarker == "" &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  let getTargetField = searchContent.filter(
+                    (item) => item.searchName == bokTermsObj.active
+                  );
+                  query += `${query ? " and " : ""}(${getTargetField[0].searchTarget} in ("${bokTermsObj.value}"))`;
+                }
+              }
+            });
+          });
+
+          // Update the bokTermObj only if the dropdownId exists
+          if (dropdownId in bokTermObj) {
+            bokTermObj[dropdownId].value = selectedValue;
+            bokTermObj[dropdownId].active = labelValue;
+          } else {
+            bokTermObj[dropdownId] = {
+              value: selectedValue,
+              active: labelValue,
+            };
+          }
         }
 
+        querySuccess = encodeURIComponent(query);
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-        const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${mergedBokTerms}`;
+        const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
         window.location.href = updatedUrl;
       }
     }
@@ -929,18 +1449,16 @@ jQuery.noConflict();
         let bokTerm;
         try {
           bokTerm = JSON.parse(wrappedBokTerms);
-          console.log(bokTerm);
         } catch (error) {
           console.error("Error parsing bokTerm:", error);
           return; // Exit if there's an error parsing
         }
         Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
           CONFIG.groupSetting.forEach((searchItem) => {
-            if (searchItem.groupName === key) {
+            if (searchItem.groupName === key.replace("_", " ")) {
               if (searchItem.nameMarker == "") {
                 let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                 const getId = $(`#${getIdElement}`);
-                console.log("bokTermsObj.valu ======>>>>>", bokTermsObj.valu);
                 const trimmedActive = bokTermsObj.active.trim();
                 getId
                   .closest(".search-item")
@@ -1004,11 +1522,13 @@ jQuery.noConflict();
         "data-serach-type": searchType,
         id: initialText,
       });
-      // set css
+
       inputElement.css("width", width);
+
       if (result[initialText]) {
         inputElement.val(result[initialText]);
       }
+
       return inputElement;
     }
 
@@ -1018,10 +1538,12 @@ jQuery.noConflict();
         type: "number",
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
-        id: initialNumber,
-      });
-      // set css
+        "id": initialNumber
+      })
+
       InputNumber.css("width", width);
+      result[`${initialNumber}`] ? InputNumber.val(result[`${initialNumber}`]) : "";
+      
       return InputNumber;
     }
 
@@ -1034,14 +1556,17 @@ jQuery.noConflict();
         "data-search-type": searchType,
         id: `${NumberRange}_start`,
       });
+
       // set css
       start.css("width", width);
+
       const end = $("<input>", {
         type: "number",
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
         id: `${NumberRange}_end`,
       });
+
       // set css
       end.css("width", width);
 
@@ -1064,7 +1589,9 @@ jQuery.noConflict();
         id: dateInput,
         visible: true,
         disabled: false,
+        value: result[`${dateInput}`] ? result[`${dateInput}`] : "",
       });
+
       datePicker.setAttribute("data-search-type", searchType);
       return datePicker;
     }
@@ -1078,7 +1605,8 @@ jQuery.noConflict();
         id: `${dateRange}_start`,
         visible: true,
         disabled: false,
-      })
+        value: result[`${dateRange}_start`] ? result[`${dateRange}_start`] : "",
+      });
 
       datePickerSatrt.setAttribute("data-search-type", searchType);
 
@@ -1089,15 +1617,16 @@ jQuery.noConflict();
         id: `${dateRange}_end`,
         visible: true,
         disabled: false,
-      })
+        value: result[`${dateRange}_end`] ? result[`${dateRange}_end`] : "",
+      });
 
       datePickerEnd.setAttribute("data-search-type", searchType);
 
       result[`${dateRange}_start`]
-        ? datePickerSatrt.val(result[`${dateRange}_start`])
+        ? $(`#${dateRange}_start`).val(result[`${dateRange}_start`])
         : "";
       result[`${dateRange}_end`]
-        ? datePickerEnd.val(result[`${dateRange}_end`])
+        ? $(`#${dateRange}_end`).val(result[`${dateRange}_end`])
         : "";
       const separator = $("<span>⁓</span>").addClass("separator-datepicker");
       const wrapper = $("<div></div>").addClass("wrapper-datepiker");
@@ -1117,39 +1646,51 @@ jQuery.noConflict();
         .on("click", callback);
     }
 
-    const searchButton = createButton("Search", () => {
+    const searchButton = createButton("検索", () => {
       let searchInfoList = CONFIG.groupSetting;
       searchProcess(searchInfoList);
     });
+    $(searchButton).addClass("btn-search");
 
     const clearButton = createButton("C", () => {
       Swal10.fire({
-        title: "Are you sure?",
-        text: "Do you want to delete the search condition?",
-        icon: "warning",
+        position: "center",
+        icon: "info",
+        text: "クエリをクリアにしますか？",
+        confirmButtonColor: "#3498db",
         showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, delete it!",
-        cancelButtonText: "Cancel",
+        cancelButtonColor: "#f7f9fa",
+        confirmButtonText: "はい",
+        cancelButtonText: "いいえ",
+        customClass: {
+          confirmButton: "custom-confirm-button",
+          cancelButton: "custom-cancel-button",
+        },
       }).then((result) => {
         if (result.isConfirmed) {
+          let bokTermObj = {};
           CONFIG.groupSetting.forEach((searchItem) => {
             let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
             const getId = $(`#${getIdElement}`);
-            const getIdStart = $(`#${getIdElement}_start`);
-            const getIdEnd = $(`#${getIdElement}_end`);
-            if (getId.length) getId.val("");
-            if (getIdStart.length) getIdStart.val("");
-            if (getIdEnd.length) getIdEnd.val("");
             if (getId.hasClass("kintoneplugin-dropdown")) {
-              if (!getId.find("option[value='']").length) {
-                getId.append($("<option>").text("-----").val(""));
+              const dropdownId = getId.attr("id");
+              const labelValue = getId
+                .closest(".search-item")
+                .find(".custom-dropdownTitle")
+                .text()
+                .trim();
+              if (dropdownId) {
+                bokTermObj[dropdownId] = {
+                  value: "",
+                  active: labelValue,
+                };
               }
             }
-            window.location.href =
-              "../../" + "k" + "/" + kintone.app.getId() + "/";
           });
+          const currentUrlBase = window.location.href.match(/\S+\//)[0];
+          const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
+          const updatedUrl = `${currentUrlBase}?&bokTerms=${mergedBokTerms}`;
+          window.location.href = updatedUrl;
         }
       });
     });
@@ -1168,26 +1709,20 @@ jQuery.noConflict();
         (searchItem) => searchItem.groupName == groupName
       );
       afterFilter.forEach((searchItemTarget) => {
-        Titlename = nameMarker
-          ? searchItemTarget.groupName
-          : searchItemTarget.searchName;
-        setSearchTarget.push(
-          searchItemTarget.fieldForSearch != "-----"
-            ? searchItemTarget.fieldForSearch
-            : searchItemTarget.searchTarget
-        );
+        Titlename = nameMarker ? nameMarker : searchItemTarget.searchName || "";
+        setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
       });
-      //get with css in config
-      let setWidth = searchItem.searchLength
-        .match(/^\s*(\d+\s*(rem|px|%))/i)[1]
-        .replace(/\s/g, '');
-      if (!setWidth) return;
+      //css
+      let matchResult = searchItem.searchLength?.match(
+        /^\s*(\d+\s*(rem|px|%))/i
+      );
+      let setWidth = matchResult ? matchResult[1].replace(/\s/g, "") : "1px";
+
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
         const elementInput = $("<div></div>").addClass("search-item").css({
           color: SETCOLOR.titleColor,
         });
-
 
         let inputElement;
         switch (searchType) {
@@ -1254,319 +1789,314 @@ jQuery.noConflict();
     getURL();
   });
 
-  // kintone.events.on(
-  //   [
-  //     "app.record.edit.show",
-  //     "app.record.create.show",
-  //     "app.record.create.submit",
-  //     "app.record.edit.submit.success",
-  //     "app.record.detail.show",
-  //   ],
-  //   async (event) => {
-  //     let record = event.record;
-  //     let updateRecord = {};
-  //     for (const searchItem of CONFIG.searchContent) {
-  //       for (const item of CONFIG.groupSetting) {
-  //         if (item.groupName == searchItem.groupName) {
-  //           if (
-  //             item.searchType == "text_initial" ||
-  //             item.searchType == "text_patial" ||
-  //             item.searchType == "text_exact" ||
-  //             item.searchType == "multi_text_initial" ||
-  //             item.searchType == "multi_text_patial"
-  //           ) {
-  //             console.log(searchItem.fieldForSearch);
-  //             kintone.app.record.setFieldShown(
-  //               searchItem.fieldForSearch,
-  //               false
-  //             );
-  //             let targetValue = record[searchItem.searchTarget].value;
-  //             let convertedValue = "";
-  //             if (record[searchItem.searchTarget].type != "CHECK_BOX") {
-  //               let convertedValue = "";
-  //               if (targetValue == "" || targetValue == undefined) {
-  //                 convertedValue = "";
-  //               } else {
-  //                 switch (item.searchType) {
-  //                   case "text_initial":
-  //                   case "multi_text_initial":
-  //                     convertedValue = `_,${targetValue.split("").join(",")}`;
-  //                     break;
-  //                   case "text_patial":
-  //                   case "multi_text_patial":
-  //                     convertedValue = `${targetValue.split("").join(",")}`;
-  //                     break;
-  //                   case "text_exact":
-  //                     convertedValue = `_,${targetValue.split("").join(",")},_`;
-  //                     break;
-  //                   default:
-  //                     break;
-  //                 }
-  //               }
-  //               updateRecord[searchItem.fieldForSearch] = {
-  //                 value: convertedValue,
-  //               };
-  //               // record[searchItem.fieldForSearch].value = convertedValue;
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
+  kintone.events.on(
+    [
+      "app.record.edit.show",
+      "app.record.create.show",
+      "app.record.create.submit",
+      "app.record.edit.submit.success",
+      "app.record.detail.show",
+    ],
+    async (event) => {
+      let record = event.record;
+      let updateRecord = {};
+      for (const searchItem of CONFIG.searchContent) {
+        for (const item of CONFIG.groupSetting) {
+          if (item.groupName == searchItem.groupName) {
+            if (
+              item.searchType == "text_initial" ||
+              item.searchType == "text_patial" ||
+              item.searchType == "text_exact" ||
+              item.searchType == "multi_text_initial" ||
+              item.searchType == "multi_text_patial"
+            ) {
+              kintone.app.record.setFieldShown(
+                searchItem.fieldForSearch,
+                false
+              );
+              let targetValue = record[searchItem.searchTarget].value;
+              let convertedValue = "";
+              if (record[searchItem.searchTarget].type != "CHECK_BOX") {
+                let convertedValue = "";
+                if (targetValue == "" || targetValue == undefined) {
+                  convertedValue = "";
+                } else {
+                  switch (item.searchType) {
+                    case "text_initial":
+                    case "multi_text_initial":
+                      convertedValue = `_,${targetValue.split("").join(",")}`;
+                      break;
+                    case "text_patial":
+                    case "multi_text_patial":
+                      convertedValue = `${targetValue.split("").join(",")}`;
+                      break;
+                    case "text_exact":
+                      convertedValue = `_,${targetValue.split("").join(",")},_`;
+                      break;
+                    default:
+                      break;
+                  }
+                }
+                updateRecord[searchItem.fieldForSearch] = {
+                  value: convertedValue,
+                };
+                if (
+                  // searchItem.fieldForSearch !== "" &&
+                  searchItem.fieldForSearch !== "-----"
+                ) {
+                  record[searchItem.fieldForSearch].value = convertedValue;
+                }
+              }
+            }
+          }
+        }
+      }
 
-  //     if (
-  //       event.type == "app.record.create.submit" ||
-  //       event.type == "app.record.edit.submit.success"
-  //     ) {
-  //       let body = {
-  //         app: kintone.app.getId(),
-  //         records: [
-  //           {
-  //             id: kintone.app.record.getId(),
-  //             record: updateRecord,
-  //           },
-  //         ],
-  //       };
-  //       try {
-  //         await kintone.api(
-  //           kintone.api.url("/k/v1/records.json", true),
-  //           "PUT",
-  //           body
-  //         );
-  //       } catch (error) {
-  //         console.log(error);
-  //       }
-  //     }
+      if (
+        event.type == "app.record.create.submit" ||
+        event.type == "app.record.edit.submit.success"
+      ) {
+        let body = {
+          app: kintone.app.getId(),
+          records: [
+            {
+              id: kintone.app.record.getId(),
+              record: updateRecord,
+            },
+          ],
+        };
+        try {
+          await kintone.api(
+            kintone.api.url("/k/v1/records.json", true),
+            "PUT",
+            body
+          );
+        } catch (error) {
+          console.error(error);
+        }
+      }
 
-  //     //------------------------Get space in App LiveStock-------------------------//
-  //     if (
-  //       event.type == "app.record.edit.show" ||
-  //       event.type == "app.record.edit.submit.success"
-  //     ) {
-  //       let GETSPACE = await kintone.api(
-  //         "/k/v1/preview/app/form/layout.json",
-  //         "GET",
-  //         {
-  //           app: kintone.app.getId(),
-  //         }
-  //       );
+      //------------------------Get space in App LiveStock-------------------------//
+      if (
+        event.type == "app.record.edit.show" ||
+        event.type == "app.record.edit.submit.success"
+      ) {
+        let GETSPACE = await kintone.api(
+          "/k/v1/preview/app/form/layout.json",
+          "GET",
+          {
+            app: kintone.app.getId(),
+          }
+        );
 
-  //       let SPACE = GETSPACE.layout.reduce((setSpace, layoutFromApp) => {
-  //         if (layoutFromApp.type === "GROUP") {
-  //           layoutFromApp.layout.forEach((layoutItem) => {
-  //             layoutItem.fields.forEach((field) => {
-  //               if (field.type === "SPACER") {
-  //                 setSpace.push({
-  //                   type: "space",
-  //                   value: field.elementId,
-  //                 });
-  //               }
-  //             });
-  //           });
-  //         } else {
-  //           layoutFromApp.fields.forEach((field) => {
-  //             if (field.type === "SPACER") {
-  //               setSpace.push({
-  //                 type: "space",
-  //                 value: field.elementId,
-  //               });
-  //             }
-  //           });
-  //         }
-  //         return setSpace;
-  //       }, []);
+        let SPACE = GETSPACE.layout.reduce((setSpace, layoutFromApp) => {
+          if (layoutFromApp.type === "GROUP") {
+            layoutFromApp.layout.forEach((layoutItem) => {
+              layoutItem.fields.forEach((field) => {
+                if (field.type === "SPACER") {
+                  setSpace.push({
+                    type: "space",
+                    value: field.elementId,
+                  });
+                }
+              });
+            });
+          } else {
+            layoutFromApp.fields.forEach((field) => {
+              if (field.type === "SPACER") {
+                setSpace.push({
+                  type: "space",
+                  value: field.elementId,
+                });
+              }
+            });
+          }
+          return setSpace;
+        }, []);
 
-  //       let sortedSpaces = SPACE.sort((a, b) => {
-  //         return a.value.localeCompare(b.value);
-  //       });
-  //       console.log(sortedSpaces);
+        let sortedSpaces = SPACE.sort((a, b) => {
+          return a.value.localeCompare(b.value);
+        });
 
-  //       let storedRecords = JSON.parse(
-  //         sessionStorage.getItem("kintoneRecords")
-  //       );
-  //       let storedDataSpace = JSON.parse(sessionStorage.getItem("dataspace"));
+        let storedRecords = JSON.parse(
+          sessionStorage.getItem("kintoneRecords")
+        );
+        let storedDataSpace = JSON.parse(sessionStorage.getItem("dataspace"));
 
-  //       if (storedDataSpace && storedDataSpace.length > 0) {
-  //         storedDataSpace.forEach((item) => {
-  //           sortedSpaces.forEach((space) => {
-  //             let selectElement;
-  //             console.log(item.spc);
-  //             console.log(space.value);
-  //             if (item.spc === space.value) {
-  //               console.log(storedRecords);
+        if (storedDataSpace && storedDataSpace.length > 0) {
+          storedDataSpace.forEach((item) => {
+            sortedSpaces.forEach((space) => {
+              let selectElement;
+              if (item.spc === space.value) {
+                let filteredRecords = storedRecords.filter(
+                  (rec) => rec.type.value == item.kind
+                );
+                let blankElement = kintone.app.record.getSpaceElement(
+                  space.value
+                );
 
-  //               let filteredRecords = storedRecords.filter(
-  //                 (rec) => rec.type.value == item.kind
-  //               );
-  //               let blankElement = kintone.app.record.getSpaceElement(
-  //                 space.value
-  //               );
+                if (blankElement) {
+                  let label = $("<div>", {
+                    class: "kintoneplugin-title",
+                    html:
+                      item.name +
+                      (item.required
+                        ? '<span class="kintoneplugin-require">*</span>'
+                        : ""),
+                  });
+                  let divMain = $("<div>", { class: "custom-main" }).css({
+                    display: "flex",
+                    flexDirection: "column",
+                  });
+                  let containerDiv = $("<div>", {
+                    class: "custom-container",
+                  }).css({
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  });
+                  let inputBox = $("<input>", {
+                    type: "number",
+                    class: "modern-input-box kintoneplugin-input-text",
+                    min: "0",
+                  }).css({
+                    width: "50px",
+                    hight: "50px",
+                  });
+                  let dropdownOuter = $("<div>", {
+                    class: "kintoneplugin-select-outer",
+                  }).css({
+                    marginTop: "6px",
+                  });
+                  let dropdown = $("<div>", { class: "kintoneplugin-select" });
+                  selectElement = $("<select>");
+                  selectElement.append(
+                    $("<option>").attr("value", "-----").text("-----")
+                  );
 
-  //               if (blankElement) {
-  //                 let label = $("<div>", {
-  //                   class: "kintoneplugin-title",
-  //                   html:
-  //                     item.name +
-  //                     (item.required
-  //                       ? '<span class="kintoneplugin-require">*</span>'
-  //                       : ""),
-  //                 });
-  //                 let divMain = $("<div>", { class: "custom-main" }).css({
-  //                   display: "flex",
-  //                   flexDirection: "column",
-  //                 });
-  //                 let containerDiv = $("<div>", {
-  //                   class: "custom-container",
-  //                 }).css({
-  //                   display: "flex",
-  //                   alignItems: "center",
-  //                   justifyContent: "center",
-  //                 });
-  //                 let inputBox = $("<input>", {
-  //                   type: "number",
-  //                   class: "modern-input-box kintoneplugin-input-text",
-  //                   min: "0",
-  //                 }).css({
-  //                   width: "50px",
-  //                   hight: "50px",
-  //                 });
-  //                 let dropdownOuter = $("<div>", {
-  //                   class: "kintoneplugin-select-outer",
-  //                 }).css({
-  //                   marginTop: "6px",
-  //                 });
-  //                 let dropdown = $("<div>", { class: "kintoneplugin-select" });
-  //                 selectElement = $("<select>");
-  //                 selectElement.append(
-  //                   $("<option>").attr("value", "-----").text("-----")
-  //                 );
+                  // Populate dropdown with stored records
+                  if (filteredRecords.length > 0) {
+                    filteredRecords.forEach((record) => {
+                      selectElement.append(
+                        $("<option>")
+                          .attr("value", record.name.value)
+                          .attr("code", record.code.value)
+                          .attr("types", record.type.value)
+                          .text(record.name.value)
+                      );
+                    });
+                  }
+                  inputBox.on("input", function () {
+                    let inputValue = $(this)
+                      .val()
+                      .replace(/[^0-9]/g, ""); // Keep only numbers
+                    if (inputValue.startsWith("0") && inputValue.length > 1) {
+                      inputValue = inputValue.replace(/^0+/, ""); // Remove leading zeros
+                    }
 
-  //                 // Populate dropdown with stored records
-  //                 if (filteredRecords.length > 0) {
-  //                   filteredRecords.forEach((record) => {
-  //                     selectElement.append(
-  //                       $("<option>")
-  //                         .attr("value", record.name.value)
-  //                         .attr("code", record.code.value)
-  //                         .attr("types", record.type.value)
-  //                         .text(record.name.value)
-  //                     );
-  //                   });
-  //                 }
-  //                 console.log(record);
-  //                 inputBox.on("input", function () {
-  //                   let inputValue = $(this)
-  //                     .val()
-  //                     .replace(/[^0-9]/g, ""); // Keep only numbers
-  //                   if (inputValue.startsWith("0") && inputValue.length > 1) {
-  //                     inputValue = inputValue.replace(/^0+/, ""); // Remove leading zeros
-  //                   }
+                    if (filteredRecords.length > 0) {
+                      let matchFound = false;
+                      filteredRecords.forEach((record) => {
+                        if (record.code.value === inputValue) {
+                          let existingOption = selectElement.find(
+                            `option[value="${record.name.value}"]`
+                          );
+                          let selectedType = existingOption.attr("types");
+                          let selectedCode = existingOption.attr("code");
+                          let selectedValue = existingOption.attr("value");
+                          if (existingOption.length > 0) {
+                            existingOption.prop("selected", true);
+                            setField(selectedCode, selectedValue, selectedType);
+                          } else {
+                            let newOption = $("<option>")
+                              .attr("value", record.name.value)
+                              .text(record.name.value);
+                            selectElement.append(newOption);
+                            newOption.prop("selected", true);
+                          }
+                          matchFound = true;
+                        }
+                      });
 
-  //                   if (filteredRecords.length > 0) {
-  //                     let matchFound = false;
-  //                     filteredRecords.forEach((record) => {
-  //                       if (record.code.value === inputValue) {
-  //                         let existingOption = selectElement.find(
-  //                           `option[value="${record.name.value}"]`
-  //                         );
-  //                         let selectedType = existingOption.attr("types");
-  //                         let selectedCode = existingOption.attr("code");
-  //                         let selectedValue = existingOption.attr("value");
-  //                         if (existingOption.length > 0) {
-  //                           existingOption.prop("selected", true);
-  //                           setField(selectedCode, selectedValue, selectedType);
-  //                         } else {
-  //                           let newOption = $("<option>")
-  //                             .attr("value", record.name.value)
-  //                             .text(record.name.value);
-  //                           selectElement.append(newOption);
-  //                           newOption.prop("selected", true);
-  //                         }
-  //                         matchFound = true;
-  //                       }
-  //                     });
+                      if (!matchFound) {
+                        let defaultOption = selectElement.find(
+                          'option[value="-----"]'
+                        );
+                        if (defaultOption.length > 0) {
+                          defaultOption.prop("selected", true);
+                        } else {
+                          let newDefaultOption = $("<option>")
+                            .attr("value", "-----")
+                            .text("-----");
+                          selectElement.append(newDefaultOption);
+                          newDefaultOption.prop("selected", true);
+                        }
+                      }
+                    }
+                  });
 
-  //                     if (!matchFound) {
-  //                       let defaultOption = selectElement.find(
-  //                         'option[value="-----"]'
-  //                       );
-  //                       if (defaultOption.length > 0) {
-  //                         defaultOption.prop("selected", true);
-  //                       } else {
-  //                         let newDefaultOption = $("<option>")
-  //                           .attr("value", "-----")
-  //                           .text("-----");
-  //                         selectElement.append(newDefaultOption);
-  //                         newDefaultOption.prop("selected", true);
-  //                       }
-  //                     }
-  //                   }
-  //                 });
+                  selectElement.on("change", function (e) {
+                    const selectedOption = $(e.target).find("option:selected");
+                    let nearestInput = $(this)
+                      .closest(".custom-container")
+                      .find(".kintoneplugin-input-text");
+                    nearestInput.val("");
+                    const selectedCode = selectedOption.attr("code");
+                    const selectedValue = selectedOption.attr("value");
+                    const selectedType = selectedOption.attr("types");
+                    nearestInput.val(selectedCode);
+                    setField(selectedCode, selectedValue, selectedType);
+                  });
 
-  //                 selectElement.on("change", function (e) {
-  //                   const selectedOption = $(e.target).find("option:selected");
-  //                   let nearestInput = $(this)
-  //                     .closest(".custom-container")
-  //                     .find(".kintoneplugin-input-text");
-  //                   nearestInput.val("");
-  //                   const selectedCode = selectedOption.attr("code");
-  //                   const selectedValue = selectedOption.attr("value");
-  //                   const selectedType = selectedOption.attr("types");
-  //                   nearestInput.val(selectedCode);
-  //                   setField(selectedCode, selectedValue, selectedType);
-  //                 });
+                  function setField(selectedCode, selectedValue, selectedType) {
+                    if (item.kind == selectedType) {
+                      const record = kintone.app.record.get();
+                      const fieldCode = item.name;
+                      const fieldCode2 = item.code;
+                      record.record[fieldCode].value = selectedValue;
+                      record.record[fieldCode2].value = selectedCode;
+                      kintone.app.record.set(record);
+                    }
+                  }
+                  dropdown.append(selectElement);
+                  dropdownOuter.append(dropdown);
+                  containerDiv.append(inputBox).append(dropdownOuter);
+                  divMain.append(label);
+                  divMain.append(containerDiv);
+                  $(blankElement).append(divMain);
 
-  //                 function setField(selectedCode, selectedValue, selectedType) {
-  //                   if (item.kind == selectedType) {
-  //                     const record = kintone.app.record.get();
-  //                     const fieldCode = item.name;
-  //                     const fieldCode2 = item.code;
-  //                     record.record[fieldCode].value = selectedValue;
-  //                     record.record[fieldCode2].value = selectedCode;
-  //                     kintone.app.record.set(record);
-  //                   }
-  //                 }
-  //                 dropdown.append(selectElement);
-  //                 dropdownOuter.append(dropdown);
-  //                 containerDiv.append(inputBox).append(dropdownOuter);
-  //                 divMain.append(label);
-  //                 divMain.append(containerDiv);
-  //                 $(blankElement).append(divMain);
+                  selectElement.each(function (index, selectElement) {
+                    $(selectElement)
+                      .find("option")
+                      .each(function (optionIndex, optionElement) {
+                        const codeValue = $(optionElement).attr("code");
+                        const typeValue = $(optionElement).attr("types");
+                        const optionValue = $(optionElement).val();
+                        $.each(record, function (fieldKey, fieldValue) {
+                          if (typeValue === fieldKey) {
+                            const fieldValueContent = fieldValue.value;
+                            if (fieldValueContent === optionValue) {
+                              $(optionElement).prop("selected", true);
+                              //setField(codeValue, optionValue, typeValue);
+                              const correspondingInputBox = inputBox.eq(index);
+                              correspondingInputBox.val(codeValue);
+                              return false;
+                            }
+                          }
+                        });
+                      });
+                  });
+                }
+              }
+            });
+            // Hide fields by code and name
+            kintone.app.record.setFieldShown(item.code, false);
+            kintone.app.record.setFieldShown(item.name, false);
+          });
+        }
+      }
 
-  //                 selectElement.each(function (index, selectElement) {
-  //                   $(selectElement)
-  //                     .find("option")
-  //                     .each(function (optionIndex, optionElement) {
-  //                       const codeValue = $(optionElement).attr("code");
-  //                       const typeValue = $(optionElement).attr("types");
-  //                       const optionValue = $(optionElement).val();
-  //                       $.each(record, function (fieldKey, fieldValue) {
-  //                         if (typeValue === fieldKey) {
-  //                           const fieldValueContent = fieldValue.value;
-  //                           if (fieldValueContent === optionValue) {
-  //                             $(optionElement).prop("selected", true);
-  //                             //setField(codeValue, optionValue, typeValue);
-  //                             const correspondingInputBox = inputBox.eq(index);
-  //                             console.log(correspondingInputBox);
-  //                             correspondingInputBox.val(codeValue);
-  //                             return false;
-  //                           }
-  //                         }
-  //                       });
-  //                     });
-  //                 });
-  //               }
-  //             }
-  //           });
-
-  //           // Hide fields by code and name
-
-  //           kintone.app.record.setFieldShown(item.code, false);
-  //           kintone.app.record.setFieldShown(item.name, false);
-  //         });
-  //       }
-  //     }
-
-  //     return event;
-  //   }
-  // );
+      return event;
+    }
+  );
 })(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
