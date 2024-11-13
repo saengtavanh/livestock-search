@@ -47,13 +47,13 @@
   font-size: 15px;
   min-Width: 20px;
   margin-Left: 1px;
-  color: rgb(12, 1, 1);
+  color: black;
   border: none !important;
   cursor: pointer;
   margin-top: 20px;
   outline: none !important;
   box-shadow: none !important;
-  background-color: #f5f5f5;
+  background-color: #F5F5F5;
   border-radius: 5px;
 }
 
@@ -61,25 +61,25 @@
   font-size: 15px;
   min-Width: 65px;
   margin-Left: 1px;
-  color: rgb(12, 1, 1);
+  color: black;
   border: none !important;
   cursor: pointer;
   margin-top: 20px;
   outline: none !important;
   box-shadow: none !important;
-  background-color: #f5f5f5;
+  background-color: #F5F5F5;
   border-radius: 5px;
 }
 
 .kintoneplugin-button-dialog-ok:hover {
-  color: rgb(12, 1, 1);
-  background-color: #f5f5f5;
+  color: black;
+  background-color: #F5F5F5;
 }
 
 .btnClear {
   font-size: 15px;
   min-Width: 15px;
-  color: rgb(12, 1, 1);
+  color: white;
   border: none;
   cursor: pointer;
   margin-top: 20px;
@@ -159,4 +159,12 @@
   border-radius: 5px;
   margin-bottom: -5px;
   margin-top: -5px;
+}
+
+.custom-confirm-button {
+  color: #f7f9fa !important;
+}
+
+.custom-cancel-button {
+  color: #3498db !important;
 }
