@@ -1326,7 +1326,7 @@ jQuery.noConflict();
                     delete bokTermObj[selectedId];
                     query = string;
                   } else {
-                    let changeToArray = changeToArray.filter(
+                    changeToArray = changeToArray.filter(
                       (item) =>
                         item !==
                         `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
@@ -1401,7 +1401,7 @@ jQuery.noConflict();
                     delete bokTermObj[selectedId.replace(/\s+/g, "_")];
                     query = string;
                   } else {
-                    let changeToArray = changeToArray.filter(
+                    changeToArray = changeToArray.filter(
                       (item) =>
                         item !==
                         `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
@@ -1511,7 +1511,7 @@ jQuery.noConflict();
               if (searchItem.nameMarker == "") {
                 let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                 const getId = $(`#${getIdElement}`);
-                const trimmedActive = bokTermsObj.active ? bokTermsObj.active.trim() : "";
+                const trimmedActive = bokTermsObj.active.trim();
                 getId
                   .closest(".search-item")
                   .find(".custom-dropdownTitle")

@@ -1052,7 +1052,7 @@ jQuery.noConflict();
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
-				confirmButtonText: "Yes",
+				confirmButtonText: "OK",
 				cancelButtonText: "Cancel",
 			}).then(async (result) => {
 				if (result.isConfirmed) {
