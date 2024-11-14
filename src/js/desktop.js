@@ -1,20 +1,9 @@
 jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
-  console.log(window.location.href);
-  // Create a URL object
-  const urlObj = new URL(window.location.href);
 
-  // Get the base URL with only the 'view' parameter
-  const baseUrl = `${urlObj.origin}${urlObj.pathname}?view=${urlObj.searchParams.get('view')}`;
-
-  console.log(baseUrl);
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
-
-
-
-
   async function setSessionStorageItems(configSettings) {
     for (const setting of configSettings) {
       try {
@@ -69,25 +58,26 @@ jQuery.noConflict();
 
     return CODEMASTER;
   }
+  async function getConditionView(GETVIEWS,viewId) {
+    for (const key in GETVIEWS.views) {
+      console.log('key', key);
+      if (GETVIEWS.views.hasOwnProperty(key)) {
+        let view = GETVIEWS.views[key];
+        console.log('view', view);
+        if (view.id == viewId) {
+          return view.filterCond;
+        }
+      }
+    }
+    return "";
+  }
+
   kintone.events.on("app.record.index.show", async (event) => {
 
     // get views from kintone app.
     let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
       app: kintone.app.getId()
     });
-
-    async function getConditionView(viewId) {
-      for (const key in GETVIEWS.views) {
-        console.log('key', key);
-        if (GETVIEWS.views.hasOwnProperty(key)) {
-          let view = GETVIEWS.views[key];
-          return view.id == viewId ? view.filterCond : "";
-        }
-      }
-    }
-
-    console.log(event);
-    console.log(await getConditionView(event.viewId));
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
     let CodeMaster = CONFIG.codeMasterSetting;
@@ -214,7 +204,7 @@ jQuery.noConflict();
       searchInfoList,
       dropDownChange
     ) {
-      let viewCond = await getConditionView(event.viewId)
+      let viewCond = await getConditionView(GETVIEWS, event.viewId)
       let query = event.viewId == 20 ? "" : viewCond ? `(${viewCond})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
