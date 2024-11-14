@@ -1,16 +1,9 @@
 jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
+
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
-  // get field from kintone app.
-  
-	let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
-		app: kintone.app.getId()
-	});
-  console.log('GETVIEWS', GETVIEWS);
-  console.log('filter condition', GETVIEWS.views.View1.filterCond);
-
   async function setSessionStorageItems(configSettings) {
     for (const setting of configSettings) {
       try {
@@ -19,19 +12,19 @@ jQuery.noConflict();
             app: setting.appId,
             query: setting.typeField,
           });
-  
+
           const codeAndName = dataFromMaster.map((record) => ({
             code: record.code.value,
             name: record.name.value,
           }));
-  
+
           const dataToStore = {
             AppId: setting.appId,
             ApiToken: setting.apiToken,
             codeAndName: codeAndName,
             condition: setting.typeField,
           };
-  
+
           sessionStorage.setItem(
             `bokMst${setting.masterId}`,
             JSON.stringify(dataToStore)
@@ -65,7 +58,26 @@ jQuery.noConflict();
 
     return CODEMASTER;
   }
+  async function getConditionView(GETVIEWS,viewId) {
+    for (const key in GETVIEWS.views) {
+      console.log('key', key);
+      if (GETVIEWS.views.hasOwnProperty(key)) {
+        let view = GETVIEWS.views[key];
+        console.log('view', view);
+        if (view.id == viewId) {
+          return view.filterCond;
+        }
+      }
+    }
+    return "";
+  }
+
   kintone.events.on("app.record.index.show", async (event) => {
+
+    // get views from kintone app.
+    let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
+      app: kintone.app.getId()
+    });
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
     let CodeMaster = CONFIG.codeMasterSetting;
@@ -170,7 +182,12 @@ jQuery.noConflict();
     let searchProcess = async function (searchInfoList) {
       let query = await getValueConditionAndBuildQuery(searchInfoList, false);
       let queryEscape = encodeURIComponent(query);
-      let currentUrlBase = window.location.href.match(/\S+\//)[0];
+      const newUrl = new URL(window.location.href);
+
+      // Get the base URL with only the 'view' parameter
+      const baseUrl = `${newUrl.origin}${newUrl.pathname}`;
+
+      const currentUrlBase = baseUrl;
       if (bokTermsObject) {
         bokTermsGet = { ...bokTermsGet, ...bokTermsObject };
       }
@@ -178,25 +195,26 @@ jQuery.noConflict();
       const bokTermsString = JSON.stringify(bokTermsGet);
       const bokTerms = encodeURIComponent(bokTermsString);
       let url =
-        currentUrlBase + "?query=" + queryEscape + "&bokTerms=" + bokTerms + "";
+        currentUrlBase + `?view=${event.viewId}${queryEscape ? "&query=" + queryEscape : ""}&bokTerms=${bokTerms}`;
 
       window.location.href = url;
     };
 
-    let getValueConditionAndBuildQuery = function (
+    let getValueConditionAndBuildQuery = async function (
       searchInfoList,
       dropDownChange
     ) {
-      let query = "";
+      let viewCond = await getConditionView(GETVIEWS, event.viewId)
+      let query = event.viewId == 20 ? "" : viewCond ? `(${viewCond})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
       let checkFieldForSearch = [];
       let mergedBokTermsObject = {};
-      
+
       searchInfoList.forEach((searchInfo) => {
         checkFieldForSearch = searchContent.filter((item) => item.groupName == searchInfo.groupName);
-        if (checkFieldForSearch && checkFieldForSearch[0].fieldForSearch) {
-          console.log("checkFieldForSearch", checkFieldForSearch[0].fieldForSearch);
+        if (checkFieldForSearch && checkFieldForSearch[0]?.fieldForSearch) {
+          console.log("checkFieldForSearch", checkFieldForSearch[0]?.fieldForSearch);
           searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
         }
         let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
@@ -386,7 +404,7 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
-          if (searchInfo.fieldForSearch !== "-----") {
+          if (searchInfo?.fieldForSearch !== "-----") {
             searchValue = transformStringExact($(`#${replacedText}`).val());
           } else {
             searchValue = $(`#${replacedText}`).val();
@@ -683,7 +701,7 @@ jQuery.noConflict();
 
       if (display.nameMarker) {
         if (filteredRecords[0]?.masterId !== "-----") {
-          
+
           let checkValue = [];
           filteredRecords.forEach((item) => {
             // if (!CODEMASTER) return;
@@ -743,7 +761,7 @@ jQuery.noConflict();
         }
       } else {
         if (filteredRecords[0]?.masterId !== "-----") {
-          
+
           let checkValue = [];
           dropDownTitle.text(initialContent.searchName);
           $.each(CODEMASTER, (index, value) => {
@@ -840,7 +858,7 @@ jQuery.noConflict();
         );
         if (matchingContent) {
           if (matchingContent.masterId !== "-----") {
-            
+
             let checkValue = [];
             $.each(CODEMASTER, (index, value) => {
               if (matchingContent.masterId === value.numericKey) {
@@ -907,7 +925,7 @@ jQuery.noConflict();
           (content) => content.searchTarget === selectedItem.searchTarget
         );
         if (selectedContent.masterId !== "-----") {
-          
+
           let checkValue = [];
           $.each(CODEMASTER, (index, data) => {
             if (selectedContent.masterId === data.numericKey) {
@@ -1031,7 +1049,12 @@ jQuery.noConflict();
       bokTermsObject = { ...bokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelValue) }
       let joinObject = { ...bokTermsGet, ...bokTermsObject };
 
-      const currentUrlBase = window.location.href.match(/\S+\//)[0];
+      const url = new URL(window.location.href);
+
+      // Get the base URL with only the 'view' parameter
+      const baseUrl = `${url.origin}${url.pathname}`;
+
+      const currentUrlBase = baseUrl;
       const bokTermsString = JSON.stringify(joinObject);
       const bokTerms = encodeURIComponent(bokTermsString);
 
@@ -1041,7 +1064,7 @@ jQuery.noConflict();
 
       let querySuccess = encodeURIComponent(query);
 
-      const QueryUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
+      const QueryUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
       const urlObj = new URL(window.location.href);
       const bokTerm = urlObj.searchParams.get("bokTerms");
       if (bokTerm == null) {
@@ -1073,7 +1096,7 @@ jQuery.noConflict();
           let endNew = "";
           let Current_Date_id = "";
           let checkFieldForSearchForDropDown;
-          
+
           Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
             //DODO
             searchInfoList.forEach((field) => {
@@ -1504,7 +1527,7 @@ jQuery.noConflict();
 
         querySuccess = encodeURIComponent(query);
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-        const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
+        const updatedUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
         window.location.href = updatedUrl;
       }
     }
@@ -1766,9 +1789,14 @@ jQuery.noConflict();
               }
             }
           });
-          const currentUrlBase = window.location.href.match(/\S+\//)[0];
+          const url = new URL(window.location.href);
+
+          // Get the base URL with only the 'view' parameter
+          const baseUrl = `${url.origin}${url.pathname}`;
+
+          const currentUrlBase = baseUrl;
           const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-          const updatedUrl = `${currentUrlBase}?&bokTerms=${mergedBokTerms}`;
+          const updatedUrl = `${currentUrlBase}?view=${event.viewId}&bokTerms=${mergedBokTerms}`;
           window.location.href = updatedUrl;
         }
       });

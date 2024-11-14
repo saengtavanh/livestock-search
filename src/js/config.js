@@ -498,6 +498,7 @@ jQuery.noConflict();
 		}
 		if (condition == "save" || condition == "export") {
 			let searchContentError = {};
+			let searchContentMessage = "";
 			const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
 			let searchNameArray = [];
 			for (const [index, element] of searchContentTable.entries()) {
@@ -530,7 +531,7 @@ jQuery.noConflict();
 					} else {
 						$(searchName).addClass('validation-error');
 						// errorMessage += `<p>Search name "${searchName.val()}" already exists.</p>`;
-						errorMessage += `<p>検索名「${searchName.val()}」はすでに存在しています。</p>`;
+						searchContentMessage += `<p>検索名「${searchName.val()}」はすでに存在しています。</p>`;
 						hasError = true;
 					}
 				}
@@ -548,7 +549,7 @@ jQuery.noConflict();
 						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER") {
 							$(targetFields).parent().removeClass('validation-error');
 						} else {
-							errorMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
+							searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
 							$(targetFields).parent().addClass('validation-error');
 							hasError = true;
 						}
@@ -558,7 +559,7 @@ jQuery.noConflict();
 							if (fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -572,7 +573,7 @@ jQuery.noConflict();
 							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -583,7 +584,7 @@ jQuery.noConflict();
 							if (fieldType == "DATE" || fieldType == "DATETIME") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -593,7 +594,7 @@ jQuery.noConflict();
 							if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -610,7 +611,7 @@ jQuery.noConflict();
 						case "dropdown_exact":
 							$(fieldForSearch).parent().addClass('validation-error');
 							hasError = true;
-							errorMessage += `<p>Search type "${currentGroup[0].searchType} is can not select field for search"</p>`;
+							searchContentMessage += `<p>Search type "${currentGroup[0].searchType} is can not select field for search"</p>`;
 							break;
 
 						default:
@@ -620,7 +621,7 @@ jQuery.noConflict();
 								fieldForSearchArray.push(fieldForSearch.val());
 							} else {
 								$(fieldForSearch).parent().addClass('validation-error');
-								errorMessage += `<p>Field "${fieldForSearch.val()}" already exists.</p>`;
+								searchContentMessage += `<p>Field "${fieldForSearch.val()}" already exists.</p>`;
 								hasError = true;
 							}
 							break;
@@ -636,11 +637,12 @@ jQuery.noConflict();
 
 			}
 			if(searchContentError) {
-				errorMessage += `<p>【検索内容の定義】</p>
+				searchContentMessage += `
 					${searchContentError.searchName ? searchContentError.searchName : ''}
 					${searchContentError.targetField ? searchContentError.targetField : ''}
 					${searchContentError.fieldForSearch ? searchContentError.fieldForSearch : ''}`;
 			}
+			if (searchContentMessage) errorMessage += "<p>【検索内容の定義】</p>" + searchContentMessage;
 		}
 
 		if (hasError) Swal10.fire({
