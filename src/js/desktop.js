@@ -214,7 +214,8 @@ jQuery.noConflict();
       searchInfoList,
       dropDownChange
     ) {
-      let query = event.viewId != 20 ? `(${await getConditionView(event.viewId)})` : "";
+      let viewCond = await getConditionView(event.viewId)
+      let query = event.viewId == 20 ? "" : viewCond ? `(${viewCond})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
       let checkFieldForSearch = [];
