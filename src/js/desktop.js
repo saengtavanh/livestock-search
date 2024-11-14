@@ -11,24 +11,7 @@ jQuery.noConflict();
   console.log(baseUrl);
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
-  // get views from kintone app.
-  let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
-    app: kintone.app.getId()
-  });
 
-  async function getConditionView(viewId) {
-    for (const key in GETVIEWS.views) {
-      console.log('key', key);
-      if (GETVIEWS.views.hasOwnProperty(key)) {
-        let view = GETVIEWS.views[key];
-        // console.log('view', view);
-        // if (view.id == viewId) return view.filterCond
-        return view.id == viewId ? view.filterCond : "";
-
-        // console.log("viewId:", viewId);
-      }
-    }
-  }
 
 
 
@@ -87,6 +70,22 @@ jQuery.noConflict();
     return CODEMASTER;
   }
   kintone.events.on("app.record.index.show", async (event) => {
+
+    // get views from kintone app.
+    let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
+      app: kintone.app.getId()
+    });
+
+    async function getConditionView(viewId) {
+      for (const key in GETVIEWS.views) {
+        console.log('key', key);
+        if (GETVIEWS.views.hasOwnProperty(key)) {
+          let view = GETVIEWS.views[key];
+          return view.id == viewId ? view.filterCond : "";
+        }
+      }
+    }
+
     console.log(event);
     console.log(await getConditionView(event.viewId));
     // get field form SCHEMA
@@ -196,7 +195,7 @@ jQuery.noConflict();
       const newUrl = new URL(window.location.href);
 
       // Get the base URL with only the 'view' parameter
-      const baseUrl = `${newUrl.origin}${newUrl.pathname}?view=${newUrl.searchParams.get('view')}`;
+      const baseUrl = `${newUrl.origin}${newUrl.pathname}`;
 
       const currentUrlBase = baseUrl;
       if (bokTermsObject) {
@@ -206,7 +205,7 @@ jQuery.noConflict();
       const bokTermsString = JSON.stringify(bokTermsGet);
       const bokTerms = encodeURIComponent(bokTermsString);
       let url =
-        currentUrlBase + "&query=" + queryEscape + "&bokTerms=" + bokTerms + "";
+        currentUrlBase + `?view=${event.viewId}&query=` + queryEscape + "&bokTerms=" + bokTerms + "";
 
       window.location.href = url;
     };
@@ -215,7 +214,7 @@ jQuery.noConflict();
       searchInfoList,
       dropDownChange
     ) {
-      let query = await getConditionView(event.viewId);
+      let query = event.viewId != 20 ? `(${await getConditionView(event.viewId)})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
       let checkFieldForSearch = [];
@@ -1062,7 +1061,7 @@ jQuery.noConflict();
       const url = new URL(window.location.href);
 
       // Get the base URL with only the 'view' parameter
-      const baseUrl = `${url.origin}${url.pathname}?view=${url.searchParams.get('view')}`;
+      const baseUrl = `${url.origin}${url.pathname}`;
 
       const currentUrlBase = baseUrl;
       const bokTermsString = JSON.stringify(joinObject);
@@ -1074,7 +1073,7 @@ jQuery.noConflict();
 
       let querySuccess = encodeURIComponent(query);
 
-      const QueryUrl = `${currentUrlBase}&query=${querySuccess}&bokTerms=${bokTerms}`;
+      const QueryUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
       const urlObj = new URL(window.location.href);
       const bokTerm = urlObj.searchParams.get("bokTerms");
       if (bokTerm == null) {
@@ -1537,7 +1536,7 @@ jQuery.noConflict();
 
         querySuccess = encodeURIComponent(query);
         const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-        const updatedUrl = `${currentUrlBase}&query=${querySuccess}&bokTerms=${bokTerms}`;
+        const updatedUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
         window.location.href = updatedUrl;
       }
     }
@@ -1802,11 +1801,11 @@ jQuery.noConflict();
           const url = new URL(window.location.href);
 
           // Get the base URL with only the 'view' parameter
-          const baseUrl = `${url.origin}${url.pathname}?view=${url.searchParams.get('view')}`;
+          const baseUrl = `${url.origin}${url.pathname}`;
 
           const currentUrlBase = baseUrl;
           const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-          const updatedUrl = `${currentUrlBase}&bokTerms=${mergedBokTerms}`;
+          const updatedUrl = `${currentUrlBase}?view=${event.viewId}&bokTerms=${mergedBokTerms}`;
           window.location.href = updatedUrl;
         }
       });
