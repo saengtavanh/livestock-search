@@ -205,7 +205,7 @@ jQuery.noConflict();
       const bokTermsString = JSON.stringify(bokTermsGet);
       const bokTerms = encodeURIComponent(bokTermsString);
       let url =
-        currentUrlBase + `?view=${event.viewId}&query=` + queryEscape + "&bokTerms=" + bokTerms + "";
+        currentUrlBase + `?view=${event.viewId}${queryEscape ? "&query=" + queryEscape : ""}&bokTerms=${bokTerms}`;
 
       window.location.href = url;
     };
@@ -223,8 +223,8 @@ jQuery.noConflict();
 
       searchInfoList.forEach((searchInfo) => {
         checkFieldForSearch = searchContent.filter((item) => item.groupName == searchInfo.groupName);
-        if (checkFieldForSearch && checkFieldForSearch[0].fieldForSearch) {
-          console.log("checkFieldForSearch", checkFieldForSearch[0].fieldForSearch);
+        if (checkFieldForSearch && checkFieldForSearch[0]?.fieldForSearch) {
+          console.log("checkFieldForSearch", checkFieldForSearch[0]?.fieldForSearch);
           searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
         }
         let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
@@ -414,7 +414,7 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
-          if (searchInfo.fieldForSearch !== "-----") {
+          if (searchInfo?.fieldForSearch !== "-----") {
             searchValue = transformStringExact($(`#${replacedText}`).val());
           } else {
             searchValue = $(`#${replacedText}`).val();
