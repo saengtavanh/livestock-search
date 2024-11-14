@@ -64,9 +64,7 @@ jQuery.noConflict();
       if (GETVIEWS.views.hasOwnProperty(key)) {
         let view = GETVIEWS.views[key];
         console.log('view', view);
-        if (view.id == viewId) {
-          return view.filterCond;
-        }
+        if (view.id == viewId) return view.filterCond;
       }
     }
     return "";
