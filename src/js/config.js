@@ -172,7 +172,7 @@ jQuery.noConflict();
 			let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
 			let appId = item.appId;
-			if (!appId) continue;
+			// if (!appId) continue;
 			let apiToken = item.apiToken;
 			let body = { app: appId };
 			if (apiToken) body.token = apiToken;
@@ -181,34 +181,34 @@ jQuery.noConflict();
 			let selectedCode = item.codeField;
 			let selectedName = item.nameField;
 			try {
-				if (checkData.length <= 0) {
-					response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
-						app: appId
-					}).then(res => { return res.properties });
-					allResponse.push({ appId, response });
-				} else {
-					response = checkData[0].response;
-				}
+				// if (checkData.length <= 0) {
+				// 	response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
+				// 		app: appId
+				// 	}).then(res => { return res.properties });
+				// 	allResponse.push({ appId, response });
+				// } else {
+				// 	response = checkData[0].response;
+				// }
 
 				$(rowForClone).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
 				$(rowForClone).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-				$(rowForClone).find('select#code_field').append(
-					$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
-				);
-				$(rowForClone).find('select#name_field').append(
-					$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
-				);
-				// Check to see if not same value is set "-----".
-				if ($(rowForClone).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
-					selectedCode = "-----";
-				}
-				if ($(rowForClone).find('select#name_field option[value="' + selectedName + '"]').length == 0) {
-					selectedName = "-----";
-				}
+				// $(rowForClone).find('select#code_field').append(
+				// 	$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
+				// );
+				// $(rowForClone).find('select#name_field').append(
+				// 	$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
+				// );
+				// // Check to see if not same value is set "-----".
+				// if ($(rowForClone).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
+				// 	selectedCode = "-----";
+				// }
+				// if ($(rowForClone).find('select#name_field option[value="' + selectedName + '"]').length == 0) {
+				// 	selectedName = "-----";
+				// }
 
 				// Set to the value selected.
-				$(rowForClone).find('select#code_field').val(selectedCode);
-				$(rowForClone).find('select#name_field').val(selectedName);
+				$(rowForClone).find('select#code_field').val("-----");
+				$(rowForClone).find('select#name_field').val("-----");
 				$(rowForClone).find("#master_id").val(item.masterId);
 				$(rowForClone).find("#app_id").val(item.appId);
 				$(rowForClone).find("#api_token").val(item.apiToken);
@@ -222,11 +222,29 @@ jQuery.noConflict();
 		getConfig.searchContent.forEach((item) => {
 			let rowForClone = $("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-prompt-template tr:last-child").after(rowForClone);
-			rowForClone.find("#group_name_ref").val(item.groupName);
+			// rowForClone.find("#group_name_ref").val(item.groupName);
 			rowForClone.find("#search_name").val(item.searchName);
 			// rowForClone.find("#master_id_ref").val(item.masterId);
-			rowForClone.find("#search_target").val(item.searchTarget);
-			rowForClone.find("#field_for_search").val(item.fieldForSearch);
+			// rowForClone.find("#search_target").val(item.searchTarget);
+			// rowForClone.find("#field_for_search").val(item.fieldForSearch);
+
+			if ($(rowForClone).find('select#group_name_ref option[value="' + item.groupName + '"]').length == 0) {
+				rowForClone.find("#group_name_ref").val("-----");
+			} else {
+				rowForClone.find("#group_name_ref").val(item.groupName);
+			}
+
+			if ($(rowForClone).find('select#search_target option[value="' + item.searchTarget + '"]').length == 0) {
+				rowForClone.find("#search_target").val("-----");
+			} else {
+				rowForClone.find("#search_target").val(item.searchTarget);
+			}
+
+			if ($(rowForClone).find('select#field_for_search option[value="' + item.fieldForSearch + '"]').length == 0) {
+				rowForClone.find("#field_for_search").val("-----");
+			} else {
+				rowForClone.find("#field_for_search").val(item.fieldForSearch);
+			}
 
 			if ($(rowForClone).find('select#master_id_ref option[value="' + item.masterId + '"]').length == 0) {
 				rowForClone.find("#master_id_ref").val("-----");
