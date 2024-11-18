@@ -67,24 +67,25 @@ jQuery.noConflict();
 
     return CODEMASTER;
   }
+
+  async function getConditionView(GETVIEWS,viewId) {
+    for (const key in GETVIEWS.views) {
+      console.log("key", key);
+      if (GETVIEWS.views.hasOwnProperty(key)) {
+        let view = GETVIEWS.views[key];
+        if (view.id == viewId) {
+          return view.filterCond;
+        }
+      }
+    }
+    return "";
+  }
+
   kintone.events.on("app.record.index.show", async (event) => {
     // get views from kintone app.
     let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
       app: kintone.app.getId(),
     });
-
-    async function getConditionView(viewId) {
-      for (const key in GETVIEWS.views) {
-        console.log("key", key);
-        if (GETVIEWS.views.hasOwnProperty(key)) {
-          let view = GETVIEWS.views[key];
-          return view.id == viewId ? view.filterCond : "";
-        }
-      }
-    }
-
-    console.log(event);
-    console.log(await getConditionView(event.viewId));
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
 
@@ -170,8 +171,8 @@ jQuery.noConflict();
     });
 
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
-    if (!spaceEl)
-      throw new Error("The header element is unavailable on this page.");
+    // if (!spaceEl)
+    //   throw new Error("The header element is unavailable on this page.");
 
     if ($(spaceEl).find(".custom-space-el").length > 0) {
       return;
@@ -197,11 +198,7 @@ jQuery.noConflict();
       const bokTerms = encodeURIComponent(bokTermsString);
       let url =
         currentUrlBase +
-        `?view=${event.viewId}&query=` +
-        queryEscape +
-        "&bokTerms=" +
-        bokTerms +
-        "";
+        `?view=${event.viewId}${queryEscape ? "&query=" + queryEscape : ""}&bokTerms=${bokTerms}`;
 
       window.location.href = url;
     };
@@ -210,8 +207,8 @@ jQuery.noConflict();
       searchInfoList,
       dropDownChange
     ) {
-      let viewCoud = await getConditionView(event.viewId);
-      let query = event.viewId == 20 ? "" : viewCoud ? `(${viewCoud})` : "";
+      let viewCond = await getConditionView(GETVIEWS,event.viewId);
+      let query = event.viewId == 20 ? "" : viewCond ? `(${viewCond})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
       let checkFieldForSearch = [];
@@ -490,14 +487,14 @@ jQuery.noConflict();
             ).val();
             queryChild += queryChild
               ? `${query && !queryChild ? " and " : ""}` +
-              " or (" +
-              field +
-              " " +
-              ">=" +
-              ' "' +
-              startValue +
-              '"' +
-              "))"
+                " or (" +
+                field +
+                " " +
+                ">=" +
+                ' "' +
+                startValue +
+                '"' +
+                "))"
               : "((" + field + " " + ">=" + ' "' + startValue + '"' + ")";
           } else if (endValue && startValue == "") {
             bokTermsGet[`${replacedText}_end`] = $(
@@ -505,14 +502,14 @@ jQuery.noConflict();
             ).val();
             queryChild += queryChild
               ? `${query && !queryChild ? " and " : ""}` +
-              " or (" +
-              field +
-              " " +
-              "<=" +
-              ' "' +
-              endValue +
-              '"' +
-              "))"
+                " or (" +
+                field +
+                " " +
+                "<=" +
+                ' "' +
+                endValue +
+                '"' +
+                "))"
               : "((" + field + " " + "<=" + ' "' + endValue + '"' + ")";
           } else if (startValue && endValue) {
             bokTermsGet[`${replacedText}_start`] = $(
@@ -523,35 +520,35 @@ jQuery.noConflict();
             ).val();
             queryChild += queryChild
               ? " or ((" +
-              field +
-              " " +
-              ">=" +
-              ' "' +
-              startValue +
-              '")' +
-              " and (" +
-              field +
-              " " +
-              "<=" +
-              ' "' +
-              endValue +
-              '"' +
-              "))"
+                field +
+                " " +
+                ">=" +
+                ' "' +
+                startValue +
+                '")' +
+                " and (" +
+                field +
+                " " +
+                "<=" +
+                ' "' +
+                endValue +
+                '"' +
+                "))"
               : "((" +
-              field +
-              " " +
-              ">=" +
-              ' "' +
-              startValue +
-              '")' +
-              " and (" +
-              field +
-              " " +
-              "<=" +
-              ' "' +
-              endValue +
-              '"' +
-              "))";
+                field +
+                " " +
+                ">=" +
+                ' "' +
+                startValue +
+                '")' +
+                " and (" +
+                field +
+                " " +
+                "<=" +
+                ' "' +
+                endValue +
+                '"' +
+                "))";
           }
         });
       } else {
@@ -561,42 +558,42 @@ jQuery.noConflict();
           ).val();
           queryChild += queryChild
             ? `${query && !queryChild ? " and " : ""}` +
-            " or (" +
-            searchInfo.target_field[0] +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '"' +
-            ")"
+              " or (" +
+              searchInfo.target_field[0] +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '"' +
+              ")"
             : "(" +
-            searchInfo.target_field[0] +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '"' +
-            ")";
+              searchInfo.target_field[0] +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '"' +
+              ")";
         } else if (endValue && startValue == "") {
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
           queryChild += queryChild
             ? `${query && !queryChild ? " and " : ""}` +
-            " or (" +
-            searchInfo.target_field[0] +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            ")"
+              " or (" +
+              searchInfo.target_field[0] +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              ")"
             : "(" +
-            searchInfo.target_field[0] +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            ")";
+              searchInfo.target_field[0] +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              ")";
         } else if (startValue && endValue) {
           bokTermsGet[`${replacedText}_start`] = $(
             `#${replacedText}_start`
@@ -604,35 +601,35 @@ jQuery.noConflict();
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
           queryChild += queryChild
             ? " or ((" +
-            searchInfo.target_field[0] +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '")' +
-            " and (" +
-            searchInfo.target_field[0] +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            "))"
+              searchInfo.target_field[0] +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '")' +
+              " and (" +
+              searchInfo.target_field[0] +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))"
             : "((" +
-            searchInfo.target_field[0] +
-            " " +
-            ">=" +
-            ' "' +
-            startValue +
-            '")' +
-            " and (" +
-            searchInfo.target_field[0] +
-            " " +
-            "<=" +
-            ' "' +
-            endValue +
-            '"' +
-            "))";
+              searchInfo.target_field[0] +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '")' +
+              " and (" +
+              searchInfo.target_field[0] +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))";
         }
       }
 
@@ -1348,142 +1345,142 @@ jQuery.noConflict();
                       if (startData && endData == "") {
                         queryChildRank += queryChildRank
                           ? " or (" +
-                          fields +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startData +
-                          '"' +
-                          "))"
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startData +
+                            '"' +
+                            "))"
                           : "((" +
-                          fields +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startData +
-                          '"' +
-                          ")";
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startData +
+                            '"' +
+                            ")";
                       } else if (endData && startData == "") {
                         queryChildRank += queryChildRank
                           ? " or (" +
-                          fields +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endData +
-                          '"' +
-                          "))"
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endData +
+                            '"' +
+                            "))"
                           : "((" +
-                          fields +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endData +
-                          '"' +
-                          ")";
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endData +
+                            '"' +
+                            ")";
                       } else if (startData && endData) {
                         queryChildRank += queryChildRank
                           ? " or ((" +
-                          fields +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startData +
-                          '")' +
-                          " and (" +
-                          fields +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endData +
-                          '"' +
-                          "))"
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startData +
+                            '")' +
+                            " and (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endData +
+                            '"' +
+                            "))"
                           : "((" +
-                          fields +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startData +
-                          '")' +
-                          " and (" +
-                          fields +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endData +
-                          '"' +
-                          "))";
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startData +
+                            '")' +
+                            " and (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endData +
+                            '"' +
+                            "))";
                       }
                     });
                   } else {
                     if (startData && endData == "") {
                       queryChildRank += queryChildRank
                         ? " or (" +
-                        field.target_field[0] +
-                        " " +
-                        ">=" +
-                        ' "' +
-                        startData +
-                        '"' +
-                        ")"
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '"' +
+                          ")"
                         : "(" +
-                        field.target_field[0] +
-                        " " +
-                        ">=" +
-                        ' "' +
-                        startData +
-                        '"' +
-                        ")";
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '"' +
+                          ")";
                     } else if (endData && startData == "") {
                       queryChildRank += queryChildRank
                         ? " or (" +
-                        field.target_field[0] +
-                        " " +
-                        "<=" +
-                        ' "' +
-                        endData +
-                        '"' +
-                        ")"
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          ")"
                         : "(" +
-                        field.target_field[0] +
-                        " " +
-                        "<=" +
-                        ' "' +
-                        endData +
-                        '"' +
-                        ")";
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          ")";
                     } else if (startData && endData) {
                       queryChildRank += queryChildRank
                         ? " or ((" +
-                        field.target_field[0] +
-                        " " +
-                        ">=" +
-                        ' "' +
-                        startData +
-                        '")' +
-                        " and (" +
-                        field.target_field[0] +
-                        " " +
-                        "<=" +
-                        ' "' +
-                        endData +
-                        '"' +
-                        "))"
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '")' +
+                          " and (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          "))"
                         : "((" +
-                        field.target_field[0] +
-                        " " +
-                        ">=" +
-                        ' "' +
-                        startData +
-                        '")' +
-                        " and (" +
-                        field.target_field[0] +
-                        " " +
-                        "<=" +
-                        ' "' +
-                        endData +
-                        '"' +
-                        "))";
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '")' +
+                          " and (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          "))";
                     }
                   }
 
@@ -1502,142 +1499,142 @@ jQuery.noConflict();
                         if (startNew && endNew == "") {
                           queryChildRank += queryChildRank
                             ? " or (" +
-                            fields +
-                            " " +
-                            ">=" +
-                            ' "' +
-                            startNew +
-                            '"' +
-                            "))"
+                              fields +
+                              " " +
+                              ">=" +
+                              ' "' +
+                              startNew +
+                              '"' +
+                              "))"
                             : "((" +
-                            fields +
-                            " " +
-                            ">=" +
-                            ' "' +
-                            startNew +
-                            '"' +
-                            ")";
+                              fields +
+                              " " +
+                              ">=" +
+                              ' "' +
+                              startNew +
+                              '"' +
+                              ")";
                         } else if (endNew && startNew == "") {
                           queryChildRank += queryChildRank
                             ? " or (" +
-                            fields +
-                            " " +
-                            "<=" +
-                            ' "' +
-                            endNew +
-                            '"' +
-                            "))"
+                              fields +
+                              " " +
+                              "<=" +
+                              ' "' +
+                              endNew +
+                              '"' +
+                              "))"
                             : " or ((" +
-                            fields +
-                            " " +
-                            "<=" +
-                            ' "' +
-                            endNew +
-                            '"' +
-                            ")";
+                              fields +
+                              " " +
+                              "<=" +
+                              ' "' +
+                              endNew +
+                              '"' +
+                              ")";
                         } else if (startNew && endNew) {
                           queryChildRank += queryChildRank
                             ? " or ((" +
-                            fields +
-                            " " +
-                            ">=" +
-                            ' "' +
-                            startNew +
-                            '")' +
-                            " and (" +
-                            fields +
-                            " " +
-                            "<=" +
-                            ' "' +
-                            endNew +
-                            '"' +
-                            "))"
+                              fields +
+                              " " +
+                              ">=" +
+                              ' "' +
+                              startNew +
+                              '")' +
+                              " and (" +
+                              fields +
+                              " " +
+                              "<=" +
+                              ' "' +
+                              endNew +
+                              '"' +
+                              "))"
                             : "((" +
-                            fields +
-                            " " +
-                            ">=" +
-                            ' "' +
-                            startNew +
-                            '")' +
-                            " and (" +
-                            fields +
-                            " " +
-                            "<=" +
-                            ' "' +
-                            endNew +
-                            '"' +
-                            "))";
+                              fields +
+                              " " +
+                              ">=" +
+                              ' "' +
+                              startNew +
+                              '")' +
+                              " and (" +
+                              fields +
+                              " " +
+                              "<=" +
+                              ' "' +
+                              endNew +
+                              '"' +
+                              "))";
                         }
                       });
                     } else {
                       if (startNew && endNew == "") {
                         queryChildRank += queryChildRank
                           ? " or (" +
-                          field.target_field[0] +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startNew +
-                          '"' +
-                          ")"
+                            field.target_field[0] +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '"' +
+                            ")"
                           : "(" +
-                          field.target_field[0] +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startNew +
-                          '"' +
-                          ")";
+                            field.target_field[0] +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '"' +
+                            ")";
                       } else if (endNew && startNew == "") {
                         queryChildRank += queryChildRank
                           ? " or (" +
-                          field.target_field[0] +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endNew +
-                          '"' +
-                          ")"
+                            field.target_field[0] +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            ")"
                           : "or (" +
-                          field.target_field[0] +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endNew +
-                          '"' +
-                          ")";
+                            field.target_field[0] +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            ")";
                       } else if (startNew && endNew) {
                         queryChildRank += queryChildRank
                           ? " or ((" +
-                          field.target_field[0] +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startNew +
-                          '")' +
-                          " and (" +
-                          field.target_field[0] +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endNew +
-                          '"' +
-                          "))"
+                            field.target_field[0] +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '")' +
+                            " and (" +
+                            field.target_field[0] +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            "))"
                           : "((" +
-                          field.target_field[0] +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startNew +
-                          '")' +
-                          " and (" +
-                          field.target_field[0] +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endNew +
-                          '"' +
-                          "))";
+                            field.target_field[0] +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '")' +
+                            " and (" +
+                            field.target_field[0] +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            "))";
                       }
                     }
 
