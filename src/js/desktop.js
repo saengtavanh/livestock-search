@@ -884,7 +884,6 @@ jQuery.noConflict();
                 });
               }
             });
-            dropDown.trigger("change");
           } else {
             let checkValue = [];
             $.each(DETFIELDlIST, (index, data) => {
