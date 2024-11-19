@@ -1695,10 +1695,13 @@ jQuery.noConflict();
         setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
       });
       //css
-      let matchResult = searchItem.searchLength?.match(
-        /^\s*(\d+\s*(rem|px|%))/i
-      );
-      let setWidth = matchResult ? matchResult[1].replace(/\s/g, "") : "10px";
+    
+
+      let matchResult = searchItem.searchLength
+        .replace(/\s/g, "")
+        .match(/(\d+)(rem|px|%)/i);
+
+      let setWidth = matchResult ? `${matchResult[1]}${matchResult[2]}` : "10px";
 
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
