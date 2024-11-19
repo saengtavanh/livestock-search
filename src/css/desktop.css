@@ -101,6 +101,7 @@
   min-width: 0;
   margin: 0;
   padding: 0;
+  margin-right: -3.5px;
   height: 35px;
   font-size: 15px;
   color: rgb(93, 92, 92);

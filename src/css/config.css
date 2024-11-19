@@ -552,3 +552,38 @@ select:disabled {
 .item label {
   font-size: 14px;
 }
+
+/* #load_data[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  background-color: #f7f9fa;
+  color: #3498db;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 1000;
+  top: 30px; 
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 200px; 
+  word-wrap: break-word;
+} */
+
+/* Hide the default title tooltip */
+/* #load_data[title]:hover {
+  text-decoration: none; 
+} */
+.tooltip {
+  position: absolute;
+  background-color: #f7f9fa;
+  color: #3498db;
+  padding: 5px 10px;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  font-size: 14px;
+  display: none;
+  z-index: 1000;
+  white-space: nowrap;
+  word-wrap: break-word;
+}

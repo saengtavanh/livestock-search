@@ -60,10 +60,8 @@ jQuery.noConflict();
   }
   async function getConditionView(GETVIEWS,viewId) {
     for (const key in GETVIEWS.views) {
-      console.log('key', key);
       if (GETVIEWS.views.hasOwnProperty(key)) {
         let view = GETVIEWS.views[key];
-        console.log('view', view);
         if (view.id == viewId) return view.filterCond;
       }
     }
@@ -71,60 +69,16 @@ jQuery.noConflict();
   }
 
   kintone.events.on("app.record.index.show", async (event) => {
-
     // get views from kintone app.
     let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
       app: kintone.app.getId()
     });
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
-    let CodeMaster = CONFIG.codeMasterSetting;
-
-    //data test
-    // window.RsComAPI.getRecords({ app: 234 }).then((dataFromMaster) => {
-    //   sessionStorage.setItem("kintoneRecords", JSON.stringify(dataFromMaster));
-    //   sessionStorage.setItem(
-    //     "dataspace",
-    //     JSON.stringify([
-    //       {
-    //         spc: "spaceA",
-    //         kind: "品種",
-    //         code: "品種CD",
-    //         name: "品種",
-    //         required: true,
-    //       },
-    //       {
-    //         spc: "spaceB",
-    //         kind: "性別",
-    //         code: "性別CD",
-    //         name: "性別",
-    //         required: true,
-    //       },
-    //       {
-    //         spc: "spaceC",
-    //         kind: "產地",
-    //         code: "產地CD",
-    //         name: "產地",
-    //         required: true,
-    //       },
-    //       {
-    //         spc: "spaceD",
-    //         kind: "預託区分",
-    //         code: "預託区分CD",
-    //         name: "預託区分",
-    //         required: true,
-    //       },
-    //     ])
-    //   );
-    // });
     await setSessionStorageItems(CONFIG.codeMasterSetting);
     const CODEMASTER = await getCodeMasterData();
-
-
-
     let SETCOLOR = CONFIG.colorSetting;
     let queryForDropdow = "";
-    let queryAll = "";
     let bokTermsGet = {};
     let bokTermsObject;
 
@@ -149,15 +103,9 @@ jQuery.noConflict();
       );
     });
 
-
-
-
     const urlObj = new URL(window.location.href);
-
     const bokTerms = urlObj.searchParams.get("bokTerms");
-
     const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{|}/g, "");
-
     const result = {};
     decodedBokTerms.split(",").forEach((pair) => {
       const [key, value] = pair
@@ -167,9 +115,6 @@ jQuery.noConflict();
     });
 
     const spaceEl = kintone.app.getHeaderMenuSpaceElement();
-    if (!spaceEl)
-      throw new Error("The header element is unavailable on this page.");
-
     if ($(spaceEl).find(".custom-space-el").length > 0) {
       return;
     }
@@ -212,7 +157,6 @@ jQuery.noConflict();
       searchInfoList.forEach((searchInfo) => {
         checkFieldForSearch = searchContent.filter((item) => item.groupName == searchInfo.groupName);
         if (checkFieldForSearch && checkFieldForSearch[0]?.fieldForSearch) {
-          console.log("checkFieldForSearch", checkFieldForSearch[0]?.fieldForSearch);
           searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
         }
         let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
@@ -221,7 +165,6 @@ jQuery.noConflict();
           let dropdownId = groupNameSlit;
           let labelText = $(`#${groupNameSlit}`).prev("label").text();
           if (selectedValue) {
-            // bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelText);
             mergedBokTermsObject = {
               ...mergedBokTermsObject,
               ...createBokTermsObject(selectedValue, dropdownId, labelText),
@@ -299,7 +242,6 @@ jQuery.noConflict();
       });
 
       bokTermsObject = mergedBokTermsObject;
-
       return query;
     };
 
@@ -427,36 +369,6 @@ jQuery.noConflict();
       return "";
     };
 
-    let buildMultieinitialQuery = function (searchInfo, query) {
-      let replacedText = searchInfo.groupName;
-
-      if ($(`#${replacedText}`).length) {
-        let bla = $(`#${replacedText}`).val();
-      }
-
-      if (bla) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${bla}")`;
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
-        return queryChild;
-      }
-      return "";
-    };
-
-    let buildMultiePatialQuery = function (searchInfo, query) {
-      let replacedText = searchInfo.groupName;
-
-      if ($(`#${replacedText}`).length) {
-        let bla = $(`#${replacedText}`).val();
-      }
-
-      if (bla) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${bla}")`;
-        // sessionStorage.setItem(searchInfo.fieldInfo.code, inputVal); // Store in session storage
-        return queryChild;
-      }
-      return "";
-    };
-
     let buildNumberExactQuery = function (searchInfo, query) {
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
       let queryChild;
@@ -537,22 +449,6 @@ jQuery.noConflict();
       }
 
       return queryFinal;
-    };
-
-    let buildDateRangeQuery = function (searchInfo, query) {
-      let replacedText = searchInfo.groupName;
-      if ($(`#${replacedText}_start`).length) {
-        let start = $(`#${replacedText}_start`).val();
-      }
-      if ($(`#${replacedText}_end`).length) {
-        let end = $(`#${replacedText}_end`).val();
-      }
-
-      if (start && end) {
-        let queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${start}" and "${end}")`;
-        return queryChild;
-      }
-      return "";
     };
 
     // Create dropdowns based on the configuration
@@ -1045,12 +941,10 @@ jQuery.noConflict();
 
       bokTermsObject = { ...bokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelValue) }
       let joinObject = { ...bokTermsGet, ...bokTermsObject };
-
       const url = new URL(window.location.href);
 
       // Get the base URL with only the 'view' parameter
       const baseUrl = `${url.origin}${url.pathname}`;
-
       const currentUrlBase = baseUrl;
       const bokTermsString = JSON.stringify(joinObject);
       const bokTerms = encodeURIComponent(bokTermsString);
@@ -1080,7 +974,6 @@ jQuery.noConflict();
         try {
           bokTermObj = JSON.parse(wrappedBokTerms);
         } catch (error) {
-          console.error("Error parsing bokTerm:", error);
           bokTermObj = {}; // initialize as an empty object in case of error
         }
         if (!selectedValue || !fieldCode) {
@@ -1336,7 +1229,6 @@ jQuery.noConflict();
                     delete bokTermObj[selectedId];
                     query = string;
                   } else {
-                    // query += `${query ? " and " : ""}(${field.target_field[0]} like "${bokTermsObj.value}")`;
                     let filteredArray = changeToArray.filter(
                       (item) =>
                         item !==
@@ -1353,7 +1245,6 @@ jQuery.noConflict();
                 ) {
                   let filteredArray;
 
-                  // let filteredArray = changeToArray.filter(item => item.trim !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
                   if (field.target_field.length > 1) {
                     field.target_field.forEach((fieldCode, index) => {
                       queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
@@ -1410,7 +1301,6 @@ jQuery.noConflict();
                     delete bokTermObj[selectedId.replace(/\s+/g, "_")];
                     query = string;
                   } else {
-                    // query += `${query ? " and " : ""}(${field.target_field[0]} like "${bokTermsObj.value}")`;
                     let filteredArray = changeToArray.filter(
                       (item) =>
                         item !==
@@ -1426,12 +1316,9 @@ jQuery.noConflict();
                   field.searchType == "dropdown_exact"
                 ) {
                   let filteredArray;
-
-                  // let filteredArray = changeToArray.filter(item => item.trim !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
                   if (field.target_field.length > 1) {
                     field.target_field.forEach((fieldCode, index) => {
                       queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
-
                       if (changeToArray.includes(queryChild)) {
                         changeToArray = changeToArray.filter(
                           (item) => item !== queryChild
@@ -1523,7 +1410,6 @@ jQuery.noConflict();
         }
 
         querySuccess = encodeURIComponent(query);
-        const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
         const updatedUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
         window.location.href = updatedUrl;
       }
@@ -1546,7 +1432,6 @@ jQuery.noConflict();
         try {
           bokTerm = JSON.parse(wrappedBokTerms);
         } catch (error) {
-          console.error("Error parsing bokTerm:", error);
           return; // Exit if there's an error parsing
         }
         Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
@@ -1655,7 +1540,6 @@ jQuery.noConflict();
 
       // set css
       start.css("width", width);
-
       const end = $("<input>", {
         type: "number",
         class: "kintoneplugin-input-text",
@@ -1665,12 +1549,10 @@ jQuery.noConflict();
 
       // set css
       end.css("width", width);
-
       result[`${NumberRange}_start`]
         ? start.val(result[`${NumberRange}_start`])
         : "";
       result[`${NumberRange}_end`] ? end.val(result[`${NumberRange}_end`]) : "";
-
       const separator = $("<span>⁓</span>").addClass("separatornumber");
 
       return wrapper.append(start, separator, end);
@@ -1717,7 +1599,6 @@ jQuery.noConflict();
       });
 
       datePickerEnd.setAttribute("data-search-type", searchType);
-
       result[`${dateRange}_start`]
         ? $(`#${dateRange}_start`).val(result[`${dateRange}_start`])
         : "";
@@ -1726,7 +1607,6 @@ jQuery.noConflict();
         : "";
 
       const separator = $("<span>⁓</span>").addClass("separator-datepicker");
-
       const wrapper = $("<div></div>").addClass("wrapper-datepiker");
       wrapper.append(datePickerSatrt).append(separator).append(datePickerEnd);
 
@@ -1787,10 +1667,8 @@ jQuery.noConflict();
             }
           });
           const url = new URL(window.location.href);
-
           // Get the base URL with only the 'view' parameter
           const baseUrl = `${url.origin}${url.pathname}`;
-
           const currentUrlBase = baseUrl;
           const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
           const updatedUrl = `${currentUrlBase}?view=${event.viewId}&bokTerms=${mergedBokTerms}`;
@@ -1919,7 +1797,6 @@ jQuery.noConflict();
                 false
               );
               let targetValue = record[searchItem.searchTarget].value;
-              let convertedValue = "";
               if (record[searchItem.searchTarget].type != "CHECK_BOX") {
                 let convertedValue = "";
                 if (targetValue == "" || targetValue == undefined) {
@@ -1945,7 +1822,6 @@ jQuery.noConflict();
                   value: convertedValue,
                 };
                 if (
-                  // searchItem.fieldForSearch !== "" &&
                   searchItem.fieldForSearch !== "-----"
                 ) {
                   record[searchItem.fieldForSearch].value = convertedValue;
@@ -2181,7 +2057,6 @@ jQuery.noConflict();
                             const fieldValueContent = fieldValue.value;
                             if (fieldValueContent === optionValue) {
                               $(optionElement).prop("selected", true);
-                              //setField(codeValue, optionValue, typeValue);
                               const correspondingInputBox = inputBox.eq(index);
                               correspondingInputBox.val(codeValue);
                               return false;
