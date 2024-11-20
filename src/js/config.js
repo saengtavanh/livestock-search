@@ -166,13 +166,53 @@ jQuery.noConflict();
 
 		})
 
+		let allResponse = [];
 		for (const item of getConfig.codeMasterSetting) {
 			let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
+			let appId = item.appId;
+			// if (!appId) continue;
+			let apiToken = item.apiToken;
+			let body = { app: appId };
+			if (apiToken) body.token = apiToken;
+			let checkData = allResponse.filter(item => item.appId == appId);
+			let response = [];
+			let selectedCode = item.codeField;
+			let selectedName = item.nameField;
+			try {
+				if (checkData.length <= 0) {
+					response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
+						app: appId
+					}).then(res => { return res.properties });
+					allResponse.push({ appId, response });
+				} else {
+					response = checkData[0].response;
+				}
 
 				$(rowForClone).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
 				$(rowForClone).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+				$(rowForClone).find('select#code_field').append(
+					$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
+				);
+				$(rowForClone).find('select#name_field').append(
+					$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
+				);
+				// Check to see if not same value is set "-----".
+				if ($(rowForClone).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
+					selectedCode = "-----";
+				}
+				if ($(rowForClone).find('select#name_field option[value="' + selectedName + '"]').length == 0) {
+					selectedName = "-----";
+				}
 
+				// Set to the value selected.
+				$(rowForClone).find("#master_id").val(item.masterId);
+				$(rowForClone).find('select#code_field').val(selectedCode);
+				$(rowForClone).find('select#name_field').val(selectedName);
+				$(rowForClone).find("#app_id").val(item.appId);
+				$(rowForClone).find("#api_token").val(item.apiToken);
+				$(rowForClone).find("#type_field").val(item.typeField);
+			} catch (error) {
 				// Set to the value selected.
 				$(rowForClone).find('select#code_field').val("-----");
 				$(rowForClone).find('select#name_field').val("-----");
@@ -180,6 +220,9 @@ jQuery.noConflict();
 				$(rowForClone).find("#app_id").val(item.appId);
 				$(rowForClone).find("#api_token").val(item.apiToken);
 				$(rowForClone).find("#type_field").val(item.typeField);
+			}
+
+				
 		}
 		await updateData("initial");
 
