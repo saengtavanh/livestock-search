@@ -442,7 +442,10 @@ select:disabled {
 }
 
 .kintoneplugin-input-outer #app_id {
-  width: 3rem !important;
+  width: 4rem !important;
+}
+.kintoneplugin-input-outer #master_id {
+  width: 11rem !important;
 }
 
 

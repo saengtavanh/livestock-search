@@ -1,5 +1,5 @@
 jQuery.noConflict();
-(async function ($, Swal10, PLUGIN_ID) {
+(async function ($, PLUGIN_ID) {
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
 
   if (!CONFIG) return;
@@ -58,7 +58,7 @@ jQuery.noConflict();
 
     return CODEMASTER;
   }
-  async function getConditionView(GETVIEWS,viewId) {
+  async function getConditionView(GETVIEWS, viewId) {
     for (const key in GETVIEWS.views) {
       if (GETVIEWS.views.hasOwnProperty(key)) {
         let view = GETVIEWS.views[key];
@@ -1632,49 +1632,32 @@ jQuery.noConflict();
     $(searchButton).addClass("btn-search");
 
     const clearButton = createButton("C", () => {
-      Swal10.fire({
-        position: "center",
-        icon: "info",
-        text: "クエリをクリアにしますか？",
-        confirmButtonColor: "#3498db",
-        showCancelButton: true,
-        cancelButtonColor: "#f7f9fa",
-        confirmButtonText: "はい",
-        cancelButtonText: "いいえ",
-        customClass: {
-          confirmButton: "custom-confirm-button",
-          cancelButton: "custom-cancel-button",
-        },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          let bokTermObj = {};
-          CONFIG.groupSetting.forEach((searchItem) => {
-            let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-            const getId = $(`#${getIdElement}`);
-            if (getId.hasClass("kintoneplugin-dropdown")) {
-              const dropdownId = getId.attr("id");
-              const labelValue = getId
-                .closest(".search-item")
-                .find(".custom-dropdownTitle")
-                .text()
-                .trim();
-              if (dropdownId) {
-                bokTermObj[dropdownId] = {
-                  value: "",
-                  active: labelValue,
-                };
-              }
-            }
-          });
-          const url = new URL(window.location.href);
-          // Get the base URL with only the 'view' parameter
-          const baseUrl = `${url.origin}${url.pathname}`;
-          const currentUrlBase = baseUrl;
-          const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-          const updatedUrl = `${currentUrlBase}?view=${event.viewId}&bokTerms=${mergedBokTerms}`;
-          window.location.href = updatedUrl;
+      let bokTermObj = {};
+      CONFIG.groupSetting.forEach((searchItem) => {
+        let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+        const getId = $(`#${getIdElement}`);
+        if (getId.hasClass("kintoneplugin-dropdown")) {
+          const dropdownId = getId.attr("id");
+          const labelValue = getId
+            .closest(".search-item")
+            .find(".custom-dropdownTitle")
+            .text()
+            .trim();
+          if (dropdownId) {
+            bokTermObj[dropdownId] = {
+              value: "",
+              active: labelValue,
+            };
+          }
         }
       });
+      const url = new URL(window.location.href);
+      // Get the base URL with only the 'view' parameter
+      const baseUrl = `${url.origin}${url.pathname}`;
+      const currentUrlBase = baseUrl;
+      const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
+      const updatedUrl = `${currentUrlBase}?view=${event.viewId}&bokTerms=${mergedBokTerms}`;
+      window.location.href = updatedUrl;
     });
 
     const elementBtn = $('<div class="element-button"></div>').append(
@@ -1695,13 +1678,14 @@ jQuery.noConflict();
         setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
       });
       //css
-    
+
 
       let matchResult = searchItem.searchLength
         .replace(/\s/g, "")
         .match(/(\d+)(rem|px|%)/i);
 
-      let setWidth = matchResult ? `${matchResult[1]}${matchResult[2]}` : "10px";
+      let setWidth = matchResult ? `${matchResult[1]}${matchResult[2]}` : "5rem";
+      console.log("setWidth", setWidth);
 
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
@@ -2081,4 +2065,4 @@ jQuery.noConflict();
       return event;
     }
   );
-})(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
+})(jQuery, kintone.$PLUGIN_ID);
