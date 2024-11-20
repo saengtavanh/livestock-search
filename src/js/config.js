@@ -375,7 +375,7 @@ jQuery.noConflict();
 			let groupName = $(element).find('#group_name');
 			let searchType = $(element).find('#search_type');
 			if (searchType.val() == "-----") {
-				groupSettingError.searchType = `<p>検索タイプを選択してください。}</p>`;
+				groupSettingError.searchType = `<p>検索タイプを選択してください。</p>`;
 				$(searchType).parent().addClass('validation-error');
 				hasError = true;
 			} else {
