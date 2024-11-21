@@ -3,7 +3,6 @@ jQuery.noConflict();
 	"use strict";
 	let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID);
 	let HASUPDATED = true;
-	let HASLOADDATA = true;
 
 	// Color picker dialog function
 	const defaultColorPickerConfig = {
@@ -37,7 +36,7 @@ jQuery.noConflict();
 
 			const buttons = $elm.append('<div class="cp-disp">' +
 				'<button type="button" id="cp-submit">OK</button>' +
-				'<button type="button" id="cp-cancel">Cancel</button>' +
+				'<button type="button" id="cp-cancel">キャンセル</button>' +
 				'</div>');
 
 			buttons.on('click', '#cp-submit', (e) => {
@@ -172,7 +171,7 @@ jQuery.noConflict();
 			let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
 			let appId = item.appId;
-			if (!appId) continue;
+			// if (!appId) continue;
 			let apiToken = item.apiToken;
 			let body = { app: appId };
 			if (apiToken) body.token = apiToken;
@@ -207,26 +206,48 @@ jQuery.noConflict();
 				}
 
 				// Set to the value selected.
+				$(rowForClone).find("#master_id").val(item.masterId);
 				$(rowForClone).find('select#code_field').val(selectedCode);
 				$(rowForClone).find('select#name_field').val(selectedName);
-				$(rowForClone).find("#master_id").val(item.masterId);
 				$(rowForClone).find("#app_id").val(item.appId);
 				$(rowForClone).find("#api_token").val(item.apiToken);
 				$(rowForClone).find("#type_field").val(item.typeField);
 			} catch (error) {
-				throw new Error("Cannot find code master app");
+				// Set to the value selected.
+				$(rowForClone).find('select#code_field').val("-----");
+				$(rowForClone).find('select#name_field').val("-----");
+				$(rowForClone).find("#master_id").val(item.masterId);
+				$(rowForClone).find("#app_id").val(item.appId);
+				$(rowForClone).find("#api_token").val(item.apiToken);
+				$(rowForClone).find("#type_field").val(item.typeField);
 			}
+
+				
 		}
 		await updateData("initial");
 
 		getConfig.searchContent.forEach((item) => {
 			let rowForClone = $("#kintoneplugin-setting-prompt-template tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-prompt-template tr:last-child").after(rowForClone);
-			rowForClone.find("#group_name_ref").val(item.groupName);
 			rowForClone.find("#search_name").val(item.searchName);
-			// rowForClone.find("#master_id_ref").val(item.masterId);
-			rowForClone.find("#search_target").val(item.searchTarget);
-			rowForClone.find("#field_for_search").val(item.fieldForSearch);
+
+			if ($(rowForClone).find('select#group_name_ref option[value="' + item.groupName + '"]').length == 0) {
+				rowForClone.find("#group_name_ref").val("-----");
+			} else {
+				rowForClone.find("#group_name_ref").val(item.groupName);
+			}
+
+			if ($(rowForClone).find('select#search_target option[value="' + item.searchTarget + '"]').length == 0) {
+				rowForClone.find("#search_target").val("-----");
+			} else {
+				rowForClone.find("#search_target").val(item.searchTarget);
+			}
+
+			if ($(rowForClone).find('select#field_for_search option[value="' + item.fieldForSearch + '"]').length == 0) {
+				rowForClone.find("#field_for_search").val("-----");
+			} else {
+				rowForClone.find("#field_for_search").val(item.fieldForSearch);
+			}
 
 			if ($(rowForClone).find('select#master_id_ref option[value="' + item.masterId + '"]').length == 0) {
 				rowForClone.find("#master_id_ref").val("-----");
@@ -307,12 +328,6 @@ jQuery.noConflict();
 	}
 
 	async function updateData(condition) {
-		if (HASLOADDATA === false) return Swal10.fire({
-			position: 'center',
-			icon: 'warning',
-			text: "please click load data button",
-			showConfirmButton: true,
-		})
 		let getValueUpdated = await getData();
 		let hassError = await validation("update", getValueUpdated);
 		if (!hassError) {
@@ -380,7 +395,7 @@ jQuery.noConflict();
 			Swal10.fire({
 				position: 'center',
 				icon: 'success',
-				text: 'Update data successfully',
+				text: 'データの更新に成功しました。',
 				showConfirmButton: true,
 			});
 
@@ -391,6 +406,8 @@ jQuery.noConflict();
 	async function validation(condition, data) {
 		let hasError = false;
 		let errorMessage = "";
+		let groupSettingError = {};
+
 		//group setting table
 		let groupSettingTable = $('#kintoneplugin-setting-tspace > tr:gt(0)').toArray();
 		let groupNameArray = [];
@@ -400,7 +417,7 @@ jQuery.noConflict();
 			let groupName = $(element).find('#group_name');
 			let searchType = $(element).find('#search_type');
 			if (searchType.val() == "-----") {
-				errorMessage += `<p>Please select Search type on Group setting row: ${index + 1}</p>`;
+				groupSettingError.searchType = `<p>検索タイプを選択してください。</p>`;
 				$(searchType).parent().addClass('validation-error');
 				hasError = true;
 			} else {
@@ -408,7 +425,7 @@ jQuery.noConflict();
 			}
 
 			if (!groupName.val()) {
-				errorMessage += `<p>Please enter Group name on Group setting row: ${index + 1}</p>`;
+				groupSettingError.groupName = `<p>検索対象グループ名を入力してください。</p>`;
 				$(groupName).addClass('validation-error');
 				hasError = true;
 			} else {
@@ -417,20 +434,25 @@ jQuery.noConflict();
 					groupNameArray.push(groupName.val());
 				} else {
 					$(groupName).addClass('validation-error');
-					errorMessage += `<p>The group "${groupName.val()}" already exists.</p>`;
+					groupSettingError.groupNameExist = groupSettingError.groupNameExist
+						? groupSettingError.groupNameExist + `<p>検索対象グループ名「${groupName.val()}」はすでに存在しています。</p>`
+						: `<p>検索対象グループ名「${groupName.val()}」はすでに存在しています。</p>`;
 					hasError = true;
 				}
 			}
+		}
+		///////////////////////////////////////////////////////////////
+		if (Object.keys(groupSettingError).length > 0) {
+			errorMessage += `<p>【検索項目表示の定義】</p>
+				${groupSettingError.searchType ? groupSettingError.searchType : ''}
+				${groupSettingError.groupName ? groupSettingError.groupName : ''}
+				${groupSettingError.groupNameExist ? groupSettingError.groupNameExist : ''}`
 		}
 
 		const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
 		//code master table
 		for (const [index, element] of codeMasterTable.entries()) {
-			let appId = $(element).find('#app_id');
 			let masterId = $(element).find('#master_id');
-			let condition = $(element).find('#type_field');
-			let code = $(element).find('#code_field');
-			let name = $(element).find('#name_field');
 			if (!masterId.val()) {
 				// errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
 				// $(masterId).addClass('validation-error');
@@ -442,48 +464,17 @@ jQuery.noConflict();
 					masterIdArray.push(masterId.val());
 				} else {
 					$(masterId).addClass('validation-error');
-					errorMessage += `<p>Master ID "${masterId.val()}" already exists.</p>`;
+					errorMessage += `<p>マスタID「${masterId.val()}」はすでに存在しています。</p>`;
 					hasError = true;
 				}
 			}
-
-			// if (!appId.val()) {
-			// 	errorMessage += `<p>Please enter App ID on Code master difinition row: ${index + 1}</p>`;
-			// 	$(appId).addClass('validation-error');
-			// 	hasError = true;
-			// } else {
-			// 	$(appId).removeClass('validation-error');
-			// }
-
-			// if (!condition.val()) {
-			// 	errorMessage += `<p>Please enter Condition on Code master difinition row: ${index + 1}</p>`;
-			// 	$(condition).addClass('validation-error');
-			// 	hasError = true;
-			// } else {
-			// 	$(condition).removeClass('validation-error');
-			// }
-
-			// if (code.val() == "-----") {
-			// 	errorMessage += `<p>Please select Code on Code master difinition row: ${index + 1}</p>`;
-			// 	$(code).parent().addClass('validation-error');
-			// 	hasError = true;
-			// } else {
-			// 	$(code).parent().removeClass('validation-error');
-			// }
-
-			// if (name.val() == "-----") {
-			// 	errorMessage += `<p>Please select Name on Code master difinition row: ${index + 1}</p>`;
-			// 	$(name).parent().addClass('validation-error');
-			// 	hasError = true;
-			// } else {
-			// 	$(name).parent().removeClass('validation-error');
-			// }
-
-
 		}
 		if (condition == "save" || condition == "export") {
+			let searchContentError = {};
+			let searchContentMessage = "";
 			const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
 			let searchNameArray = [];
+			let groupNameArray = [];
 			for (const [index, element] of searchContentTable.entries()) {
 
 				let groupName = $(element).find('#group_name_ref');
@@ -493,16 +484,8 @@ jQuery.noConflict();
 				let masterId = $(element).find('#master_id_ref');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
 
-				// if (groupName.val() == "-----") {
-				// 	errorMessage += `<p>Please select Group name on Search content row: ${index + 1}</p>`;
-				// 	$(groupName).parent().addClass('validation-error');
-				// 	hasError = true;
-				// } else {
-				// 	$(groupName).parent().removeClass('validation-error');
-				// }
-
 				if (!searchName.val()) {
-					errorMessage += `<p>Please enter Search name on Search content row: ${index + 1}</p>`;
+					searchContentError.searchName = `<p>検索名を入力してください。</p>`;
 					$(searchName).addClass('validation-error');
 					hasError = true;
 				} else {
@@ -512,13 +495,13 @@ jQuery.noConflict();
 						searchNameArray.push(searchName.val());
 					} else {
 						$(searchName).addClass('validation-error');
-						errorMessage += `<p>Search name "${searchName.val()}" already exists.</p>`;
+						searchContentMessage += `<p>検索名「${searchName.val()}」はすでに存在しています。</p>`;
 						hasError = true;
 					}
 				}
 
 				if (targetFields.val() == "-----") {
-					errorMessage += `<p>Please select Search target field on Search content row: ${index + 1}</p>`;
+					searchContentError.targetField = `<p>検索対象フィールドを選択してください。</p>`;
 					$(targetFields).parent().addClass('validation-error');
 					hasError = true;
 				} else {
@@ -528,8 +511,8 @@ jQuery.noConflict();
 					if (masterId.val() != "-----"){
 						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER"){
 							$(targetFields).parent().removeClass('validation-error');
-						}else {
-							errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
+						} else {
+							searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
 							$(targetFields).parent().addClass('validation-error');
 							hasError = true;
 						}
@@ -539,7 +522,7 @@ jQuery.noConflict();
 							if (fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not number type.</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -553,7 +536,7 @@ jQuery.noConflict();
 							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -564,17 +547,26 @@ jQuery.noConflict();
 							if (fieldType == "DATE" || fieldType == "DATETIME") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not type date.</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
 						} else if (currentGroup.length > 0 && (
 							currentGroup[0].searchType == "dropdown_exact"
-						))  {
+						)) {
+							if (!groupNameArray.includes(groupName.val())) {
+								$(groupName).parent().removeClass('validation-error');
+								groupNameArray.push(groupName.val());
+							} else {
+								$(groupName).parent().addClass('validation-error');
+								searchContentError.groupTypeDropdown = `<p>ドロップダウンタイプのグループは1つしか選択できません。</p>`;
+								hasError = true;
+							}
+
 							if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not support for this type.</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -591,7 +583,7 @@ jQuery.noConflict();
 						case "dropdown_exact":
 							$(fieldForSearch).parent().addClass('validation-error');
 							hasError = true;
-							errorMessage += `<p>Search type "${currentGroup[0].searchType} is can not select field for search"</p>`;
+							searchContentMessage += `<p>検索タイプ「${currentGroup[0].searchType}」は検索用フィールドを選択できません。</p>`;
 							break;
 
 						default:
@@ -601,7 +593,7 @@ jQuery.noConflict();
 								fieldForSearchArray.push(fieldForSearch.val());
 							} else {
 								$(fieldForSearch).parent().addClass('validation-error');
-								errorMessage += `<p>Field "${fieldForSearch.val()}" already exists.</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${fieldForSearch.val()}」はすでに存在しています。</p>`;
 								hasError = true;
 							}
 							break;
@@ -609,13 +601,21 @@ jQuery.noConflict();
 				} else {
 					$(fieldForSearch).parent().removeClass('validation-error');
 					if (currentGroup.length > 0 && (currentGroup[0].searchType == "text_initial" || currentGroup[0].searchType == "multi_text_initial")) {
-						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
+						searchContentError.fieldForSearch = `<p>検索用フィールドを選択してください。</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
 					}
 				}
 
 			}
+			if (searchContentError) {
+				searchContentMessage += `
+					${searchContentError.searchName ? searchContentError.searchName : ''}
+					${searchContentError.targetField ? searchContentError.targetField : ''}
+					${searchContentError.fieldForSearch ? searchContentError.fieldForSearch : ''}
+					${searchContentError.groupTypeDropdown ? searchContentError.groupTypeDropdown : ''}`;
+			}
+			if (searchContentMessage) errorMessage += "<p>【検索内容の定義】</p>" + searchContentMessage;
 		}
 
 		if (hasError) Swal10.fire({
@@ -688,13 +688,75 @@ jQuery.noConflict();
 			placeholder: 'ui-state-highlight',
 			axis: 'y'
 		});
+		
+		//Create the tooltip element
+		let buttons = ["#load_data", "#button-update","#recreate-button"];
+		for (const element of buttons) {
+			let titleText = "";
+			if (element == "#load_data"){
+				titleText = "コードマスタの定義のアプリ情報を取得します";
+			}else if (element == "#button-update"){
+				titleText = "グループ設定を検索内容に反映します";
+			}else{
+				titleText = "内部的な検索情報を再作成します";
+			}
+			$(document).on('mouseenter',element, function (e) {
+				 // Get the title text
+				let timeout = setTimeout(async () => {
+					e.preventDefault();
+					const oldContextMenu = $('#custom-context-menu');
+	
+					//check old contextmenu and remove
+					if (oldContextMenu.length) {
+						oldContextMenu.remove();
+					}
+	
+					//create contextmenu
+					var customContextMenu = $('<div>').attr('id', 'custom-context-menu')
+						.css({
+							position: 'absolute',
+							background: '#f7f9fa',
+							color: '#3498db',
+							border: '0.5px solid #ccc',
+							fontSize: '12px',
+							// boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.1)',
+							padding: '5px',
+							left: e.pageX + 'px',
+							top: e.pageY + 'px'
+						}).text(titleText)
+					
+					$('body').append(customContextMenu);
+					//remove contextMenu when mouseleave from button
+					customContextMenu.on('mouseleave', function () {
+						customContextMenu.remove();
+					});
+	
+				}, 400);
+				//check mouseout
+				$(this).on('mouseout', function () {
+					clearTimeout(timeout);
+					$('#custom-context-menu').remove();
+				});
+			});
+		}
+
+		// When the mouse leaves the button, remove the tooltip
+		$(buttons).on('mouseleave', function () {
+			$(this).attr('title', $(this).data('original-title')); // Restore the title if needed
+			$('.tooltip').remove(); // Remove the custom tooltip
+		});
+
+		//remove tooltip when click
+		$(document).on('click', ()=>{
+			if ($('#custom-context-menu')) $('#custom-context-menu').remove(); // Remove the custom
+		})
 
 		// button save.
 		$('#button_save').on('click', async function () {
 			if (HASUPDATED === false) return Swal10.fire({
 				position: 'center',
 				icon: 'warning',
-				text: "please click update button",
+				text: "更新ボタンをクリックしてください。",
 				showConfirmButton: true,
 			})
 			let createConfig = await getData();
@@ -757,18 +819,16 @@ jQuery.noConflict();
 							$(row).find('select#code_field').val(selectedCode);
 							$(row).find('select#name_field').val(selectedName);
 						} catch (error) {
-							throw new Error("Cannot find code master app");
+							throw new Error("コードマスタアプリが見つかりません。");
 						}
 					}
 					Swal10.fire({
 						position: 'center',
 						icon: 'success',
-						text: "Load data successfully",
+						text: "データの反映に成功しました。",
 						showConfirmButton: true,
 					})
-					HASLOADDATA = true;
 				} catch (error) {
-					HASLOADDATA = false;
 					window.RsComAPI.hideSpinner();
 					Swal10.fire({
 						position: 'center',
@@ -794,7 +854,7 @@ jQuery.noConflict();
 				return Swal10.fire({
 					position: 'center',
 					icon: 'error',
-					text: "please select group name and target field",
+					text: "検索グループ名と対象フィールドを選択してください。",
 					showConfirmButton: true,
 				})
 			} else {
@@ -808,7 +868,7 @@ jQuery.noConflict();
 				return Swal10.fire({
 					position: 'center',
 					icon: 'error',
-					text: "please select group name",
+					text: "検索グループ名を選択してください。",
 					showConfirmButton: true,
 				})
 			} else {
@@ -817,11 +877,11 @@ jQuery.noConflict();
 				let searchType = currentGroup[0].searchType;
 				if (searchType != "text_initial" && searchType != "text_patial" && searchType != "text_exact"&& searchType != "multi_text_initial" && searchType != "multi_text_patial"){
 					return Swal10.fire({
-				    position: 'center',
-				    icon: 'error',
-				    text: "this group name does not support recreation",
-				    showConfirmButton: true,
-				  })
+						position: 'center',
+						icon: 'error',
+						text: "この検索グループ名は再作成できません。",
+						showConfirmButton: true,
+					})
 				}
 			}
 
@@ -831,7 +891,7 @@ jQuery.noConflict();
 				return Swal10.fire({
 					position: 'center',
 					icon: 'error',
-					text: "please select target field",
+					text: "検索対象フィールドを選択してください。",
 					showConfirmButton: true,
 				})
 			} else {
@@ -844,7 +904,7 @@ jQuery.noConflict();
 					return Swal10.fire({
 						position: 'center',
 						icon: 'error',
-						text: "Recreation is not supported by the target field type",
+						text: "検索対象フィールドタイプは再作成できません。",
 						showConfirmButton: true,
 					})
 				}
@@ -902,7 +962,7 @@ jQuery.noConflict();
 				Swal10.fire({
 					position: 'center',
 					icon: 'success',
-					text: 'Recreate successfully',
+					text: '再作成に成功しました。',
 					showConfirmButton: true,
 				});
 			} catch (error) {
@@ -945,7 +1005,6 @@ jQuery.noConflict();
 
 		$("input#app_id").on("input", function () {
 			$(this).val($(this).val().replace(/[^0-9]/g, ''));
-			// HASLOADDATA = false;
 		});
 
 		$("input#group_name, input#search_length").on("input", function () {
@@ -958,18 +1017,14 @@ jQuery.noConflict();
 			for (let row of codeMasterTable) {
 				let appId = $(row).find('#app_id').val();
 				if (!appId) {
-					// $(row).find('#app_id').addClass('validation-error');
 					Swal10.fire({
 						position: "center",
 						icon: "warning",
-						text: "App ID has not been entered",
+						text: "アプリIDが入力されていません。",
 						showConfirmButton: true,
 					});
 					hasError = true;
-				} 
-				// else {
-				// 	$(row).find('#app_id').removeClass('validation-error');
-				// }
+				}
 			}
 			return hasError;
 		}
@@ -978,12 +1033,12 @@ jQuery.noConflict();
 			Swal10.fire({
 				position: "center",
 				icon: "info",
-				text: "Do you want to exit the plugin configuration?",
+				text: "プラグインの設定を終了しますか？",
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
 				confirmButtonText: "OK",
-				cancelButtonText: "Cancel",
+				cancelButtonText: "キャンセル",
 				customClass: {
 					confirmButton: 'custom-confirm-button',
 					cancelButton: 'custom-cancel-button'
@@ -1047,12 +1102,12 @@ jQuery.noConflict();
 				},
 				position: "center",
 				icon: "info",
-				text: "Do you want to export configuration information?",
+				text: "設定情報を書き出しますか？",
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
-				confirmButtonText: "Yes",
-				cancelButtonText: "Cancel",
+				confirmButtonText: "OK",
+				cancelButtonText: "キャンセル",
 			}).then(async (result) => {
 				if (result.isConfirmed) {
 					let hasError = await validation("export", await getData());
@@ -1092,7 +1147,7 @@ jQuery.noConflict();
 						dataImport = JSON.parse(fileContent);
 					} catch (error) {
 						let customClass = $("<div></div>")
-							.html(`The file format for reading configuration information is JSON format<br>  Please check the file format extension.`)
+							.html(`読み込み用設定情報のファイル形式はJSON形式です。<br>ファイル形式の拡張子をご確認ください。`)
 							.css("font-size", "14px");
 						await Swal10.fire({
 							icon: "error",
@@ -1106,6 +1161,14 @@ jQuery.noConflict();
 
 					let checkCompareConfig = await compareConfigStructures(dataImport);
 					if (!checkCompareConfig) {
+						let customClass = $("<div></div>")
+							.text("設定情報の読み込みに失敗しました。")
+							.css("font-size", "18px");
+						await Swal10.fire({
+							icon: "error",
+							html: customClass.prop("outerHTML"),
+							confirmButtonColor: "#3498db",
+						});
 						$("#fileInput").val('');
 						return;
 					} else {
@@ -1113,27 +1176,22 @@ jQuery.noConflict();
 						Swal10.fire({
 							position: 'center',
 							icon: 'success',
-							text: 'Configuration information was successfully imported',
+							text: '設定情報が正常に読み込まれました。',
 							showConfirmButton: true,
 						});
 						$("#fileInput").val('');
 					}
 				};
 				reader.readAsText(file);
-			} else {
-				Swal10.fire({
-					position: "center",
-					text: "Select the file you want to import",
-					confirmButtonColor: "#3498db",
-					confirmButtonText: "OK",
-				});
-				$("#fileInput").val('');
 			}
 		});
 
 		// function check structure and data import
 		async function compareConfigStructures(dataImport) {
-			let errorTexts = [];
+			if (dataImport.groupSetting && dataImport.groupSetting.length <= 0) return false;
+			if (dataImport.codeMasterSetting && dataImport.codeMasterSetting.length <= 0) return false;
+			if (dataImport.searchContent && dataImport.searchContent.length <= 0) return false;
+			if (dataImport.colorSetting && dataImport.colorSetting.length <= 0) return false;
 			let configStructure = {
 				groupSetting: [
 					{
@@ -1172,12 +1230,10 @@ jQuery.noConflict();
 			function checkType(configStructure, dataImport) {
 				if (Array.isArray(configStructure)) {
 					if (!Array.isArray(dataImport)) {
-						errorTexts.push("The data loaded with configuration information is not an array");
 						return false;
 					}
 					for (let item of dataImport) {
 						if (!checkType(configStructure[0], item)) {
-							errorTexts.push("Array element type mismatch");
 							return false;
 						}
 					}
@@ -1186,12 +1242,10 @@ jQuery.noConflict();
 
 				if (typeof configStructure === 'object' && !Array.isArray(configStructure)) {
 					if (typeof dataImport !== 'object' || Array.isArray(dataImport)) {
-						// errorTexts.push("The data loaded with configuration information is not an object");
 						return false;
 					}
 					for (let key in configStructure) {
 						if (!(key in dataImport)) {
-							// errorTexts.push(`${key} Key not found.`);
 							return false;
 						}
 						if (!checkType(configStructure[key], dataImport[key])) {
@@ -1211,7 +1265,6 @@ jQuery.noConflict();
 			function checkAllCases(dataImport) {
 				// Check if the object is empty
 				if (Object.keys(dataImport).length === 0) {
-					// errorTexts.push(" オブジェクトが未入力です。");
 					return false;
 				}
 

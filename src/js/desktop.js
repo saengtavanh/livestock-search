@@ -1,6 +1,7 @@
 jQuery.noConflict();
-(async function ($, Swal10, PLUGIN_ID) {
+(async function ($, PLUGIN_ID) {
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
+
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
   async function setSessionStorageItems(configSettings) {
@@ -57,55 +58,27 @@ jQuery.noConflict();
 
     return CODEMASTER;
   }
+  async function getConditionView(GETVIEWS, viewId) {
+    for (const key in GETVIEWS.views) {
+      if (GETVIEWS.views.hasOwnProperty(key)) {
+        let view = GETVIEWS.views[key];
+        if (view.id == viewId) return view.filterCond;
+      }
+    }
+    return "";
+  }
+
   kintone.events.on("app.record.index.show", async (event) => {
+    // get views from kintone app.
+    let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
+      app: kintone.app.getId()
+    });
     // get field form SCHEMA
     let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
-
-    //data test
-    // window.RsComAPI.getRecords({ app: 234 }).then((dataFromMaster) => {
-    //   sessionStorage.setItem("kintoneRecords", JSON.stringify(dataFromMaster));
-    //   sessionStorage.setItem(
-    //     "dataspace",
-    //     JSON.stringify([
-    //       {
-    //         spc: "spaceA",
-    //         kind: "品種",
-    //         code: "品種CD",
-    //         name: "品種",
-    //         required: true,
-    //       },
-    //       {
-    //         spc: "spaceB",
-    //         kind: "性別",
-    //         code: "性別CD",
-    //         name: "性別",
-    //         required: true,
-    //       },
-    //       {
-    //         spc: "spaceC",
-    //         kind: "產地",
-    //         code: "產地CD",
-    //         name: "產地",
-    //         required: true,
-    //       },
-    //       {
-    //         spc: "spaceD",
-    //         kind: "預託区分",
-    //         code: "預託区分CD",
-    //         name: "預託区分",
-    //         required: true,
-    //       },
-    //     ])
-    //   );
-    // });
     await setSessionStorageItems(CONFIG.codeMasterSetting);
     const CODEMASTER = await getCodeMasterData();
-
-
-
     let SETCOLOR = CONFIG.colorSetting;
     let queryForDropdow = "";
-    let queryAll = "";
     let bokTermsGet = {};
     let bokTermsObject;
 
@@ -131,11 +104,8 @@ jQuery.noConflict();
     });
 
     const urlObj = new URL(window.location.href);
-
     const bokTerms = urlObj.searchParams.get("bokTerms");
-
     const decodedBokTerms = decodeURIComponent(bokTerms).replace(/{|}/g, "");
-
     const result = {};
     decodedBokTerms.split(",").forEach((pair) => {
       const [key, value] = pair
@@ -155,7 +125,12 @@ jQuery.noConflict();
     let searchProcess = async function (searchInfoList) {
       let query = await getValueConditionAndBuildQuery(searchInfoList, false);
       let queryEscape = encodeURIComponent(query);
-      let currentUrlBase = window.location.href.match(/\S+\//)[0];
+      const newUrl = new URL(window.location.href);
+
+      // Get the base URL with only the 'view' parameter
+      const baseUrl = `${newUrl.origin}${newUrl.pathname}`;
+
+      const currentUrlBase = baseUrl;
       if (bokTermsObject) {
         bokTermsGet = { ...bokTermsGet, ...bokTermsObject };
       }
@@ -163,21 +138,26 @@ jQuery.noConflict();
       const bokTermsString = JSON.stringify(bokTermsGet);
       const bokTerms = encodeURIComponent(bokTermsString);
       let url =
-        currentUrlBase + "?query=" + queryEscape + "&bokTerms=" + bokTerms + "";
+        currentUrlBase + `?view=${event.viewId}${queryEscape ? "&query=" + queryEscape : ""}&bokTerms=${bokTerms}`;
 
       window.location.href = url;
     };
 
-    let getValueConditionAndBuildQuery = function (
+    let getValueConditionAndBuildQuery = async function (
       searchInfoList,
       dropDownChange
     ) {
-      let query = "";
+      let viewCond = await getConditionView(GETVIEWS, event.viewId)
+      let query = event.viewId == 20 ? "" : viewCond ? `(${viewCond})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
       let mergedBokTermsObject = {};
 
       searchInfoList.forEach((searchInfo) => {
+        checkFieldForSearch = searchContent.filter((item) => item.groupName == searchInfo.groupName);
+        if (checkFieldForSearch && checkFieldForSearch[0]?.fieldForSearch) {
+          searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
+        }
         let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
         if ($(`#${groupNameSlit}`).is("select")) {
           let selectedValue = $(`#${groupNameSlit} option:selected`).val();
@@ -261,7 +241,6 @@ jQuery.noConflict();
       });
 
       bokTermsObject = mergedBokTermsObject;
-
       return query;
     };
 
@@ -365,7 +344,11 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
-          searchValue = transformStringExact($(`#${replacedText}`).val());
+          if (searchInfo?.fieldForSearch !== "-----") {
+            searchValue = transformStringExact($(`#${replacedText}`).val());
+          } else {
+            searchValue = $(`#${replacedText}`).val();
+          }
           bokTermsGet[replacedText] = $(`#${replacedText}`).val();
         }
       }
@@ -467,6 +450,7 @@ jQuery.noConflict();
 
       return queryFinal;
     };
+
     // Create dropdowns based on the configuration
     function createDropDowns(display) {
       let relatedContent = CONFIG.searchContent.filter(
@@ -793,7 +777,6 @@ jQuery.noConflict();
                 });
               }
             });
-            dropDown.trigger("change");
           } else {
             let checkValue = [];
             $.each(DETFIELDlIST, (index, data) => {
@@ -952,8 +935,11 @@ jQuery.noConflict();
 
       bokTermsObject = { ...bokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelValue) }
       let joinObject = { ...bokTermsGet, ...bokTermsObject };
+      const url = new URL(window.location.href);
 
-      const currentUrlBase = window.location.href.match(/\S+\//)[0];
+      // Get the base URL with only the 'view' parameter
+      const baseUrl = `${url.origin}${url.pathname}`;
+      const currentUrlBase = baseUrl;
       const bokTermsString = JSON.stringify(joinObject);
       const bokTerms = encodeURIComponent(bokTermsString);
 
@@ -963,7 +949,7 @@ jQuery.noConflict();
 
       let querySuccess = encodeURIComponent(query);
 
-      const QueryUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
+      const QueryUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
       const urlObj = new URL(window.location.href);
       const bokTerm = urlObj.searchParams.get("bokTerms");
       if (bokTerm == null) {
@@ -982,7 +968,6 @@ jQuery.noConflict();
         try {
           bokTermObj = JSON.parse(wrappedBokTerms);
         } catch (error) {
-          console.error("Error parsing bokTerm:", error);
           bokTermObj = {}; // initialize as an empty object in case of error
         }
         if (!selectedValue || !fieldCode) {
@@ -994,6 +979,8 @@ jQuery.noConflict();
           let startNew = "";
           let endNew = "";
           let Current_Date_id = "";
+          let checkFieldForSearchForDropDown;
+
           Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
             searchInfoList.forEach((field) => {
               if (
@@ -1230,7 +1217,6 @@ jQuery.noConflict();
                     delete bokTermObj[selectedId];
                     query = string;
                   } else {
-                    // query += `${query ? " and " : ""}(${field.target_field[0]} like "${bokTermsObj.value}")`;
                     let filteredArray = changeToArray.filter(
                       (item) =>
                         item !==
@@ -1247,7 +1233,6 @@ jQuery.noConflict();
                 ) {
                   let filteredArray;
 
-                  // let filteredArray = changeToArray.filter(item => item.trim !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
                   if (field.target_field.length > 1) {
                     field.target_field.forEach((fieldCode, index) => {
                       queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
@@ -1304,7 +1289,6 @@ jQuery.noConflict();
                     delete bokTermObj[selectedId.replace(/\s+/g, "_")];
                     query = string;
                   } else {
-                    // query += `${query ? " and " : ""}(${field.target_field[0]} like "${bokTermsObj.value}")`;
                     let filteredArray = changeToArray.filter(
                       (item) =>
                         item !==
@@ -1320,12 +1304,9 @@ jQuery.noConflict();
                   field.searchType == "dropdown_exact"
                 ) {
                   let filteredArray;
-
-                  // let filteredArray = changeToArray.filter(item => item.trim !== `(${fieldCode} in ("${bokTermsObj.value}"))`);
                   if (field.target_field.length > 1) {
                     field.target_field.forEach((fieldCode, index) => {
                       queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
-
                       if (changeToArray.includes(queryChild)) {
                         changeToArray = changeToArray.filter(
                           (item) => item !== queryChild
@@ -1417,8 +1398,7 @@ jQuery.noConflict();
         }
 
         querySuccess = encodeURIComponent(query);
-        const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-        const updatedUrl = `${currentUrlBase}?query=${querySuccess}&bokTerms=${bokTerms}`;
+        const updatedUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
         window.location.href = updatedUrl;
       }
     }
@@ -1440,7 +1420,6 @@ jQuery.noConflict();
         try {
           bokTerm = JSON.parse(wrappedBokTerms);
         } catch (error) {
-          console.error("Error parsing bokTerm:", error);
           return; // Exit if there's an error parsing
         }
         Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
@@ -1549,7 +1528,6 @@ jQuery.noConflict();
 
       // set css
       start.css("width", width);
-
       const end = $("<input>", {
         type: "number",
         class: "kintoneplugin-input-text",
@@ -1559,12 +1537,10 @@ jQuery.noConflict();
 
       // set css
       end.css("width", width);
-
       result[`${NumberRange}_start`]
         ? start.val(result[`${NumberRange}_start`])
         : "";
       result[`${NumberRange}_end`] ? end.val(result[`${NumberRange}_end`]) : "";
-
       const separator = $("<span>⁓</span>").addClass("separatornumber");
 
       return wrapper.append(start, separator, end);
@@ -1611,7 +1587,6 @@ jQuery.noConflict();
       });
 
       datePickerEnd.setAttribute("data-search-type", searchType);
-
       result[`${dateRange}_start`]
         ? $(`#${dateRange}_start`).val(result[`${dateRange}_start`])
         : "";
@@ -1620,7 +1595,6 @@ jQuery.noConflict();
         : "";
 
       const separator = $("<span>⁓</span>").addClass("separator-datepicker");
-
       const wrapper = $("<div></div>").addClass("wrapper-datepiker");
       wrapper.append(datePickerSatrt).append(separator).append(datePickerEnd);
 
@@ -1665,9 +1639,12 @@ jQuery.noConflict();
           }
         }
       });
-      const currentUrlBase = window.location.href.match(/\S+\//)[0];
+      const url = new URL(window.location.href);
+      // Get the base URL with only the 'view' parameter
+      const baseUrl = `${url.origin}${url.pathname}`;
+      const currentUrlBase = baseUrl;
       const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-      const updatedUrl = `${currentUrlBase}?&bokTerms=${mergedBokTerms}`;
+      const updatedUrl = `${currentUrlBase}?view=${event.viewId}&bokTerms=${mergedBokTerms}`;
       window.location.href = updatedUrl;
     });
 
@@ -1678,21 +1655,36 @@ jQuery.noConflict();
      console.log("CONFIG" ,CONFIG);
     //TODO: Create Function-------------------------------------------------------------------------
     CONFIG.groupSetting.forEach((searchItem) => {
-      const { searchType, groupName, nameMarker } = searchItem;
+      let searchType = searchItem.searchType[0].value;
+      const {groupName, nameMarker } = searchItem;
+
+      // let searchTypesed = [{
+      //   type: "Initial",
+      //   value: "Initial",
+      // }]
+      // let searchTypes = [{
+      //   type: "SINGLE_LINE_TEXT",
+      //   code: "Initial",
+      // }]
+      // console.log("searchTypes", searchTypes[0].type);
       let setSearchTarget = [];
       let Titlename;
+      let types;
+      // if(searchType.type)
       let afterFilter = CONFIG.searchContent.filter(
         (searchItem) => searchItem.groupName == groupName
       );
       afterFilter.forEach((searchItemTarget) => {
+        types = searchItemTarget.searchType[0].type;
         Titlename = nameMarker ? nameMarker : searchItemTarget.searchName;
         setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget);
       });
-      //css
-      let matchResult = searchItem.searchLength?.match(
-        /^\s*(\d+\s*(rem|px|%))/i
-      );
-      let setWidth = matchResult ? matchResult[1].replace(/\s/g, "") : "1px";
+
+      let matchResult = searchItem.searchLength
+        .replace(/\s/g, "")
+        .match(/(\d+)(rem|px|%)/i);
+
+      let setWidth = matchResult ? `${matchResult[1]}${matchResult[2]}` : "5rem";
 
       if (afterFilter.length >= 1) {
         searchItem["target_field"] = setSearchTarget;
@@ -1701,10 +1693,14 @@ jQuery.noConflict();
         });
 
         let inputElement;
-        switch (searchType) {
+        console.log("afterFilter",afterFilter);
+        switch (types) {
           case "Initial":
             inputElement = createTextInput(searchType, groupName, setWidth);
             break;
+          case "SIGNLE":
+            inputElement = createTextInput(searchType, groupName, setWidth);
+          break;
           case "Partial":
             inputElement = createTextInput(searchType, groupName, setWidth);
             break;
@@ -1714,30 +1710,34 @@ jQuery.noConflict();
           case "multi_text_initial":
             inputElement = createTextInput(searchType, groupName, setWidth);
             break;
-          case "multi_text_patial":
+          case "SINGLE_LINE_TEXT":
             inputElement = createTextInput(searchType, groupName, setWidth);
             break;
-          case "number_exact":
+            // NUMBER
+          case "NUMBER" || "CALC":
             inputElement = createTextNumberInput(
               searchType,
               groupName,
               setWidth
             );
             break;
-          case "number_range":
+            // NUMBER RANGE
+          case "NUMBER" || "CALC":
             inputElement = createNumberRangeInput(
               searchType,
               groupName,
               setWidth
             );
             break;
-          case "date_exact":
+            // DATE
+          case "DATE" || "DATE_TIME":
             inputElement = createDateInput(searchType, groupName);
             setTimeout(() => {
               $(inputElement).find(`input`).css({ width: setWidth });
             }, 0);
             break;
-          case "date_range":
+            // DATE RANGE
+          case "DATE" || "DATE_TIME":
             inputElement = createDateRangeInput(
               searchType,
               groupName,
@@ -1747,12 +1747,13 @@ jQuery.noConflict();
               $(inputElement).find(`input`).css({ width: setWidth });
             }, 0);
             break;
-          case "dropdown_exact":
+            // DROPDOWN
+          case "CHECK_BOX" || "DROPDOWN" || "RADIO_BUTTON" || "CODE_MASRTER":
             inputElement = createDropDowns(searchItem);
           default:
             inputElement = null;
         }
-        if (searchItem.searchType !== "dropdown_exact") {
+        if (searchItem.searchType !== "CHECK_BOX" || "DROPDOWN" || "RADIO_BUTTON" || "CODE_MASRTER") {
           const label = $("<label>").text(Titlename).addClass("label");
           elementInput.append(label);
         }
@@ -1791,7 +1792,6 @@ jQuery.noConflict();
                 false
               );
               let targetValue = record[searchItem.searchTarget].value;
-              let convertedValue = "";
               if (record[searchItem.searchTarget].type != "CHECK_BOX") {
                 let convertedValue = "";
                 if (targetValue == "" || targetValue == undefined) {
@@ -1817,7 +1817,6 @@ jQuery.noConflict();
                   value: convertedValue,
                 };
                 if (
-                  // searchItem.fieldForSearch !== "" &&
                   searchItem.fieldForSearch !== "-----"
                 ) {
                   record[searchItem.fieldForSearch].value = convertedValue;
@@ -2053,7 +2052,6 @@ jQuery.noConflict();
                             const fieldValueContent = fieldValue.value;
                             if (fieldValueContent === optionValue) {
                               $(optionElement).prop("selected", true);
-                              //setField(codeValue, optionValue, typeValue);
                               const correspondingInputBox = inputBox.eq(index);
                               correspondingInputBox.val(codeValue);
                               return false;
@@ -2075,4 +2073,4 @@ jQuery.noConflict();
       return event;
     }
   );
-})(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
+})(jQuery, kintone.$PLUGIN_ID);
