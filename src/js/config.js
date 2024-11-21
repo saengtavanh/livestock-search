@@ -228,7 +228,7 @@ jQuery.noConflict();
 				$(rowForClone).find("#type_field").val(item.typeField);
 			}
 
-				
+
 		}
 		await updateData("initial");
 
@@ -346,7 +346,7 @@ jQuery.noConflict();
 
 			// Set value from groupSetting and codeMaster to searchContent table
 			$('#kintoneplugin-setting-prompt-template > tr').each(function () {
-				let row = $(this); 
+				let row = $(this);
 				let selectedGroupName = row.find('select#group_name_ref').val();
 				let selectedMasterId = row.find('select#master_id_ref').val();
 
@@ -565,6 +565,15 @@ jQuery.noConflict();
 						// 	}
 						// }
 						if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "exact")) {
+							if (!groupNameArray.includes(groupName.val())) {
+								$(groupName).parent().removeClass('validation-error');
+								groupNameArray.push(groupName.val());
+							} else {
+								$(groupName).parent().addClass('validation-error');
+								// searchContentError.groupTypeDropdown = `<p>ドロップダウンタイプのグループは1つしか選択できません。</p>`;
+								searchContentError.groupTypeDropdown = `<p>ンタイプのグループ「${groupName.val()}」は1つしか選択できません。</p>`;
+								hasError = true;
+							}
 							if (fieldType == "NUMBER" || fieldType == "CALC" || fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
@@ -596,7 +605,7 @@ jQuery.noConflict();
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
-						} 
+						}
 					}
 				}
 
@@ -623,7 +632,7 @@ jQuery.noConflict();
 					}
 				} else {
 					$(fieldForSearch).parent().removeClass('validation-error');
-					if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "initial" || currentGroup[0].searchType.value == "patial")) {
+					if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "initial")) {
 						searchContentError.fieldForSearch = `<p>検索用フィールドを選択してください。</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
@@ -711,29 +720,29 @@ jQuery.noConflict();
 			placeholder: 'ui-state-highlight',
 			axis: 'y'
 		});
-		
+
 		//Create the tooltip element
-		let buttons = ["#load_data", "#button-update","#recreate-button"];
+		let buttons = ["#load_data", "#button-update", "#recreate-button"];
 		for (const element of buttons) {
 			let titleText = "";
-			if (element == "#load_data"){
+			if (element == "#load_data") {
 				titleText = "コードマスタの定義のアプリ情報を取得します";
-			}else if (element == "#button-update"){
+			} else if (element == "#button-update") {
 				titleText = "グループ設定を検索内容に反映します";
-			}else{
+			} else {
 				titleText = "内部的な検索情報を再作成します";
 			}
-			$(document).on('mouseenter',element, function (e) {
-				 // Get the title text
+			$(document).on('mouseenter', element, function (e) {
+				// Get the title text
 				let timeout = setTimeout(async () => {
 					e.preventDefault();
 					const oldContextMenu = $('#custom-context-menu');
-	
+
 					//check old contextmenu and remove
 					if (oldContextMenu.length) {
 						oldContextMenu.remove();
 					}
-	
+
 					//create contextmenu
 					var customContextMenu = $('<div>').attr('id', 'custom-context-menu')
 						.css({
@@ -747,13 +756,13 @@ jQuery.noConflict();
 							left: e.pageX + 'px',
 							top: e.pageY + 'px'
 						}).text(titleText)
-					
+
 					$('body').append(customContextMenu);
 					//remove contextMenu when mouseleave from button
 					customContextMenu.on('mouseleave', function () {
 						customContextMenu.remove();
 					});
-	
+
 				}, 400);
 				//check mouseout
 				$(this).on('mouseout', function () {
@@ -770,7 +779,7 @@ jQuery.noConflict();
 		});
 
 		//remove tooltip when click
-		$(document).on('click', ()=>{
+		$(document).on('click', () => {
 			if ($('#custom-context-menu')) $('#custom-context-menu').remove(); // Remove the custom
 		})
 
@@ -898,7 +907,8 @@ jQuery.noConflict();
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
 				let searchType = currentGroup[0].searchType.value;
-				if (searchType != "initial" || searchType != "patial") {
+				console.log(searchType);
+				if (searchType !== "initial" && searchType !== "patial") {
 					return Swal10.fire({
 						position: 'center',
 						icon: 'error',
