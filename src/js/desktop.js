@@ -2160,6 +2160,7 @@ jQuery.noConflict();
       console.log(setWidth); // Output: 10px
 
      
+      
         switch (searchType) {
           case "text_initial":
             inputElement = createTextInput(searchType, groupName, setWidth);
