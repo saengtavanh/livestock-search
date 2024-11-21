@@ -1,17 +1,9 @@
 jQuery.noConflict();
 (async function ($, Swal10, PLUGIN_ID) {
   let CONFIG = kintone.plugin.app.getConfig(PLUGIN_ID).config;
-  console.log(window.location.href);
-  // Create a URL object
-  const urlObj = new URL(window.location.href);
 
-  // Get the base URL with only the 'view' parameter
-  const baseUrl = `${urlObj.origin}${urlObj.pathname}?view=${urlObj.searchParams.get("view")}`;
-
-  console.log(baseUrl);
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
-
   async function setSessionStorageItems(configSettings) {
     for (const setting of configSettings) {
       try {
@@ -67,15 +59,13 @@ jQuery.noConflict();
 
     return CODEMASTER;
   }
-
-  async function getConditionView(GETVIEWS,viewId) {
+  async function getConditionView(GETVIEWS, viewId) {
     for (const key in GETVIEWS.views) {
       console.log("key", key);
       if (GETVIEWS.views.hasOwnProperty(key)) {
         let view = GETVIEWS.views[key];
-        if (view.id == viewId) {
-          return view.filterCond;
-        }
+        console.log("view", view);
+        if (view.id == viewId) return view.filterCond;
       }
     }
     return "";
@@ -207,7 +197,7 @@ jQuery.noConflict();
       searchInfoList,
       dropDownChange
     ) {
-      let viewCond = await getConditionView(GETVIEWS,event.viewId);
+      let viewCond = await getConditionView(GETVIEWS, event.viewId);
       let query = event.viewId == 20 ? "" : viewCond ? `(${viewCond})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
@@ -218,10 +208,10 @@ jQuery.noConflict();
         checkFieldForSearch = searchContent.filter(
           (item) => item.groupName == searchInfo.groupName
         );
-        if (checkFieldForSearch && checkFieldForSearch[0].fieldForSearch) {
+        if (checkFieldForSearch && checkFieldForSearch[0]?.fieldForSearch) {
           console.log(
             "checkFieldForSearch",
-            checkFieldForSearch[0].fieldForSearch
+            checkFieldForSearch[0]?.fieldForSearch
           );
           searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
         }
@@ -412,7 +402,7 @@ jQuery.noConflict();
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
         if (searchValue) {
-          if (searchInfo.fieldForSearch !== "-----") {
+          if (searchInfo?.fieldForSearch !== "-----") {
             searchValue = transformStringExact($(`#${replacedText}`).val());
           } else {
             searchValue = $(`#${replacedText}`).val();
@@ -975,7 +965,6 @@ jQuery.noConflict();
                 });
               }
             });
-            dropDown.trigger("change");
           } else {
             let checkValue = [];
             $.each(DETFIELDlIST, (index, data) => {
@@ -2108,51 +2097,34 @@ jQuery.noConflict();
     $(searchButton).addClass("btn-search");
 
     const clearButton = createButton("C", () => {
-      Swal10.fire({
-        position: "center",
-        icon: "info",
-        text: "クエリをクリアにしますか？",
-        confirmButtonColor: "#3498db",
-        showCancelButton: true,
-        cancelButtonColor: "#f7f9fa",
-        confirmButtonText: "はい",
-        cancelButtonText: "いいえ",
-        customClass: {
-          confirmButton: "custom-confirm-button",
-          cancelButton: "custom-cancel-button",
-        },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          let bokTermObj = {};
-          CONFIG.groupSetting.forEach((searchItem) => {
-            let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-            const getId = $(`#${getIdElement}`);
-            if (getId.hasClass("kintoneplugin-dropdown")) {
-              const dropdownId = getId.attr("id");
-              const labelValue = getId
-                .closest(".search-item")
-                .find(".custom-dropdownTitle")
-                .text()
-                .trim();
-              if (dropdownId) {
-                bokTermObj[dropdownId] = {
-                  value: "",
-                  active: labelValue,
-                };
-              }
-            }
-          });
-          const url = new URL(window.location.href);
-
-          // Get the base URL with only the 'view' parameter
-          const baseUrl = `${url.origin}${url.pathname}`;
-
-          const currentUrlBase = baseUrl;
-          const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-          const updatedUrl = `${currentUrlBase}?view=${event.viewId}&bokTerms=${mergedBokTerms}`;
-          window.location.href = updatedUrl;
+      let bokTermObj = {};
+      CONFIG.groupSetting.forEach((searchItem) => {
+        let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+        const getId = $(`#${getIdElement}`);
+        if (getId.hasClass("kintoneplugin-dropdown")) {
+          const dropdownId = getId.attr("id");
+          const labelValue = getId
+            .closest(".search-item")
+            .find(".custom-dropdownTitle")
+            .text()
+            .trim();
+          if (dropdownId) {
+            bokTermObj[dropdownId] = {
+              value: "",
+              active: labelValue,
+            };
+          }
         }
       });
+      const url = new URL(window.location.href);
+
+      // Get the base URL with only the 'view' parameter
+      const baseUrl = `${url.origin}${url.pathname}`;
+
+      const currentUrlBase = baseUrl;
+      const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
+      const updatedUrl = `${currentUrlBase}?view=${event.viewId}&bokTerms=${mergedBokTerms}`;
+      window.location.href = updatedUrl;
     });
 
     const elementBtn = $('<div class="element-button"></div>').append(
@@ -2176,19 +2148,18 @@ jQuery.noConflict();
             : searchItemTarget.searchTarget
         );
       });
-      //css
-      let matchResult = searchItem.searchLength?.match(
-        /^\s*(\d+\s*(rem|px|%))/i
-      );
-      let setWidth = matchResult ? matchResult[1].replace(/\s/g, "") : "10px";
 
-      if (afterFilter.length >= 1) {
-        searchItem["target_field"] = setSearchTarget;
-        const elementInput = $("<div></div>").addClass("search-item").css({
-          color: SETCOLOR.titleColor,
-        });
+      let matchResult = searchItem.searchLength
+        .replace(/\s/g, "")
+        .match(/(\d+)(rem|px|%)/i);
 
-        let inputElement;
+      let setWidth = matchResult
+        ? `${matchResult[1]}${matchResult[2]}`
+        : "5rem";
+
+      console.log(setWidth); // Output: 10px
+
+     
         switch (searchType) {
           case "text_initial":
             inputElement = createTextInput(searchType, groupName, setWidth);
