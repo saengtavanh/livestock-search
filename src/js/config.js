@@ -119,7 +119,10 @@ jQuery.noConflict();
 			let nameMarker = $(this).find("#name_marker").val();
 			let groupName = $(this).find("#group_name").val();
 			let searchLength = $(this).find("#search_length").val();
-			let searchType = $(this).find("#search_type").val();
+			let searchType = {
+				value: $(this).find("#search_type").val(),
+				type: $(this).find("#search_type option:selected").attr('type')
+			};
 			return { nameMarker, groupName, searchLength, searchType };
 		}).get();
 
@@ -137,7 +140,10 @@ jQuery.noConflict();
 			let groupName = $(this).find("#group_name_ref").val();
 			let searchName = $(this).find("#search_name").val();
 			let masterId = $(this).find("#master_id_ref").val();
-			let searchTarget = $(this).find("#search_target").val();
+			let searchTarget = {
+				code: $(this).find("#search_target").val(),
+				type: $(this).find("#search_target option:selected").attr('type')
+			};
 			let fieldForSearch = $(this).find("#field_for_search").val();
 			return { groupName, searchName, masterId, searchTarget, fieldForSearch };
 		}).get();
@@ -162,7 +168,7 @@ jQuery.noConflict();
 			rowForClone.find("#name_marker").val(item.nameMarker);
 			rowForClone.find("#group_name").val(item.groupName);
 			rowForClone.find("#search_length").val(item.searchLength);
-			rowForClone.find("#search_type").val(item.searchType);
+			rowForClone.find("#search_type").val(item.searchType.value);
 
 		})
 
@@ -237,10 +243,10 @@ jQuery.noConflict();
 				rowForClone.find("#group_name_ref").val(item.groupName);
 			}
 
-			if ($(rowForClone).find('select#search_target option[value="' + item.searchTarget + '"]').length == 0) {
+			if ($(rowForClone).find('select#search_target option[value="' + item.searchTarget.code + '"]').length == 0) {
 				rowForClone.find("#search_target").val("-----");
 			} else {
-				rowForClone.find("#search_target").val(item.searchTarget);
+				rowForClone.find("#search_target").val(item.searchTarget.code);
 			}
 
 			if ($(rowForClone).find('select#field_for_search option[value="' + item.fieldForSearch + '"]').length == 0) {
@@ -279,7 +285,7 @@ jQuery.noConflict();
 				)
 				HASUPDATED = false;
 				checkRow();
-				return;
+				// return;
 			} else {
 				getConfig = JSON.parse(CONFIG.config);
 				await setValueToTable(getConfig);
@@ -330,6 +336,7 @@ jQuery.noConflict();
 
 	async function updateData(condition) {
 		let getValueUpdated = await getData();
+		console.log(getValueUpdated);
 		let hassError = await validation("update", getValueUpdated);
 		if (!hassError) {
 
@@ -339,17 +346,17 @@ jQuery.noConflict();
 			firstRow.find('select#master_id_ref').empty().append($('<option>').text('-----').val('-----'));
 
 			// set data to row 0 of table space for prompt template and button.
-			getValueUpdated.groupSetting.forEach((item) => {
-				if (item.spaceForPromptTemplate !== "-----") {
-					firstRow.find('select#group_name_ref').append(
-						$('<option>').attr("value", item.spaceForPromptTemplate).text(`${item.spaceForPromptTemplate} (${item.spaceForPromptTemplate})`)
-					);
-				}
+			// getValueUpdated.groupSetting.forEach((item) => {
+			// 	if (item.spaceForPromptTemplate !== "-----") {
+			// 		firstRow.find('select#group_name_ref').append(
+			// 			$('<option>').attr("value", item.spaceForPromptTemplate).text(`${item.spaceForPromptTemplate} (${item.spaceForPromptTemplate})`)
+			// 		);
+			// 	}
 
-				firstRow.find('select#master_id_ref').append(
-					$('<option>').attr("value", item.spaceForButton).text(`${item.spaceForButton} (${item.spaceForButton})`)
-				);
-			});
+			// 	firstRow.find('select#master_id_ref').append(
+			// 		$('<option>').attr("value", item.spaceForButton).text(`${item.spaceForButton} (${item.spaceForButton})`)
+			// 	);
+			// });
 
 			// Select all table rows except the first one.
 			$('#kintoneplugin-setting-prompt-template > tr').each(function () {
@@ -399,7 +406,7 @@ jQuery.noConflict();
 				text: 'データの更新に成功しました。',
 				showConfirmButton: true,
 			});
-
+			checkMasterId();
 		}
 	}
 
@@ -418,7 +425,7 @@ jQuery.noConflict();
 			let groupName = $(element).find('#group_name');
 			let searchType = $(element).find('#search_type');
 			if (searchType.val() == "-----") {
-				groupSettingError.searchType = `<p>検索タイプを選択してください。</p>`;
+				groupSettingError.searchType.value = `<p>検索タイプを選択してください。</p>`;
 				$(searchType).parent().addClass('validation-error');
 				hasError = true;
 			} else {
@@ -445,7 +452,7 @@ jQuery.noConflict();
 		///////////////////////////////////////////////////////////////
 		if (Object.keys(groupSettingError).length > 0) {
 			errorMessage += `<p>【検索項目表示の定義】</p>
-				${groupSettingError.searchType ? groupSettingError.searchType : ''}
+				${groupSettingError.searchType.value ? groupSettingError.searchType.value : ''}
 				${groupSettingError.groupName ? groupSettingError.groupName : ''}
 				${groupSettingError.groupNameExist ? groupSettingError.groupNameExist : ''}`
 		}
@@ -519,20 +526,71 @@ jQuery.noConflict();
 						}
 
 					} else {
-						if (currentGroup.length > 0 && (currentGroup[0].searchType == "number_range" || currentGroup[0].searchType == "number_exact")) {
-							if (fieldType == "NUMBER" || fieldType == "CALC") {
+						// if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "number_range" || currentGroup[0].searchType.value == "number_exact")) {
+						// 	if (fieldType == "NUMBER" || fieldType == "CALC") {
+						// 		$(targetFields).parent().removeClass('validation-error');
+						// 	} else {
+						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
+						// 		$(targetFields).parent().addClass('validation-error');
+						// 		hasError = true;
+						// 	}
+						// } else if (currentGroup.length > 0 && (
+						// 	currentGroup[0].searchType.value == "text_initial" ||
+						// 	currentGroup[0].searchType.value == "text_patial" ||
+						// 	currentGroup[0].searchType.value == "text_exact" ||
+						// 	currentGroup[0].searchType.value == "multi_text_initial" ||
+						// 	currentGroup[0].searchType.value == "multi_text_patial"
+						// )) {
+						// 	if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
+						// 		$(targetFields).parent().removeClass('validation-error');
+						// 	} else {
+						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
+						// 		$(targetFields).parent().addClass('validation-error');
+						// 		hasError = true;
+						// 	}
+						// } else if (currentGroup.length > 0 && (
+						// 	currentGroup[0].searchType.value == "date_exact" ||
+						// 	currentGroup[0].searchType.value == "date_range"
+						// )) {
+						// 	if (fieldType == "DATE" || fieldType == "DATETIME") {
+						// 		$(targetFields).parent().removeClass('validation-error');
+						// 	} else {
+						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
+						// 		$(targetFields).parent().addClass('validation-error');
+						// 		hasError = true;
+						// 	}
+						// } else if (currentGroup.length > 0 && (
+						// 	currentGroup[0].searchType.value == "dropdown_exact"
+						// )) {
+						// 	if (!groupNameArray.includes(groupName.val())) {
+						// 		$(groupName).parent().removeClass('validation-error');
+						// 		groupNameArray.push(groupName.val());
+						// 	} else {
+						// 		$(groupName).parent().addClass('validation-error');
+						// 		searchContentError.groupTypeDropdown = `<p>ドロップダウンタイプのグループは1つしか選択できません。</p>`;
+						// 		hasError = true;
+						// 	}
+
+						// 	if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
+						// 		$(targetFields).parent().removeClass('validation-error');
+						// 	} else {
+						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
+						// 		$(targetFields).parent().addClass('validation-error');
+						// 		hasError = true;
+						// 	}
+						// }
+						if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "exact")) {
+							if (fieldType == "NUMBER" || fieldType == "CALC" || fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
+								searchContentMessage += `<p>Field「${targetFields.val()}」not support for Search type「${currentGroup[0].searchType.type}」</p>`;
+								// searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
 						} else if (currentGroup.length > 0 && (
-							currentGroup[0].searchType == "text_initial" ||
-							currentGroup[0].searchType == "text_patial" ||
-							currentGroup[0].searchType == "text_exact" ||
-							currentGroup[0].searchType == "multi_text_initial" ||
-							currentGroup[0].searchType == "multi_text_patial"
+							currentGroup[0].searchType.value == "initial" ||
+							currentGroup[0].searchType.value == "patial"
 						)) {
 							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
 								$(targetFields).parent().removeClass('validation-error');
@@ -542,49 +600,27 @@ jQuery.noConflict();
 								hasError = true;
 							}
 						} else if (currentGroup.length > 0 && (
-							currentGroup[0].searchType == "date_exact" ||
-							currentGroup[0].searchType == "date_range"
+							currentGroup[0].searchType.value == "range"
 						)) {
-							if (fieldType == "DATE" || fieldType == "DATETIME") {
+							if (fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
+								// searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
+								searchContentMessage += `<p>Field「${targetFields.val()}」not support for Search type「${currentGroup[0].searchType.type}」</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
-						} else if (currentGroup.length > 0 && (
-							currentGroup[0].searchType == "dropdown_exact"
-						)) {
-							if (!groupNameArray.includes(groupName.val())) {
-								$(groupName).parent().removeClass('validation-error');
-								groupNameArray.push(groupName.val());
-							} else {
-								$(groupName).parent().addClass('validation-error');
-								searchContentError.groupTypeDropdown = `<p>ドロップダウンタイプのグループは1つしか選択できません。</p>`;
-								hasError = true;
-							}
-
-							if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
-								$(targetFields).parent().removeClass('validation-error');
-							} else {
-								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
-								$(targetFields).parent().addClass('validation-error');
-								hasError = true;
-							}
-						}
+						} 
 					}
 				}
 
 				if (fieldForSearch.val() != "-----") {
-					switch (currentGroup.length > 0 && currentGroup[0].searchType) {
-						case "number_exact":
-						case "number_range":
-						case "date_exact":
-						case "date_range":
-						case "dropdown_exact":
+					switch (currentGroup.length > 0 && currentGroup[0].searchType.value) {
+						case "exact":
+						case "range":
 							$(fieldForSearch).parent().addClass('validation-error');
 							hasError = true;
-							searchContentMessage += `<p>検索タイプ「${currentGroup[0].searchType}」は検索用フィールドを選択できません。</p>`;
+							searchContentMessage += `<p>検索タイプ「${currentGroup[0].searchType.type}」は検索用フィールドを選択できません。</p>`;
 							break;
 
 						default:
@@ -601,7 +637,7 @@ jQuery.noConflict();
 					}
 				} else {
 					$(fieldForSearch).parent().removeClass('validation-error');
-					if (currentGroup.length > 0 && (currentGroup[0].searchType == "text_initial" || currentGroup[0].searchType == "multi_text_initial")) {
+					if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "text_initial" || currentGroup[0].searchType.value == "multi_text_initial")) {
 						searchContentError.fieldForSearch = `<p>検索用フィールドを選択してください。</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
@@ -635,7 +671,7 @@ jQuery.noConflict();
 			let groupName = $(element).find('#group_name_ref');
 			if (groupName.val() != "-----") {
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
-				if (currentGroup[0].searchType == "dropdown_exact") {
+				if (currentGroup[0].searchType.value == "exact") {
 					$(element).find('select#master_id_ref').prop('disabled', false).parent().removeClass('disabled-select');
 				} else {
 					$(element).find('select#master_id_ref').val('-----').prop('disabled', true).parent().addClass('disabled-select');
@@ -875,8 +911,8 @@ jQuery.noConflict();
 			} else {
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
-				let searchType = currentGroup[0].searchType;
-				if (searchType != "text_initial" && searchType != "text_patial" && searchType != "text_exact" && searchType != "multi_text_initial" && searchType != "multi_text_patial") {
+				let searchType = currentGroup[0].searchType.value;
+				if (searchType != "exact") {
 					return Swal10.fire({
 						position: 'center',
 						icon: 'error',
@@ -924,7 +960,7 @@ jQuery.noConflict();
 				if (targetValue == "" || targetField == undefined) continue;
 				let convertedValue = "";
 
-				switch (getGroupData[0].searchType) {
+				switch (getGroupData[0].searchType.value) {
 					case "text_initial":
 					case "multi_text_initial":
 						convertedValue = `_,${targetValue.split('').join(',')}`
