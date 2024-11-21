@@ -11,19 +11,19 @@ jQuery.noConflict();
             app: setting.appId,
             query: setting.typeField,
           });
-  
+
           const codeAndName = dataFromMaster.map((record) => ({
             code: record.code.value,
             name: record.name.value,
           }));
-  
+
           const dataToStore = {
             AppId: setting.appId,
             ApiToken: setting.apiToken,
             codeAndName: codeAndName,
             condition: setting.typeField,
           };
-  
+
           sessionStorage.setItem(
             `bokMst${setting.masterId}`,
             JSON.stringify(dataToStore)
@@ -226,7 +226,7 @@ jQuery.noConflict();
             }
           }
         }
-// Check type 
+        // Check type 
         switch (searchInfo.searchType) {
           case "text_initial":
             query += buildTextInitialQuery(searchInfo, query);
@@ -609,7 +609,7 @@ jQuery.noConflict();
 
       if (display.nameMarker) {
         if (filteredRecords[0]?.masterId !== "-----") {
-          
+
           let checkValue = [];
           filteredRecords.forEach((item) => {
             $.each(CODEMASTER, (index, data) => {
@@ -668,7 +668,7 @@ jQuery.noConflict();
         }
       } else {
         if (filteredRecords[0]?.masterId !== "-----") {
-          
+
           let checkValue = [];
           dropDownTitle.text(initialContent.searchName);
           $.each(CODEMASTER, (index, value) => {
@@ -765,7 +765,7 @@ jQuery.noConflict();
         );
         if (matchingContent) {
           if (matchingContent.masterId !== "-----") {
-            
+
             let checkValue = [];
             $.each(CODEMASTER, (index, value) => {
               if (matchingContent.masterId === value.numericKey) {
@@ -831,7 +831,7 @@ jQuery.noConflict();
           (content) => content.searchTarget === selectedItem.searchTarget
         );
         if (selectedContent.masterId !== "-----") {
-          
+
           let checkValue = [];
           $.each(CODEMASTER, (index, data) => {
             if (selectedContent.masterId === data.numericKey) {
@@ -1646,53 +1646,36 @@ jQuery.noConflict();
     $(searchButton).addClass("btn-search");
 
     const clearButton = createButton("C", () => {
-      Swal10.fire({
-        position: "center",
-        icon: "info",
-        text: "クエリをクリアにしますか？",
-        confirmButtonColor: "#3498db",
-        showCancelButton: true,
-        cancelButtonColor: "#f7f9fa",
-        confirmButtonText: "はい",
-        cancelButtonText: "いいえ",
-        customClass: {
-          confirmButton: "custom-confirm-button",
-          cancelButton: "custom-cancel-button",
-        },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          let bokTermObj = {};
-          CONFIG.groupSetting.forEach((searchItem) => {
-            let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-            const getId = $(`#${getIdElement}`);
-            if (getId.hasClass("kintoneplugin-dropdown")) {
-              const dropdownId = getId.attr("id");
-              const labelValue = getId
-                .closest(".search-item")
-                .find(".custom-dropdownTitle")
-                .text()
-                .trim();
-              if (dropdownId) {
-                bokTermObj[dropdownId] = {
-                  value: "",
-                  active: labelValue,
-                };
-              }
-            }
-          });
-          const currentUrlBase = window.location.href.match(/\S+\//)[0];
-          const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
-          const updatedUrl = `${currentUrlBase}?&bokTerms=${mergedBokTerms}`;
-          window.location.href = updatedUrl;
+      let bokTermObj = {};
+      CONFIG.groupSetting.forEach((searchItem) => {
+        let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+        const getId = $(`#${getIdElement}`);
+        if (getId.hasClass("kintoneplugin-dropdown")) {
+          const dropdownId = getId.attr("id");
+          const labelValue = getId
+            .closest(".search-item")
+            .find(".custom-dropdownTitle")
+            .text()
+            .trim();
+          if (dropdownId) {
+            bokTermObj[dropdownId] = {
+              value: "",
+              active: labelValue,
+            };
+          }
         }
       });
+      const currentUrlBase = window.location.href.match(/\S+\//)[0];
+      const mergedBokTerms = encodeURIComponent(JSON.stringify(bokTermObj));
+      const updatedUrl = `${currentUrlBase}?&bokTerms=${mergedBokTerms}`;
+      window.location.href = updatedUrl;
     });
 
     const elementBtn = $('<div class="element-button"></div>').append(
       searchButton,
       clearButton
     );
-
+     console.log("CONFIG" ,CONFIG);
     //TODO: Create Function-------------------------------------------------------------------------
     CONFIG.groupSetting.forEach((searchItem) => {
       const { searchType, groupName, nameMarker } = searchItem;
@@ -1719,13 +1702,13 @@ jQuery.noConflict();
 
         let inputElement;
         switch (searchType) {
-          case "text_initial":
+          case "Initial":
             inputElement = createTextInput(searchType, groupName, setWidth);
             break;
-          case "text_patial":
+          case "Partial":
             inputElement = createTextInput(searchType, groupName, setWidth);
             break;
-          case "text_exact":
+          case "Exact":
             inputElement = createTextInput(searchType, groupName, setWidth);
             break;
           case "multi_text_initial":
