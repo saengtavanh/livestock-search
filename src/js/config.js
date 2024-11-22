@@ -510,6 +510,15 @@ jQuery.noConflict();
 							hasError = true;
 						}
 
+						if (!groupNameArray.includes(groupName.val())) {
+							$(groupName).parent().removeClass('validation-error');
+							groupNameArray.push(groupName.val());
+						} else {
+							$(groupName).parent().addClass('validation-error');
+							searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
+							hasError = true;
+						}
+
 					} else {
 						if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "exact")) {
 							if (!groupNameArray.includes(groupName.val())) {
