@@ -511,74 +511,19 @@ jQuery.noConflict();
 						}
 
 					} else {
-						// if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "number_range" || currentGroup[0].searchType.value == "number_exact")) {
-						// 	if (fieldType == "NUMBER" || fieldType == "CALC") {
-						// 		$(targetFields).parent().removeClass('validation-error');
-						// 	} else {
-						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
-						// 		$(targetFields).parent().addClass('validation-error');
-						// 		hasError = true;
-						// 	}
-						// } else if (currentGroup.length > 0 && (
-						// 	currentGroup[0].searchType.value == "text_initial" ||
-						// 	currentGroup[0].searchType.value == "text_patial" ||
-						// 	currentGroup[0].searchType.value == "text_exact" ||
-						// 	currentGroup[0].searchType.value == "multi_text_initial" ||
-						// 	currentGroup[0].searchType.value == "multi_text_patial"
-						// )) {
-						// 	if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
-						// 		$(targetFields).parent().removeClass('validation-error');
-						// 	} else {
-						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
-						// 		$(targetFields).parent().addClass('validation-error');
-						// 		hasError = true;
-						// 	}
-						// } else if (currentGroup.length > 0 && (
-						// 	currentGroup[0].searchType.value == "date_exact" ||
-						// 	currentGroup[0].searchType.value == "date_range"
-						// )) {
-						// 	if (fieldType == "DATE" || fieldType == "DATETIME") {
-						// 		$(targetFields).parent().removeClass('validation-error');
-						// 	} else {
-						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
-						// 		$(targetFields).parent().addClass('validation-error');
-						// 		hasError = true;
-						// 	}
-						// } else if (currentGroup.length > 0 && (
-						// 	currentGroup[0].searchType.value == "dropdown_exact"
-						// )) {
-						// 	if (!groupNameArray.includes(groupName.val())) {
-						// 		$(groupName).parent().removeClass('validation-error');
-						// 		groupNameArray.push(groupName.val());
-						// 	} else {
-						// 		$(groupName).parent().addClass('validation-error');
-						// 		searchContentError.groupTypeDropdown = `<p>ドロップダウンタイプのグループは1つしか選択できません。</p>`;
-						// 		hasError = true;
-						// 	}
-
-						// 	if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
-						// 		$(targetFields).parent().removeClass('validation-error');
-						// 	} else {
-						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
-						// 		$(targetFields).parent().addClass('validation-error');
-						// 		hasError = true;
-						// 	}
-						// }
 						if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "exact")) {
 							if (!groupNameArray.includes(groupName.val())) {
 								$(groupName).parent().removeClass('validation-error');
 								groupNameArray.push(groupName.val());
 							} else {
 								$(groupName).parent().addClass('validation-error');
-								// searchContentError.groupTypeDropdown = `<p>ドロップダウンタイプのグループは1つしか選択できません。</p>`;
-								searchContentError.groupTypeDropdown = `<p>ンタイプのグループ「${groupName.val()}」は1つしか選択できません。</p>`;
+								searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
 								hasError = true;
 							}
 							if (fieldType == "NUMBER" || fieldType == "CALC" || fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
 								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
-								// searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -907,7 +852,6 @@ jQuery.noConflict();
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
 				let searchType = currentGroup[0].searchType.value;
-				console.log(searchType);
 				if (searchType !== "initial" && searchType !== "patial") {
 					return Swal10.fire({
 						position: 'center',
