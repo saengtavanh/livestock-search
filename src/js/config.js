@@ -543,7 +543,6 @@ jQuery.noConflict();
 							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								// searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
 								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
@@ -554,7 +553,6 @@ jQuery.noConflict();
 							if (fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								// searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
 								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
