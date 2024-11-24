@@ -194,15 +194,23 @@ jQuery.noConflict();
 				} else {
 					response = checkData[0].response;
 				}
+				// sort field.
+				let sortField = Object.values(response).sort((a, b) => {
+					return a.code.localeCompare(b.code);
+				});
 
-				$(rowForClone).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
-				$(rowForClone).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-				$(rowForClone).find('select#code_field').append(
-					$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
-				);
-				$(rowForClone).find('select#name_field').append(
-					$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
-				);
+				$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+				$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+				for (let field of sortField) {
+					if (field.type === "SINGLE_LINE_TEXT" || field.type === "NUMBER") {
+						$(row).find('select#code_field').append(
+							$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+						);
+						$(row).find('select#name_field').append(
+							$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+						);
+					}
+				}
 				// Check to see if not same value is set "-----".
 				if ($(rowForClone).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
 					selectedCode = "-----";
@@ -782,15 +790,24 @@ jQuery.noConflict();
 							} else {
 								response = checkData[0].response;
 							}
+							// sort field.
+							let sortField = Object.values(response).sort((a, b) => {
+								return a.code.localeCompare(b.code);
+							});
 
 							$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
 							$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-							$(row).find('select#code_field').append(
-								$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
-							);
-							$(row).find('select#name_field').append(
-								$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
-							);
+							for (let field of sortField) {
+								if (field.type === "SINGLE_LINE_TEXT" || field.type === "NUMBER") {
+									$(row).find('select#code_field').append(
+										$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+									);
+									$(row).find('select#name_field').append(
+										$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+									);
+								}
+							}
+
 							// Check to see if not same value is set "-----".
 							if ($(row).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
 								selectedCode = "-----";
@@ -1032,21 +1049,10 @@ jQuery.noConflict();
 			});
 		});
 
-		//slide up function
-		function slideUp() {
-			let settingNameValue = $(this).closest("tr").find("#settingName").val();
-			$(this).closest("tr").find("#container-table-settingPromptTemplate").slideUp();
-			$(this).closest("tr").find("#navbar-show-content").show();
-			$(this).closest("tr").find("#navbar-show-content label").text(settingNameValue);
-			$(this).closest("tr").find(".slide-up").hide();
-		};
-
 		//add new row function
 		$(".addRow").on('click', function () {
-			let closestTable = $(this).closest("table");
 			let closestTbody = $(this).closest("tbody");
 			let clonedRow = closestTbody.find("tr").first().clone(true).removeAttr("hidden");
-			if (closestTable.is("#kintoneplugin-setting-body")) slideUp.call(this);
 
 			// Insert the cloned row after the current clicked row
 			$(this).closest("tr").after(clonedRow);
@@ -1061,18 +1067,6 @@ jQuery.noConflict();
 			checkRow();
 		});
 
-		//slide down button
-		$(".slide-down").on('click', function () {
-			$(this).closest('tr').find(" #container-table-settingPromptTemplate").slideDown();
-			$(this).closest('tr').find("#navbar-show-content").hide();
-			$(this).closest('tr').find("#checkbox-slide-up").show();
-			$(this).closest('tr').find(".slide-up").show();
-		});
-
-		//slide up button
-		$('.slide-up').click(function () {
-			slideUp.call(this);
-		});
 
 
 		// Export function

@@ -383,9 +383,9 @@ tbody tr {
   width: 100px !important;
 }
 
-#container-table-settingPromptTemplate {
+/* #container-table-settingPromptTemplate {
   margin-top: -1.5rem !important;
-}
+} */
 
 .drag-icon {
   display: flex;
