@@ -157,7 +157,6 @@ jQuery.noConflict();
 	}
 
 	async function setValueToTable(getConfig) {
-		console.log('getConfig', getConfig);
 		getConfig.groupSetting.forEach((item) => {
 			let rowForClone = $("#kintoneplugin-setting-tspace tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-tspace tr:last-child").after(rowForClone);
@@ -173,6 +172,7 @@ jQuery.noConflict();
 			let rowForClone = $("#kintoneplugin-setting-code-master tr:first-child").clone(true).removeAttr("hidden");
 			$("#kintoneplugin-setting-code-master tr:last-child").after(rowForClone);
 			let appId = item.appId;
+			if (!appId) continue;
 			let apiToken = item.apiToken;
 			let body = { app: appId };
 			if (apiToken) body.token = apiToken;
@@ -433,9 +433,9 @@ jQuery.noConflict();
 			let code = $(element).find('#code_field');
 			let name = $(element).find('#name_field');
 			if (!masterId.val()) {
-				errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
-				$(masterId).addClass('validation-error');
-				hasError = true;
+				// errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
+				// $(masterId).addClass('validation-error');
+				// hasError = true;
 			} else {
 				// $(masterId).removeClass('validation-error');
 				if (!masterIdArray.includes(masterId.val().trim())) {
@@ -448,37 +448,37 @@ jQuery.noConflict();
 				}
 			}
 
-			if (!appId.val()) {
-				errorMessage += `<p>Please enter App ID on Code master difinition row: ${index + 1}</p>`;
-				$(appId).addClass('validation-error');
-				hasError = true;
-			} else {
-				$(appId).removeClass('validation-error');
-			}
+			// if (!appId.val()) {
+			// 	errorMessage += `<p>Please enter App ID on Code master difinition row: ${index + 1}</p>`;
+			// 	$(appId).addClass('validation-error');
+			// 	hasError = true;
+			// } else {
+			// 	$(appId).removeClass('validation-error');
+			// }
 
-			if (!condition.val()) {
-				errorMessage += `<p>Please enter Condition on Code master difinition row: ${index + 1}</p>`;
-				$(condition).addClass('validation-error');
-				hasError = true;
-			} else {
-				$(condition).removeClass('validation-error');
-			}
+			// if (!condition.val()) {
+			// 	errorMessage += `<p>Please enter Condition on Code master difinition row: ${index + 1}</p>`;
+			// 	$(condition).addClass('validation-error');
+			// 	hasError = true;
+			// } else {
+			// 	$(condition).removeClass('validation-error');
+			// }
 
-			if (code.val() == "-----") {
-				errorMessage += `<p>Please select Code on Code master difinition row: ${index + 1}</p>`;
-				$(code).parent().addClass('validation-error');
-				hasError = true;
-			} else {
-				$(code).parent().removeClass('validation-error');
-			}
+			// if (code.val() == "-----") {
+			// 	errorMessage += `<p>Please select Code on Code master difinition row: ${index + 1}</p>`;
+			// 	$(code).parent().addClass('validation-error');
+			// 	hasError = true;
+			// } else {
+			// 	$(code).parent().removeClass('validation-error');
+			// }
 
-			if (name.val() == "-----") {
-				errorMessage += `<p>Please select Name on Code master difinition row: ${index + 1}</p>`;
-				$(name).parent().addClass('validation-error');
-				hasError = true;
-			} else {
-				$(name).parent().removeClass('validation-error');
-			}
+			// if (name.val() == "-----") {
+			// 	errorMessage += `<p>Please select Name on Code master difinition row: ${index + 1}</p>`;
+			// 	$(name).parent().addClass('validation-error');
+			// 	hasError = true;
+			// } else {
+			// 	$(name).parent().removeClass('validation-error');
+			// }
 
 
 		}
@@ -494,13 +494,13 @@ jQuery.noConflict();
 				let masterId = $(element).find('#master_id_ref');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
 
-				if (groupName.val() == "-----") {
-					errorMessage += `<p>Please select Group name on Search content row: ${index + 1}</p>`;
-					$(groupName).parent().addClass('validation-error');
-					hasError = true;
-				} else {
-					$(groupName).parent().removeClass('validation-error');
-				}
+				// if (groupName.val() == "-----") {
+				// 	errorMessage += `<p>Please select Group name on Search content row: ${index + 1}</p>`;
+				// 	$(groupName).parent().addClass('validation-error');
+				// 	hasError = true;
+				// } else {
+				// 	$(groupName).parent().removeClass('validation-error');
+				// }
 
 				if (!searchName.val()) {
 					errorMessage += `<p>Please enter Search name on Search content row: ${index + 1}</p>`;
@@ -526,16 +526,16 @@ jQuery.noConflict();
 					let fieldType = $(element).find('#search_target option:selected').attr('type');
 					$(targetFields).parent().removeClass('validation-error');
 
-					if (masterId.val() != "-----"){
-						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER"){
+					if (masterId.val() != "-----") {
+						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER") {
 							$(targetFields).parent().removeClass('validation-error');
-						}else {
+						} else {
 							errorMessage += `<p>Field "${targetFields.val()}" is not type text.</p>`;
 							$(targetFields).parent().addClass('validation-error');
 							hasError = true;
 						}
-						
-					}else {
+
+					} else {
 						if (currentGroup.length > 0 && (currentGroup[0].searchType == "number_range" || currentGroup[0].searchType == "number_exact")) {
 							if (fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
@@ -571,11 +571,11 @@ jQuery.noConflict();
 							}
 						} else if (currentGroup.length > 0 && (
 							currentGroup[0].searchType == "dropdown_exact"
-						))  {
+						)) {
 							if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								errorMessage += `<p>Field "${targetFields.val()}" is not support for search type dropdown.</p>`;
+								errorMessage += `<p>Field "${targetFields.val()}" is not support for this type.</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -609,7 +609,7 @@ jQuery.noConflict();
 					}
 				} else {
 					$(fieldForSearch).parent().removeClass('validation-error');
-					if (currentGroup.length > 0 && currentGroup[0].searchType == "text_initial") {
+					if (currentGroup.length > 0 && (currentGroup[0].searchType == "text_initial" || currentGroup[0].searchType == "multi_text_initial")) {
 						errorMessage += `<p>Please select Field for search on Search content row: ${index + 1}</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
@@ -785,7 +785,6 @@ jQuery.noConflict();
 
 		$("button#recreate-button").on('click', async function () {
 			let data = await getData();
-			console.log('data', data);
 			let currentRow = $(this).closest('tr');
 			let targetField = $(currentRow).find('select#search_target').val();
 			let groupName = $(currentRow).find('select#group_name_ref').val();
@@ -816,16 +815,15 @@ jQuery.noConflict();
 			} else {
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
-				// let searchType = currentGroup[0].searchType;
-				// console.log('current group: ' , currentGroup);
-				// if (searchType != "text_initial" || searchType != "text_patial" || searchType != "text_exact"|| searchType != "multi_text_initial" || searchType != "multi_text_patial"){
-				// 	return Swal10.fire({
-				//     position: 'center',
-				//     icon: 'error',
-				//     text: "this group name does not support recreation",
-				//     showConfirmButton: true,
-				//   })
-				// }
+				let searchType = currentGroup[0].searchType;
+				if (searchType != "text_initial" && searchType != "text_patial" && searchType != "text_exact" && searchType != "multi_text_initial" && searchType != "multi_text_patial") {
+					return Swal10.fire({
+						position: 'center',
+						icon: 'error',
+						text: "this group name does not support recreation",
+						showConfirmButton: true,
+					})
+				}
 			}
 
 			//check target field
@@ -840,7 +838,6 @@ jQuery.noConflict();
 			} else {
 				$(currentRow).find('select#search_target').parent().removeClass('validation-error');
 				let fieldType = $(currentRow).find('select#search_target option:selected').attr('type');
-				console.log('field type: ' + fieldType);
 				if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
 					$(currentRow).find('select#search_target').parent().removeClass('validation-error');
 				} else {
@@ -949,7 +946,7 @@ jQuery.noConflict();
 
 		$("input#app_id").on("input", function () {
 			$(this).val($(this).val().replace(/[^0-9]/g, ''));
-			HASLOADDATA = false;
+			// HASLOADDATA = false;
 		});
 
 		$("input#group_name, input#search_length").on("input", function () {
@@ -962,17 +959,18 @@ jQuery.noConflict();
 			for (let row of codeMasterTable) {
 				let appId = $(row).find('#app_id').val();
 				if (!appId) {
-					$(row).find('#app_id').addClass('validation-error');
+					// $(row).find('#app_id').addClass('validation-error');
 					Swal10.fire({
 						position: "center",
-						icon: "error",
+						icon: "warning",
 						text: "App ID has not been entered",
 						showConfirmButton: true,
 					});
 					hasError = true;
-				} else {
-					$(row).find('#app_id').removeClass('validation-error');
 				}
+				// else {
+				// 	$(row).find('#app_id').removeClass('validation-error');
+				// }
 			}
 			return hasError;
 		}
@@ -985,8 +983,8 @@ jQuery.noConflict();
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
-				confirmButtonText: "Yes",
-				cancelButtonText: "No",
+				confirmButtonText: "OK",
+				cancelButtonText: "Cancel",
 				customClass: {
 					confirmButton: 'custom-confirm-button',
 					cancelButton: 'custom-cancel-button'
@@ -1054,7 +1052,7 @@ jQuery.noConflict();
 				confirmButtonColor: "#3498db",
 				showCancelButton: true,
 				cancelButtonColor: "#f7f9fa",
-				confirmButtonText: "Yes",
+				confirmButtonText: "OK",
 				cancelButtonText: "Cancel",
 			}).then(async (result) => {
 				if (result.isConfirmed) {
@@ -1109,6 +1107,14 @@ jQuery.noConflict();
 
 					let checkCompareConfig = await compareConfigStructures(dataImport);
 					if (!checkCompareConfig) {
+						let customClass = $("<div></div>")
+							.text("Failed to load configuration information")
+							.css("font-size", "18px");
+						await Swal10.fire({
+							icon: "error",
+							html: customClass.prop("outerHTML"),
+							confirmButtonColor: "#3498db",
+						});
 						$("#fileInput").val('');
 						return;
 					} else {
@@ -1136,6 +1142,10 @@ jQuery.noConflict();
 
 		// function check structure and data import
 		async function compareConfigStructures(dataImport) {
+			if (dataImport.groupSetting && dataImport.groupSetting.length <= 0) return false;
+			if (dataImport.codeMasterSetting && dataImport.codeMasterSetting.length <= 0) return false;
+			if (dataImport.searchContent && dataImport.searchContent.length <= 0) return false;
+			if (dataImport.colorSetting && dataImport.colorSetting.length <= 0) return false;
 			let errorTexts = [];
 			let configStructure = {
 				groupSetting: [
@@ -1189,12 +1199,12 @@ jQuery.noConflict();
 
 				if (typeof configStructure === 'object' && !Array.isArray(configStructure)) {
 					if (typeof dataImport !== 'object' || Array.isArray(dataImport)) {
-						errorTexts.push("The data loaded with configuration information is not an object");
+						// errorTexts.push("The data loaded with configuration information is not an object");
 						return false;
 					}
 					for (let key in configStructure) {
 						if (!(key in dataImport)) {
-							errorTexts.push(`${key} Key not found.`);
+							// errorTexts.push(`${key} Key not found.`);
 							return false;
 						}
 						if (!checkType(configStructure[key], dataImport[key])) {
@@ -1214,7 +1224,7 @@ jQuery.noConflict();
 			function checkAllCases(dataImport) {
 				// Check if the object is empty
 				if (Object.keys(dataImport).length === 0) {
-					errorTexts.push(" オブジェクトが未入力です。");
+					// errorTexts.push(" オブジェクトが未入力です。");
 					return false;
 				}
 
@@ -1227,24 +1237,7 @@ jQuery.noConflict();
 			}
 
 			let isValid = checkAllCases(dataImport);
-			if (!isValid) {
-				let customClass = $("<div></div>")
-					.text("Failed to load configuration information")
-					.css("font-size", "18px");
-
-				let errors = errorTexts.join("<br>");
-				let customClassText = $("<div></div>")
-					.html(errors) // Use .html() to correctly handle the <br> tags
-					.css("font-size", "14px");
-
-				await Swal10.fire({
-					icon: "error",
-					title: customClass.prop("outerHTML"), // Get the outerHTML of the jQuery element
-					html: customClassText.prop("outerHTML"),
-					confirmButtonColor: "#3498db",
-				});
-				return false;
-			}
+			if (!isValid) return false;
 			return true;
 		}
 	});

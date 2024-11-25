@@ -223,7 +223,7 @@ tbody tr {
 
 .color-container {
   display: flex;
-  width: 35%;
+  width: 35rem;
   flex-direction: column;
   border: 1px solid #3333;
   margin-left: 4.5%;
@@ -547,4 +547,8 @@ select:disabled {
   cursor: pointer;
   box-shadow: none;
   background-color: #c8d6dd;
+}
+
+.item label {
+  font-size: 14px;
 }
