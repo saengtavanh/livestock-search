@@ -194,15 +194,23 @@ jQuery.noConflict();
 				} else {
 					response = checkData[0].response;
 				}
+				// sort field.
+				let sortField = Object.values(response).sort((a, b) => {
+					return a.code.localeCompare(b.code);
+				});
 
-				$(rowForClone).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
-				$(rowForClone).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-				$(rowForClone).find('select#code_field').append(
-					$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
-				);
-				$(rowForClone).find('select#name_field').append(
-					$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
-				);
+				$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+				$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+				for (let field of sortField) {
+					if (field.type === "SINGLE_LINE_TEXT" || field.type === "NUMBER") {
+						$(row).find('select#code_field').append(
+							$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+						);
+						$(row).find('select#name_field').append(
+							$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+						);
+					}
+				}
 				// Check to see if not same value is set "-----".
 				if ($(rowForClone).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
 					selectedCode = "-----";
@@ -228,7 +236,7 @@ jQuery.noConflict();
 				$(rowForClone).find("#type_field").val(item.typeField);
 			}
 
-				
+
 		}
 		await updateData("initial");
 
@@ -303,7 +311,8 @@ jQuery.noConflict();
 		checkRow();
 		checkRecreateButton();
 		checkMasterId();
-	}  
+	}
+
 	//check recreate button function
 	function checkRecreateButton() {
 		$('#kintoneplugin-setting-prompt-template > tr:gt(0)').each(function (index) {
@@ -335,7 +344,6 @@ jQuery.noConflict();
 
 	async function updateData(condition) {
 		let getValueUpdated = await getData();
-		console.log(getValueUpdated);
 		let hassError = await validation("update", getValueUpdated);
 		if (!hassError) {
 
@@ -344,23 +352,9 @@ jQuery.noConflict();
 			firstRow.find(`select#group_name_ref`).empty().append($('<option>').text('-----').val('-----'));
 			firstRow.find('select#master_id_ref').empty().append($('<option>').text('-----').val('-----'));
 
-			// set data to row 0 of table space for prompt template and button.
-			// getValueUpdated.groupSetting.forEach((item) => {
-			// 	if (item.spaceForPromptTemplate !== "-----") {
-			// 		firstRow.find('select#group_name_ref').append(
-			// 			$('<option>').attr("value", item.spaceForPromptTemplate).text(`${item.spaceForPromptTemplate} (${item.spaceForPromptTemplate})`)
-			// 		);
-			// 	}
-
-			// 	firstRow.find('select#master_id_ref').append(
-			// 		$('<option>').attr("value", item.spaceForButton).text(`${item.spaceForButton} (${item.spaceForButton})`)
-			// 	);
-			// });
-
-			// Select all table rows except the first one.
+			// Set value from groupSetting and codeMaster to searchContent table
 			$('#kintoneplugin-setting-prompt-template > tr').each(function () {
-				let row = $(this); // Store the current row in a jQuery object.
-				// Get the selected values from the dropdowns space for button and space for prompt template.
+				let row = $(this);
 				let selectedGroupName = row.find('select#group_name_ref').val();
 				let selectedMasterId = row.find('select#master_id_ref').val();
 
@@ -424,7 +418,7 @@ jQuery.noConflict();
 			let groupName = $(element).find('#group_name');
 			let searchType = $(element).find('#search_type');
 			if (searchType.val() == "-----") {
-				groupSettingError.searchType.value = `<p>検索タイプを選択してください。</p>`;
+				groupSettingError.searchType = `<p>検索タイプを選択してください。</p>`;
 				$(searchType).parent().addClass('validation-error');
 				hasError = true;
 			} else {
@@ -451,7 +445,7 @@ jQuery.noConflict();
 		///////////////////////////////////////////////////////////////
 		if (Object.keys(groupSettingError).length > 0) {
 			errorMessage += `<p>【検索項目表示の定義】</p>
-				${groupSettingError.searchType.value ? groupSettingError.searchType.value : ''}
+				${groupSettingError.searchType ? groupSettingError.searchType : ''}
 				${groupSettingError.groupName ? groupSettingError.groupName : ''}
 				${groupSettingError.groupNameExist ? groupSettingError.groupNameExist : ''}`
 		}
@@ -515,8 +509,8 @@ jQuery.noConflict();
 					let fieldType = $(element).find('#search_target option:selected').attr('type');
 					$(targetFields).parent().removeClass('validation-error');
 
-					if (masterId.val() != "-----"){
-						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER"){
+					if (masterId.val() != "-----") {
+						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER") {
 							$(targetFields).parent().removeClass('validation-error');
 						} else {
 							searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
@@ -524,66 +518,29 @@ jQuery.noConflict();
 							hasError = true;
 						}
 
-					} else {
-						// if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "number_range" || currentGroup[0].searchType.value == "number_exact")) {
-						// 	if (fieldType == "NUMBER" || fieldType == "CALC") {
-						// 		$(targetFields).parent().removeClass('validation-error');
-						// 	} else {
-						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
-						// 		$(targetFields).parent().addClass('validation-error');
-						// 		hasError = true;
-						// 	}
-						// } else if (currentGroup.length > 0 && (
-						// 	currentGroup[0].searchType.value == "text_initial" ||
-						// 	currentGroup[0].searchType.value == "text_patial" ||
-						// 	currentGroup[0].searchType.value == "text_exact" ||
-						// 	currentGroup[0].searchType.value == "multi_text_initial" ||
-						// 	currentGroup[0].searchType.value == "multi_text_patial"
-						// )) {
-						// 	if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
-						// 		$(targetFields).parent().removeClass('validation-error');
-						// 	} else {
-						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
-						// 		$(targetFields).parent().addClass('validation-error');
-						// 		hasError = true;
-						// 	}
-						// } else if (currentGroup.length > 0 && (
-						// 	currentGroup[0].searchType.value == "date_exact" ||
-						// 	currentGroup[0].searchType.value == "date_range"
-						// )) {
-						// 	if (fieldType == "DATE" || fieldType == "DATETIME") {
-						// 		$(targetFields).parent().removeClass('validation-error');
-						// 	} else {
-						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
-						// 		$(targetFields).parent().addClass('validation-error');
-						// 		hasError = true;
-						// 	}
-						// } else if (currentGroup.length > 0 && (
-						// 	currentGroup[0].searchType.value == "dropdown_exact"
-						// )) {
-						// 	if (!groupNameArray.includes(groupName.val())) {
-						// 		$(groupName).parent().removeClass('validation-error');
-						// 		groupNameArray.push(groupName.val());
-						// 	} else {
-						// 		$(groupName).parent().addClass('validation-error');
-						// 		searchContentError.groupTypeDropdown = `<p>ドロップダウンタイプのグループは1つしか選択できません。</p>`;
-						// 		hasError = true;
-						// 	}
+						if (!groupNameArray.includes(groupName.val())) {
+							$(groupName).parent().removeClass('validation-error');
+							groupNameArray.push(groupName.val());
+						} else {
+							$(groupName).parent().addClass('validation-error');
+							searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
+							hasError = true;
+						}
 
-						// 	if (fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
-						// 		$(targetFields).parent().removeClass('validation-error');
-						// 	} else {
-						// 		searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
-						// 		$(targetFields).parent().addClass('validation-error');
-						// 		hasError = true;
-						// 	}
-						// }
+					} else {
 						if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "exact")) {
+							if (!groupNameArray.includes(groupName.val())) {
+								$(groupName).parent().removeClass('validation-error');
+								groupNameArray.push(groupName.val());
+							} else {
+								$(groupName).parent().addClass('validation-error');
+								searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
+								hasError = true;
+							}
 							if (fieldType == "NUMBER" || fieldType == "CALC" || fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								searchContentMessage += `<p>Field「${targetFields.val()}」not support for Search type「${currentGroup[0].searchType.type}」</p>`;
-								// searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が数字ではありません。</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -594,7 +551,7 @@ jQuery.noConflict();
 							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
@@ -604,12 +561,11 @@ jQuery.noConflict();
 							if (fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
-								// searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」が日付型ではありません。</p>`;
-								searchContentMessage += `<p>Field「${targetFields.val()}」not support for Search type「${currentGroup[0].searchType.type}」</p>`;
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
 								$(targetFields).parent().addClass('validation-error');
 								hasError = true;
 							}
-						} 
+						}
 					}
 				}
 
@@ -636,7 +592,7 @@ jQuery.noConflict();
 					}
 				} else {
 					$(fieldForSearch).parent().removeClass('validation-error');
-					if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "text_initial" || currentGroup[0].searchType.value == "multi_text_initial")) {
+					if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "initial")) {
 						searchContentError.fieldForSearch = `<p>検索用フィールドを選択してください。</p>`;
 						$(fieldForSearch).parent().addClass('validation-error');
 						hasError = true;
@@ -724,29 +680,29 @@ jQuery.noConflict();
 			placeholder: 'ui-state-highlight',
 			axis: 'y'
 		});
-		
+
 		//Create the tooltip element
-		let buttons = ["#load_data", "#button-update","#recreate-button"];
+		let buttons = ["#load_data", "#button-update", "#recreate-button"];
 		for (const element of buttons) {
 			let titleText = "";
-			if (element == "#load_data"){
+			if (element == "#load_data") {
 				titleText = "コードマスタの定義のアプリ情報を取得します";
-			}else if (element == "#button-update"){
+			} else if (element == "#button-update") {
 				titleText = "グループ設定を検索内容に反映します";
-			}else{
+			} else {
 				titleText = "内部的な検索情報を再作成します";
 			}
-			$(document).on('mouseenter',element, function (e) {
-				 // Get the title text
+			$(document).on('mouseenter', element, function (e) {
+				// Get the title text
 				let timeout = setTimeout(async () => {
 					e.preventDefault();
 					const oldContextMenu = $('#custom-context-menu');
-	
+
 					//check old contextmenu and remove
 					if (oldContextMenu.length) {
 						oldContextMenu.remove();
 					}
-	
+
 					//create contextmenu
 					var customContextMenu = $('<div>').attr('id', 'custom-context-menu')
 						.css({
@@ -760,13 +716,13 @@ jQuery.noConflict();
 							left: e.pageX + 'px',
 							top: e.pageY + 'px'
 						}).text(titleText)
-					
+
 					$('body').append(customContextMenu);
 					//remove contextMenu when mouseleave from button
 					customContextMenu.on('mouseleave', function () {
 						customContextMenu.remove();
 					});
-	
+
 				}, 400);
 				//check mouseout
 				$(this).on('mouseout', function () {
@@ -783,7 +739,7 @@ jQuery.noConflict();
 		});
 
 		//remove tooltip when click
-		$(document).on('click', ()=>{
+		$(document).on('click', () => {
 			if ($('#custom-context-menu')) $('#custom-context-menu').remove(); // Remove the custom
 		})
 
@@ -834,15 +790,24 @@ jQuery.noConflict();
 							} else {
 								response = checkData[0].response;
 							}
+							// sort field.
+							let sortField = Object.values(response).sort((a, b) => {
+								return a.code.localeCompare(b.code);
+							});
 
 							$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
 							$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-							$(row).find('select#code_field').append(
-								$('<option>').attr("value", response.code.code).text(`${response.code.code}`)
-							);
-							$(row).find('select#name_field').append(
-								$('<option>').attr("value", response.name.code).text(`${response.name.code}`)
-							);
+							for (let field of sortField) {
+								if (field.type === "SINGLE_LINE_TEXT" || field.type === "NUMBER") {
+									$(row).find('select#code_field').append(
+										$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+									);
+									$(row).find('select#name_field').append(
+										$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+									);
+								}
+							}
+
 							// Check to see if not same value is set "-----".
 							if ($(row).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
 								selectedCode = "-----";
@@ -911,7 +876,7 @@ jQuery.noConflict();
 				$(currentRow).find('select#group_name_ref').parent().removeClass('validation-error');
 				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName);
 				let searchType = currentGroup[0].searchType.value;
-				if (searchType != "exact") {
+				if (searchType !== "initial" && searchType !== "patial") {
 					return Swal10.fire({
 						position: 'center',
 						icon: 'error',
@@ -960,19 +925,17 @@ jQuery.noConflict();
 				let convertedValue = "";
 
 				switch (getGroupData[0].searchType.value) {
-					case "text_initial":
-					case "multi_text_initial":
+					case "initial":
 						convertedValue = `_,${targetValue.split('').join(',')}`
 						break;
 
-					case "text_patial":
-					case "multi_text_patial":
+					case "patial":
 						convertedValue = `${targetValue.split('').join(',')}`
 						break;
 
-					case "text_exact":
-						convertedValue = `_,${targetValue.split('').join(',')},_`
-						break;
+					// case "text_exact":
+					// 	convertedValue = `_,${targetValue.split('').join(',')},_`
+					// 	break;
 
 					default:
 						break;
@@ -1086,21 +1049,10 @@ jQuery.noConflict();
 			});
 		});
 
-		//slide up function
-		function slideUp() {
-			let settingNameValue = $(this).closest("tr").find("#settingName").val();
-			$(this).closest("tr").find("#container-table-settingPromptTemplate").slideUp();
-			$(this).closest("tr").find("#navbar-show-content").show();
-			$(this).closest("tr").find("#navbar-show-content label").text(settingNameValue);
-			$(this).closest("tr").find(".slide-up").hide();
-		};
-
 		//add new row function
 		$(".addRow").on('click', function () {
-			let closestTable = $(this).closest("table");
 			let closestTbody = $(this).closest("tbody");
 			let clonedRow = closestTbody.find("tr").first().clone(true).removeAttr("hidden");
-			if (closestTable.is("#kintoneplugin-setting-body")) slideUp.call(this);
 
 			// Insert the cloned row after the current clicked row
 			$(this).closest("tr").after(clonedRow);
@@ -1115,18 +1067,6 @@ jQuery.noConflict();
 			checkRow();
 		});
 
-		//slide down button
-		$(".slide-down").on('click', function () {
-			$(this).closest('tr').find(" #container-table-settingPromptTemplate").slideDown();
-			$(this).closest('tr').find("#navbar-show-content").hide();
-			$(this).closest('tr').find("#checkbox-slide-up").show();
-			$(this).closest('tr').find(".slide-up").show();
-		});
-
-		//slide up button
-		$('.slide-up').click(function () {
-			slideUp.call(this);
-		});
 
 
 		// Export function
@@ -1234,7 +1174,10 @@ jQuery.noConflict();
 						nameMarker: "string",
 						groupName: "string",
 						searchLength: "string",
-						searchType: "string"
+						searchType: {
+							type: "string",
+							value: ""
+						}
 					}
 				],
 				codeMasterSetting: [
@@ -1252,7 +1195,10 @@ jQuery.noConflict();
 						groupName: "string",
 						searchName: "string",
 						masterId: "string",
-						searchTarget: "string",
+						searchTarget: {
+							code: "string",
+							type: "string"
+						},
 						fieldForSearch: "string"
 					}
 				],
@@ -1313,29 +1259,7 @@ jQuery.noConflict();
 			}
 
 			let isValid = checkAllCases(dataImport);
-			if (!isValid) {
-				let customClass = $("<div></div>")
-					.text("Failed to load configuration information")
-					.css("font-size", "18px");
-
-				let errors = errorTexts.join("<br>");
-				let customClassText = $("<div></div>")
-					.html(errors) // Use .html() to correctly handle the <br> tags
-					.css("font-size", "14px");
-
-				// await Swal10.fire({
-				// 	icon: "error",
-				// 	title: customClass.prop("outerHTML"), // Get the outerHTML of the jQuery element
-				// 	html: customClassText.prop("outerHTML"),
-				// 	confirmButtonColor: "#3498db",
-				// });
-				await Swal10.fire({
-					icon: "error",
-					html: customClass.prop("outerHTML"),
-					confirmButtonColor: "#3498db",
-				});
-				return false;
-			}
+			if (!isValid) return false;
 			return true;
 		}
 	});

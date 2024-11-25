@@ -150,13 +150,65 @@ jQuery.noConflict();
       searchInfoList,
       dropDownChange
     ) {
+      console.log("🚀 ~ kintone.events.on ~ dropDownChange:", dropDownChange)
       let viewCond = await getConditionView(GETVIEWS, event.viewId);
       let query = event.viewId == 20 ? "" : viewCond ? `(${viewCond})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
       let mergedBokTermsObject = {};
 
+      
       searchInfoList.forEach((searchInfo) => {
+        let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
+        if ($(`#${groupNameSlit}`).is("select")) {
+          let selectedValue = $(`#${groupNameSlit} option:selected`).val();
+          let dropdownId = groupNameSlit;
+          let labelText = $(`#${groupNameSlit}`).prev("label").text();
+          if (selectedValue) {
+            // bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelText);
+            mergedBokTermsObject = {
+              ...mergedBokTermsObject,
+              ...createBokTermsObject(selectedValue, dropdownId, labelText),
+            };
+            if (!dropDownChange) {
+              if (
+                searchInfo.groupName == groupNameSlit.replace("_", " ") &&
+                searchInfo.nameMarker &&
+                searchInfo.searchType.value == "exact"
+              ) {
+                if (searchInfo.target_field.length > 1) {
+                  searchInfo.target_field.forEach((fieldCode, index) => {
+                    const isLastIndex =
+                      index === searchInfo.target_field.length - 1;
+
+                    if (queryChild) {
+                      if (isLastIndex) {
+                        queryChild += ` or (${fieldCode} in ("${selectedValue}")))`;
+                      } else {
+                        queryChild += ` or (${fieldCode} in ("${selectedValue}"))`;
+                      }
+                    } else {
+                      queryChild = `((${fieldCode} in ("${selectedValue}")) `;
+                    }
+                  });
+                  query += `${query ? " and " : ""}${queryChild}`;
+                } else {
+                  query += `${query ? " and " : ""}(${searchInfo.target_field[0]} in ("${selectedValue}"))`;
+                }
+              } else if (
+                searchInfo.groupName == groupNameSlit.replace("_", " ") &&
+                searchInfo.nameMarker == "" &&
+                searchInfo.searchType.value == "exact"
+              ) {
+                let getTargetField = searchContent.filter(
+                  (item) => item.searchName == labelText
+                );
+                query += `${query ? " and " : ""}(${getTargetField[0].searchTarget} in ("${selectedValue}"))`;
+              }
+            }
+          }
+        }
+
         console.log("searchInfo", searchInfo);
         checkFieldForSearch = searchContent.filter(
           (item) => item.groupName == searchInfo.groupName
@@ -300,17 +352,19 @@ jQuery.noConflict();
         bokTermsGet[replacedText] = $(`#${replacedText}`).val();
       }
 
-      if (
-        searchInfo.fieldType === "DATE" ||
-        searchInfo.fieldType === "DATE_TIME"
-      ) {
+      if (searchInfo.fieldType === "DATE" || searchInfo.fieldType === "DATE_TIME") {
         if (searchValue) {
           if (searchInfo.target_field.length > 1) {
-            searchInfo.target_field.forEach((field) => {
+            searchInfo.target_field.forEach((field, index) => {
+              const isLastIndex = index === field.target_field.length - 1;
               if (queryChild) {
-                queryChild += `or (${field} = "${searchValue}")`;
+                if (isLastIndex) {
+                  queryChild += `or (${field} = "${searchValue}"))`;
+                } else {
+                  queryChild += `or (${field} = "${searchValue}")`;
+                }
               } else {
-                queryChild = `${query ? " and " : ""}(${field} = "${searchValue}") `;
+                queryChild = `${query ? " and " : ""}((${field} = "${searchValue}") `;
               }
             });
           } else if ((searchInfo.target_field.length = 1)) {
@@ -321,11 +375,15 @@ jQuery.noConflict();
       } else {
         if (searchValue) {
           if (searchInfo.target_field.length > 1) {
-            searchInfo.target_field.forEach((field) => {
+            searchInfo.target_field.forEach((field, index) => {
+              const isLastIndex = index === field.target_field.length - 1;
               if (queryChild) {
+                if (condition) {
+                  queryChild += `or (${field} in ("${searchValue}")))`;
+                }
                 queryChild += `or (${field} in ("${searchValue}"))`;
               } else {
-                queryChild = `${query ? " and " : ""}(${field} in ("${searchValue}")) `;
+                queryChild = `${query ? " and " : ""}((${field} in ("${searchValue}"))`;
               }
             });
           } else if ((searchInfo.target_field.length = 1)) {
@@ -1001,33 +1059,63 @@ jQuery.noConflict();
         searchInfoList,
         true
       );
+      
       if (queryForDropdow) {
         query = `${query ? " and" : ""} ${queryForDropdow}`;
       }
-      searchInfoList.forEach((field, index) => {
-        if (field.groupName == selectedId && field.nameMarker) {
-          if (field.target_field.length > 1) {
-            field.target_field.forEach((fieldCode, index) => {
-              const isLastIndex = index === field.target_field.length - 1;
-
-              if (queryChild) {
-                if (isLastIndex) {
-                  queryChild += `or (${fieldCode} in ("${selectedValue}")))`;
-                } else {
-                  queryChild += `or (${fieldCode} in ("${selectedValue}"))`;
-                }
-              } else {
-                queryChild = `((${fieldCode} in ("${selectedValue}")) `;
-              }
-            });
-            query = `${query ? " and " : ""}${queryChild}`;
-          } else {
-            query = `${query ? " and " : ""}(${field.target_field[0]} in ("${selectedValue}"))`;
-          }
-        } else if (field.groupName == selectedId && field.nameMarker == "") {
-          query = `${query ? " and " : ""}(${fieldCode} in ("${selectedValue}"))`;
-        }
-      });
+      
+      // searchInfoList.forEach((field, index) => {
+      //   console.log("🚀 ~ searchInfoList.forEach ~ field:", field)
+      //   if (field.fieldType === "DATE" || field.fieldType === "DATE_TIME") {
+      //     if (field.groupName == selectedId && field.nameMarker) {
+      //       if (field.target_field.length > 1) {
+      //         field.target_field.forEach((fieldCode, index) => {
+      //           const isLastIndex = index === field.target_field.length - 1;
+  
+      //           if (queryChild) {
+      //             if (isLastIndex) {
+      //               queryChild += `or (${fieldCode} = "${selectedValue}"))`;
+      //             } else {
+      //               queryChild += `or (${fieldCode} = "${selectedValue}")`;
+      //             }
+      //           } else {
+      //             queryChild = `((${fieldCode} = "${selectedValue}") `;
+      //           }
+      //         });
+      //         query = `${query ? " and " : ""}${queryChild}`;
+      //       } else {
+      //         query = `${query ? " and " : ""}(${field.target_field[0]} = "${selectedValue}")`;
+      //       }
+      //     } else if (field.groupName == selectedId && field.nameMarker == "") {
+      //       query = `${query ? " and " : ""}(${fieldCode} = "${selectedValue}")`;
+      //     }
+      //   } else {
+      //     if (field.groupName == selectedId && field.nameMarker) {
+      //       console.log("field.target_field:::", field.target_field);
+            
+      //       if (field.target_field.length > 1) {
+      //         field.target_field.forEach((fieldCode, index) => {
+      //           const isLastIndex = index === field.target_field.length - 1;
+  
+      //           if (queryChild) {
+      //             if (isLastIndex) {
+      //               queryChild += `or (${fieldCode} in ("${selectedValue}")))`;
+      //             } else {
+      //               queryChild += `or (${fieldCode} in ("${selectedValue}"))`;
+      //             }
+      //           } else {
+      //             queryChild = `((${fieldCode} in ("${selectedValue}")) `;
+      //           }
+      //         });
+      //         query = `${query ? " and " : ""}${queryChild}`;
+      //       } else {
+      //         query = `${query ? " and " : ""}(${field.target_field[0]} in ("${selectedValue}"))`;
+      //       }
+      //     } else if (field.groupName == selectedId && field.nameMarker == "") {
+      //       query = `${query ? " and " : ""}(${fieldCode} in ("${selectedValue}"))`;
+      //     }
+      //   }
+      // });
 
       // bokTermsObject = {
       //   ...bokTermsObject,
@@ -1044,25 +1132,22 @@ jQuery.noConflict();
       const bokTerms = encodeURIComponent(bokTermsString);
 
       if (queryInput) {
-        query += `${query ? " and" : ""} ${queryInput}`;
+        query = `${query ? " and" : ""} ${queryInput}`;
+      } else {
+        query = "";
       }
 
       let querySuccess = encodeURIComponent(query);
 
       const QueryUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
       const urlObj = new URL(window.location.href);
+      console.log("🚀 ~ kintone.events.on ~ QueryUrl:", QueryUrl)
       const bokTerm = urlObj.searchParams.get("bokTerms");
       if (bokTerm == null) {
         window.location.href = QueryUrl;
       } else {
-        const decodedBokTerms = decodeURIComponent(bokTerm).replace(
-          /(^\{|\}$)/g,
-          ""
-        );
-        const cleanBokTerms = decodedBokTerms.replace(
-          /[^{}\[\]":,0-9a-zA-Z._-\s]/g,
-          ""
-        );
+        const decodedBokTerms = decodeURIComponent(bokTerm).replace(/(^\{|\}$)/g,"");
+        const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-\s]/g,"");
         const wrappedBokTerms = `{${cleanBokTerms}}`;
         let bokTermObj;
         try {
@@ -1084,652 +1169,662 @@ jQuery.noConflict();
           Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
             // ====
             // checkFieldForSearchForDropDown = searchContent.filter((item) => item.groupName == field.groupName.replace(/\s+/g, "_"));
-            searchInfoList.forEach((field) => {
-              if (
-                field.groupName.replace(/\s+/g, "_") == key &&
-                (field.searchType == "text_patial" ||
-                  field.searchType == "text_initial" ||
-                  field.searchType == "text_exact" ||
-                  field.searchType == "number_exact")
-              ) {
-                if (!$(`#${key}`).val()) {
-                  let valueForCheck;
-                  if (
-                    field.searchType == "text_patial" ||
-                    field.searchType == "multi_text_patial"
-                  ) {
-                    valueForCheck = transformStringPartial(bokTermsObj);
-                  } else if (
-                    field.searchType == "text_initial" ||
-                    field.searchType == "multi_text_initial"
-                  ) {
-                    valueForCheck = transformString(bokTermsObj);
-                  } else if (
-                    field.searchType == "text_exact" ||
-                    field.searchType == "number_exact"
-                  ) {
-                    valueForCheck = transformString(bokTermsObj);
-                  } else {
-                    valueForCheck = bokTermsObj;
-                  }
+            // searchInfoList.forEach((field) => {
+            //   console.log("🚀 ~ searchInfoList.forEach ~ field>>>>>>:", field);
+            //   if (field.groupName.replace(/\s+/g, "_") == key && (field.searchType.value == "patial" ||
+            //       field.searchType.value == "initial" ||
+            //       field.searchType.value == "exact")) {
 
-                  let queryForCheck;
-                  if (field.searchType == "number_exact") {
-                    if (field.target_field.length > 1) {
-                      field.target_field.forEach((field, index) => {
-                        const isLastIndex =
-                          index === field.target_field.length - 1;
+            //     if (!$(`#${key}`).val()) {
+            //       let valueForCheck;
+            //       if (field.searchType.value == "patial") {
+            //         valueForCheck = transformStringPartial(bokTermsObj);
+            //       } else if (
+            //         field.searchType.value == "initial") {
+            //         valueForCheck = transformString(bokTermsObj);
+            //       } else if ( field.searchType.value == "exact") {
+            //         valueForCheck = bokTermsObj;
+            //       }
 
-                        if (queryForCheck) {
-                          if (isLastIndex) {
-                            queryForCheck += `or (${field} = "${valueForCheck}"))`;
-                          } else {
-                            queryForCheck += `or (${field} = "${valueForCheck}")`;
-                          }
-                        } else {
-                          queryForCheck = `((${field} = "${valueForCheck}")`;
-                        }
-                      });
-                    } else if ((field.target_field.length = 1)) {
-                      queryForCheck = `(${field.target_field} = "${valueForCheck}")`;
-                      changeToArray = changeToArray.filter(
-                        (item) => item !== queryForCheck
-                      );
-                      let string = changeToArray.join(" and ");
-                      delete bokTermObj[key];
-                      query = string;
-                    }
-                  } else {
-                    if (field.target_field.length > 1) {
-                      field.target_field.forEach((field, index) => {
-                        const isLastIndex =
-                          index === field.target_field.length - 1;
+            //       let queryForCheck;
+            //       if (field.searchType.value == "exact") {
+            //         console.log("field.searchType::", field.searchType);
+                    
+            //         if (field.target_field.length > 1) {
+            //           field.target_field.forEach((field, index) => {
+            //             const isLastIndex =
+            //               index === field.target_field.length - 1;
 
-                        if (queryForCheck) {
-                          if (isLastIndex) {
-                            queryForCheck += `or (${field} like "${valueForCheck}"))`;
-                          } else {
-                            queryForCheck += `or (${field} like "${valueForCheck}")`;
-                          }
-                        } else {
-                          queryForCheck = `((${field} like "${valueForCheck}")`;
-                        }
-                      });
-                    } else if ((field.target_field.length = 1)) {
-                      queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
-                      changeToArray = changeToArray.filter(
-                        (item) => item !== queryForCheck
-                      );
-                      let string = changeToArray.join(" and ");
-                      delete bokTermObj[key];
-                      query = string;
-                    }
-                  }
-                }
-              }
+            //             if (queryForCheck) {
+            //               if (isLastIndex) {
+            //                 queryForCheck += `or (${field} = "${valueForCheck}"))`;
+            //               } else {
+            //                 queryForCheck += `or (${field} = "${valueForCheck}")`;
+            //               }
+            //             } else {
+            //               queryForCheck = `((${field} = "${valueForCheck}")`;
+            //             }
+            //           });
+            //         } else if ((field.target_field.length = 1)) {
+            //           queryForCheck = `(${field.target_field} = "${valueForCheck}")`;
+            //           changeToArray = changeToArray.filter(
+            //             (item) => item !== queryForCheck
+            //           );
+            //           let string = changeToArray.join(" and ");
+            //           delete bokTermObj[key];
+            //           query = string;
+            //         }
+            //       } else {
+            //         if (field.target_field.length > 1) {
+            //           field.target_field.forEach((field, index) => {
+            //             const isLastIndex =
+            //               index === field.target_field.length - 1;
 
-              let afterparts = key.split("_");
-              let afterisLastPartStart =
-                afterparts[afterparts.length - 1] === "start";
-              let afterchangeKeyValue = "";
+            //             if (queryForCheck) {
+            //               if (isLastIndex) {
+            //                 queryForCheck += `or (${field} like "${valueForCheck}"))`;
+            //               } else {
+            //                 queryForCheck += `or (${field} like "${valueForCheck}")`;
+            //               }
+            //             } else {
+            //               queryForCheck = `((${field} like "${valueForCheck}")`;
+            //             }
+            //           });
+            //         } else if ((field.target_field.length = 1)) {
+            //           queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
+            //           changeToArray = changeToArray.filter(
+            //             (item) => item !== queryForCheck
+            //           );
+            //           let string = changeToArray.join(" and ");
+            //           delete bokTermObj[key];
+            //           query = string;
+            //         }
+            //       }
+            //     }
+            //   }
 
-              if (afterisLastPartStart) {
-                afterchangeKeyValue = key.replace(/_start$/, "");
-              } else {
-                afterchangeKeyValue = key.replace(/_end$/, "");
-              }
+            //   let afterparts = key.split("_");
+            //   let afterisLastPartStart =
+            //     afterparts[afterparts.length - 1] === "start";
+            //   let afterchangeKeyValue = "";
 
-              if (
-                field.groupName.replace(/\s+/g, "_") == afterchangeKeyValue &&
-                (field.searchType == "number_range" ||
-                  field.searchType == "date_range")
-              ) {
-                let getGroupId;
-                const parts = key.split("_");
-                const isLastPartStart = parts[parts.length - 1] === "start";
+            //   if (afterisLastPartStart) {
+            //     afterchangeKeyValue = key.replace(/_start$/, "");
+            //   } else {
+            //     afterchangeKeyValue = key.replace(/_end$/, "");
+            //   }
 
-                if (!checkHaveStartData && isLastPartStart) {
-                  checkHaveStartData = 1;
-                  getGroupId = key.replace(/_start$/, "");
-                  Current_Date_id = getGroupId;
-                } else if (checkHaveStartData && isLastPartStart) {
-                  getGroupId = key.replace(/_start$/, "");
-                  checkHaveStartData = "";
-                  Current_Date_id = getGroupId;
-                } else if (checkHaveStartData && !isLastPartStart) {
-                  getGroupId = key.replace(/_end$/, "");
-                  checkHaveStartData = 1;
-                } else {
-                  getGroupId = key.replace(/_end$/, "");
-                  checkHaveEndtData = 1;
-                }
+            //   if (
+            //     field.groupName.replace(/\s+/g, "_") == afterchangeKeyValue &&
+            //     (field.searchType == "number_range" ||
+            //       field.searchType == "date_range")
+            //   ) {
+            //     let getGroupId;
+            //     const parts = key.split("_");
+            //     const isLastPartStart = parts[parts.length - 1] === "start";
 
-                if (field.groupName == getGroupId.replace("_", " ")) {
-                  if (isLastPartStart) {
-                    startData = bokTermsObj;
-                  } else {
-                    if (Current_Date_id != getGroupId) {
-                      startData = "";
-                    }
-                    endData = bokTermsObj;
-                  }
+            //     if (!checkHaveStartData && isLastPartStart) {
+            //       checkHaveStartData = 1;
+            //       getGroupId = key.replace(/_start$/, "");
+            //       Current_Date_id = getGroupId;
+            //     } else if (checkHaveStartData && isLastPartStart) {
+            //       getGroupId = key.replace(/_start$/, "");
+            //       checkHaveStartData = "";
+            //       Current_Date_id = getGroupId;
+            //     } else if (checkHaveStartData && !isLastPartStart) {
+            //       getGroupId = key.replace(/_end$/, "");
+            //       checkHaveStartData = 1;
+            //     } else {
+            //       getGroupId = key.replace(/_end$/, "");
+            //       checkHaveEndtData = 1;
+            //     }
 
-                  if (!$(`#${key}`).val()) {
-                    delete bokTermObj[key];
-                  } else {
-                    if (isLastPartStart) {
-                      startNew = $(`#${key}`).val();
-                    } else {
-                      endNew = $(`#${key}`).val();
-                    }
-                  }
+            //     if (field.groupName == getGroupId.replace("_", " ")) {
+            //       if (isLastPartStart) {
+            //         startData = bokTermsObj;
+            //       } else {
+            //         if (Current_Date_id != getGroupId) {
+            //           startData = "";
+            //         }
+            //         endData = bokTermsObj;
+            //       }
 
-                  if (field.target_field.length > 1) {
-                    field.target_field.forEach((fields) => {
-                      if (startData && endData == "") {
-                        queryChildRank += queryChildRank
-                          ? " or (" +
-                          fields +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startData +
-                          '"' +
-                          "))"
-                          : "((" +
-                          fields +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startData +
-                          '"' +
-                          ")";
-                      } else if (endData && startData == "") {
-                        queryChildRank += queryChildRank
-                          ? " or (" +
-                          fields +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endData +
-                          '"' +
-                          "))"
-                          : "((" +
-                          fields +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endData +
-                          '"' +
-                          ")";
-                      } else if (startData && endData) {
-                        queryChildRank += queryChildRank
-                          ? " or ((" +
-                          fields +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startData +
-                          '")' +
-                          " and (" +
-                          fields +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endData +
-                          '"' +
-                          "))"
-                          : "((" +
-                          fields +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startData +
-                          '")' +
-                          " and (" +
-                          fields +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endData +
-                          '"' +
-                          "))";
-                      }
-                    });
-                  } else {
-                    if (startData && endData == "") {
-                      queryChildRank += queryChildRank
-                        ? " or (" +
-                        field.target_field[0] +
-                        " " +
-                        ">=" +
-                        ' "' +
-                        startData +
-                        '"' +
-                        ")"
-                        : "(" +
-                        field.target_field[0] +
-                        " " +
-                        ">=" +
-                        ' "' +
-                        startData +
-                        '"' +
-                        ")";
-                    } else if (endData && startData == "") {
-                      queryChildRank += queryChildRank
-                        ? " or (" +
-                        field.target_field[0] +
-                        " " +
-                        "<=" +
-                        ' "' +
-                        endData +
-                        '"' +
-                        ")"
-                        : "(" +
-                        field.target_field[0] +
-                        " " +
-                        "<=" +
-                        ' "' +
-                        endData +
-                        '"' +
-                        ")";
-                    } else if (startData && endData) {
-                      queryChildRank += queryChildRank
-                        ? " or ((" +
-                        field.target_field[0] +
-                        " " +
-                        ">=" +
-                        ' "' +
-                        startData +
-                        '")' +
-                        " and (" +
-                        field.target_field[0] +
-                        " " +
-                        "<=" +
-                        ' "' +
-                        endData +
-                        '"' +
-                        "))"
-                        : "((" +
-                        field.target_field[0] +
-                        " " +
-                        ">=" +
-                        ' "' +
-                        startData +
-                        '")' +
-                        " and (" +
-                        field.target_field[0] +
-                        " " +
-                        "<=" +
-                        ' "' +
-                        endData +
-                        '"' +
-                        "))";
-                    }
-                  }
+            //       if (!$(`#${key}`).val()) {
+            //         delete bokTermObj[key];
+            //       } else {
+            //         if (isLastPartStart) {
+            //           startNew = $(`#${key}`).val();
+            //         } else {
+            //           endNew = $(`#${key}`).val();
+            //         }
+            //       }
 
-                  //copy code
-                  let changeQueryToArray = queryChildRank.split(/ and /);
-                  if (checkHaveStartData && checkHaveEndtData) {
-                    changeToArray = changeToArray.filter(
-                      (item) => !changeQueryToArray.includes(item)
-                    );
-                    checkHaveStartData = "";
-                    checkHaveEndtData = "";
-                    queryChildRank = "";
+            //       if (field.target_field.length > 1) {
+            //         field.target_field.forEach((fields) => {
+            //           if (startData && endData == "") {
+            //             queryChildRank += queryChildRank
+            //               ? " or (" +
+            //               fields +
+            //               " " +
+            //               ">=" +
+            //               ' "' +
+            //               startData +
+            //               '"' +
+            //               "))"
+            //               : "((" +
+            //               fields +
+            //               " " +
+            //               ">=" +
+            //               ' "' +
+            //               startData +
+            //               '"' +
+            //               ")";
+            //           } else if (endData && startData == "") {
+            //             queryChildRank += queryChildRank
+            //               ? " or (" +
+            //               fields +
+            //               " " +
+            //               "<=" +
+            //               ' "' +
+            //               endData +
+            //               '"' +
+            //               "))"
+            //               : "((" +
+            //               fields +
+            //               " " +
+            //               "<=" +
+            //               ' "' +
+            //               endData +
+            //               '"' +
+            //               ")";
+            //           } else if (startData && endData) {
+            //             queryChildRank += queryChildRank
+            //               ? " or ((" +
+            //               fields +
+            //               " " +
+            //               ">=" +
+            //               ' "' +
+            //               startData +
+            //               '")' +
+            //               " and (" +
+            //               fields +
+            //               " " +
+            //               "<=" +
+            //               ' "' +
+            //               endData +
+            //               '"' +
+            //               "))"
+            //               : "((" +
+            //               fields +
+            //               " " +
+            //               ">=" +
+            //               ' "' +
+            //               startData +
+            //               '")' +
+            //               " and (" +
+            //               fields +
+            //               " " +
+            //               "<=" +
+            //               ' "' +
+            //               endData +
+            //               '"' +
+            //               "))";
+            //           }
+            //         });
+            //       } else {
+            //         if (startData && endData == "") {
+            //           queryChildRank += queryChildRank
+            //             ? " or (" +
+            //             field.target_field[0] +
+            //             " " +
+            //             ">=" +
+            //             ' "' +
+            //             startData +
+            //             '"' +
+            //             ")"
+            //             : "(" +
+            //             field.target_field[0] +
+            //             " " +
+            //             ">=" +
+            //             ' "' +
+            //             startData +
+            //             '"' +
+            //             ")";
+            //         } else if (endData && startData == "") {
+            //           queryChildRank += queryChildRank
+            //             ? " or (" +
+            //             field.target_field[0] +
+            //             " " +
+            //             "<=" +
+            //             ' "' +
+            //             endData +
+            //             '"' +
+            //             ")"
+            //             : "(" +
+            //             field.target_field[0] +
+            //             " " +
+            //             "<=" +
+            //             ' "' +
+            //             endData +
+            //             '"' +
+            //             ")";
+            //         } else if (startData && endData) {
+            //           queryChildRank += queryChildRank
+            //             ? " or ((" +
+            //             field.target_field[0] +
+            //             " " +
+            //             ">=" +
+            //             ' "' +
+            //             startData +
+            //             '")' +
+            //             " and (" +
+            //             field.target_field[0] +
+            //             " " +
+            //             "<=" +
+            //             ' "' +
+            //             endData +
+            //             '"' +
+            //             "))"
+            //             : "((" +
+            //             field.target_field[0] +
+            //             " " +
+            //             ">=" +
+            //             ' "' +
+            //             startData +
+            //             '")' +
+            //             " and (" +
+            //             field.target_field[0] +
+            //             " " +
+            //             "<=" +
+            //             ' "' +
+            //             endData +
+            //             '"' +
+            //             "))";
+            //         }
+            //       }
 
-                    if (field.target_field.length > 1) {
-                      field.target_field.forEach((fields) => {
-                        if (startNew && endNew == "") {
-                          queryChildRank += queryChildRank
-                            ? " or (" +
-                            fields +
-                            " " +
-                            ">=" +
-                            ' "' +
-                            startNew +
-                            '"' +
-                            "))"
-                            : "((" +
-                            fields +
-                            " " +
-                            ">=" +
-                            ' "' +
-                            startNew +
-                            '"' +
-                            ")";
-                        } else if (endNew && startNew == "") {
-                          queryChildRank += queryChildRank
-                            ? " or (" +
-                            fields +
-                            " " +
-                            "<=" +
-                            ' "' +
-                            endNew +
-                            '"' +
-                            "))"
-                            : " or ((" +
-                            fields +
-                            " " +
-                            "<=" +
-                            ' "' +
-                            endNew +
-                            '"' +
-                            ")";
-                        } else if (startNew && endNew) {
-                          queryChildRank += queryChildRank
-                            ? " or ((" +
-                            fields +
-                            " " +
-                            ">=" +
-                            ' "' +
-                            startNew +
-                            '")' +
-                            " and (" +
-                            fields +
-                            " " +
-                            "<=" +
-                            ' "' +
-                            endNew +
-                            '"' +
-                            "))"
-                            : "((" +
-                            fields +
-                            " " +
-                            ">=" +
-                            ' "' +
-                            startNew +
-                            '")' +
-                            " and (" +
-                            fields +
-                            " " +
-                            "<=" +
-                            ' "' +
-                            endNew +
-                            '"' +
-                            "))";
-                        }
-                      });
-                    } else {
-                      if (startNew && endNew == "") {
-                        queryChildRank += queryChildRank
-                          ? " or (" +
-                          field.target_field[0] +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startNew +
-                          '"' +
-                          ")"
-                          : "(" +
-                          field.target_field[0] +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startNew +
-                          '"' +
-                          ")";
-                      } else if (endNew && startNew == "") {
-                        queryChildRank += queryChildRank
-                          ? " or (" +
-                          field.target_field[0] +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endNew +
-                          '"' +
-                          ")"
-                          : "or (" +
-                          field.target_field[0] +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endNew +
-                          '"' +
-                          ")";
-                      } else if (startNew && endNew) {
-                        queryChildRank += queryChildRank
-                          ? " or ((" +
-                          field.target_field[0] +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startNew +
-                          '")' +
-                          " and (" +
-                          field.target_field[0] +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endNew +
-                          '"' +
-                          "))"
-                          : "((" +
-                          field.target_field[0] +
-                          " " +
-                          ">=" +
-                          ' "' +
-                          startNew +
-                          '")' +
-                          " and (" +
-                          field.target_field[0] +
-                          " " +
-                          "<=" +
-                          ' "' +
-                          endNew +
-                          '"' +
-                          "))";
-                      }
-                    }
+            //       //copy code
+            //       let changeQueryToArray = queryChildRank.split(/ and /);
+            //       if (checkHaveStartData && checkHaveEndtData) {
+            //         changeToArray = changeToArray.filter(
+            //           (item) => !changeQueryToArray.includes(item)
+            //         );
+            //         checkHaveStartData = "";
+            //         checkHaveEndtData = "";
+            //         queryChildRank = "";
 
-                    if (queryChildRank) {
-                      changeToArray = queryChildRank.split(/ and /);
-                    }
+            //         if (field.target_field.length > 1) {
+            //           field.target_field.forEach((fields) => {
+            //             if (startNew && endNew == "") {
+            //               queryChildRank += queryChildRank
+            //                 ? " or (" +
+            //                 fields +
+            //                 " " +
+            //                 ">=" +
+            //                 ' "' +
+            //                 startNew +
+            //                 '"' +
+            //                 "))"
+            //                 : "((" +
+            //                 fields +
+            //                 " " +
+            //                 ">=" +
+            //                 ' "' +
+            //                 startNew +
+            //                 '"' +
+            //                 ")";
+            //             } else if (endNew && startNew == "") {
+            //               queryChildRank += queryChildRank
+            //                 ? " or (" +
+            //                 fields +
+            //                 " " +
+            //                 "<=" +
+            //                 ' "' +
+            //                 endNew +
+            //                 '"' +
+            //                 "))"
+            //                 : " or ((" +
+            //                 fields +
+            //                 " " +
+            //                 "<=" +
+            //                 ' "' +
+            //                 endNew +
+            //                 '"' +
+            //                 ")";
+            //             } else if (startNew && endNew) {
+            //               queryChildRank += queryChildRank
+            //                 ? " or ((" +
+            //                 fields +
+            //                 " " +
+            //                 ">=" +
+            //                 ' "' +
+            //                 startNew +
+            //                 '")' +
+            //                 " and (" +
+            //                 fields +
+            //                 " " +
+            //                 "<=" +
+            //                 ' "' +
+            //                 endNew +
+            //                 '"' +
+            //                 "))"
+            //                 : "((" +
+            //                 fields +
+            //                 " " +
+            //                 ">=" +
+            //                 ' "' +
+            //                 startNew +
+            //                 '")' +
+            //                 " and (" +
+            //                 fields +
+            //                 " " +
+            //                 "<=" +
+            //                 ' "' +
+            //                 endNew +
+            //                 '"' +
+            //                 "))";
+            //             }
+            //           });
+            //         } else {
+            //           if (startNew && endNew == "") {
+            //             queryChildRank += queryChildRank
+            //               ? " or (" +
+            //               field.target_field[0] +
+            //               " " +
+            //               ">=" +
+            //               ' "' +
+            //               startNew +
+            //               '"' +
+            //               ")"
+            //               : "(" +
+            //               field.target_field[0] +
+            //               " " +
+            //               ">=" +
+            //               ' "' +
+            //               startNew +
+            //               '"' +
+            //               ")";
+            //           } else if (endNew && startNew == "") {
+            //             queryChildRank += queryChildRank
+            //               ? " or (" +
+            //               field.target_field[0] +
+            //               " " +
+            //               "<=" +
+            //               ' "' +
+            //               endNew +
+            //               '"' +
+            //               ")"
+            //               : "or (" +
+            //               field.target_field[0] +
+            //               " " +
+            //               "<=" +
+            //               ' "' +
+            //               endNew +
+            //               '"' +
+            //               ")";
+            //           } else if (startNew && endNew) {
+            //             queryChildRank += queryChildRank
+            //               ? " or ((" +
+            //               field.target_field[0] +
+            //               " " +
+            //               ">=" +
+            //               ' "' +
+            //               startNew +
+            //               '")' +
+            //               " and (" +
+            //               field.target_field[0] +
+            //               " " +
+            //               "<=" +
+            //               ' "' +
+            //               endNew +
+            //               '"' +
+            //               "))"
+            //               : "((" +
+            //               field.target_field[0] +
+            //               " " +
+            //               ">=" +
+            //               ' "' +
+            //               startNew +
+            //               '")' +
+            //               " and (" +
+            //               field.target_field[0] +
+            //               " " +
+            //               "<=" +
+            //               ' "' +
+            //               endNew +
+            //               '"' +
+            //               "))";
+            //           }
+            //         }
 
-                    let string = changeToArray.join(" and ");
-                    query = string;
-                    startNew = "";
-                    endNew = "";
-                  } else if (checkHaveStartData && !checkHaveEndtData) {
-                    changeToArray = changeToArray.filter(
-                      (item) => !changeQueryToArray.includes(item)
-                    );
-                  } else if (!checkHaveStartData && checkHaveEndtData) {
-                    changeToArray = changeToArray.filter(
-                      (item) => !changeQueryToArray.includes(item)
-                    );
-                  }
+            //         if (queryChildRank) {
+            //           changeToArray = queryChildRank.split(/ and /);
+            //         }
 
-                  queryChildRank = "";
-                }
-              }
+            //         let string = changeToArray.join(" and ");
+            //         query = string;
+            //         startNew = "";
+            //         endNew = "";
+            //       } else if (checkHaveStartData && !checkHaveEndtData) {
+            //         changeToArray = changeToArray.filter(
+            //           (item) => !changeQueryToArray.includes(item)
+            //         );
+            //       } else if (!checkHaveStartData && checkHaveEndtData) {
+            //         changeToArray = changeToArray.filter(
+            //           (item) => !changeQueryToArray.includes(item)
+            //         );
+            //       }
 
-              if (field.groupName == selectedId) {
-                if (
-                  field.groupName == bokTermsObj.active &&
-                  field.nameMarker &&
-                  field.searchType == "dropdown_exact"
-                ) {
-                  if (field.target_field.length > 1) {
-                    field.target_field.forEach((fieldCode, index) => {
-                      const isLastIndex =
-                        index === field.target_field.length - 1;
-                      if (queryChild) {
-                        if (isLastIndex) {
-                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
-                        } else {
-                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
-                        }
-                      } else {
-                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
-                      }
-                    });
+            //       queryChildRank = "";
+            //     }
+            //   }
 
-                    let filteredArray = changeToArray.filter(
-                      (item) => item !== queryChild
-                    );
-                    let string = filteredArray.join(" and ");
-                    delete bokTermObj[selectedId];
-                    query = string;
-                  } else {
-                    let filteredArray = changeToArray.filter(
-                      (item) =>
-                        item !==
-                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
-                    );
-                    let string = filteredArray.join(" and ");
-                    delete bokTermObj[selectedId];
-                    query = string;
-                  }
-                } else if (
-                  field.groupName == selectedId &&
-                  field.nameMarker == "" &&
-                  field.searchType == "dropdown_exact"
-                ) {
-                  let filteredArray;
+            //   if (field.groupName == selectedId) {
+            //     if (
+            //       field.groupName == bokTermsObj.active &&
+            //       field.nameMarker &&
+            //       field.searchType == "dropdown_exact"
+            //     ) {
+            //       if (field.target_field.length > 1) {
+            //         field.target_field.forEach((fieldCode, index) => {
+            //           const isLastIndex =
+            //             index === field.target_field.length - 1;
+            //           if (queryChild) {
+            //             if (isLastIndex) {
+            //               queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+            //             } else {
+            //               queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+            //             }
+            //           } else {
+            //             queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+            //           }
+            //         });
 
-                  if (field.target_field.length > 1) {
-                    field.target_field.forEach((fieldCode, index) => {
-                      queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
+            //         let filteredArray = changeToArray.filter(
+            //           (item) => item !== queryChild
+            //         );
+            //         let string = filteredArray.join(" and ");
+            //         delete bokTermObj[selectedId];
+            //         query = string;
+            //       } else {
+            //         let filteredArray = changeToArray.filter(
+            //           (item) =>
+            //             item !==
+            //             `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+            //         );
+            //         let string = filteredArray.join(" and ");
+            //         delete bokTermObj[selectedId];
+            //         query = string;
+            //       }
+            //     } else if (
+            //       field.groupName == selectedId &&
+            //       field.nameMarker == "" &&
+            //       field.searchType == "dropdown_exact"
+            //     ) {
+            //       let filteredArray;
 
-                      if (changeToArray.includes(queryChild)) {
-                        changeToArray = changeToArray.filter(
-                          (item) => item !== queryChild
-                        );
-                      } else {
-                        filteredArray = changeToArray;
-                      }
-                    });
-                    let string = filteredArray.join(" and ");
-                    delete bokTermObj[selectedId];
-                    query = string;
-                  } else {
-                    let changeToArray = changeToArray.filter(
-                      (item) =>
-                        item !==
-                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
-                    );
-                    let string = changeToArray.join(" and ");
-                    delete bokTermObj[selectedId];
-                    query = string;
-                  }
-                }
-              }
+            //       if (field.target_field.length > 1) {
+            //         field.target_field.forEach((fieldCode, index) => {
+            //           queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
 
-              if (field.groupName.replace(/\s+/g, "_") == key) {
-                if (
-                  field.groupName == selectedId &&
-                  field.nameMarker &&
-                  field.searchType == "dropdown_exact"
-                ) {
-                  if (field.target_field.length > 1) {
-                    field.target_field.forEach((fieldCode, index) => {
-                      const isLastIndex =
-                        index === field.target_field.length - 1;
-                      if (queryChild) {
-                        if (isLastIndex) {
-                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
-                        } else {
-                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
-                        }
-                      } else {
-                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
-                      }
-                    });
+            //           if (changeToArray.includes(queryChild)) {
+            //             changeToArray = changeToArray.filter(
+            //               (item) => item !== queryChild
+            //             );
+            //           } else {
+            //             filteredArray = changeToArray;
+            //           }
+            //         });
+            //         let string = filteredArray.join(" and ");
+            //         delete bokTermObj[selectedId];
+            //         query = string;
+            //       } else {
+            //         let changeToArray = changeToArray.filter(
+            //           (item) =>
+            //             item !==
+            //             `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+            //         );
+            //         let string = changeToArray.join(" and ");
+            //         delete bokTermObj[selectedId];
+            //         query = string;
+            //       }
+            //     }
+            //   }
 
-                    let filteredArray = changeToArray.filter(
-                      (item) => item !== queryChild
-                    );
-                    let string = filteredArray.join(" and ");
-                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
-                    query = string;
-                  } else {
-                    let filteredArray = changeToArray.filter(
-                      (item) =>
-                        item !==
-                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
-                    );
-                    let string = filteredArray.join(" and ");
-                    delete bokTermObj[selectedId];
-                    query = string;
-                  }
-                } else if (
-                  field.groupName == selectedId &&
-                  field.nameMarker == "" &&
-                  field.searchType == "dropdown_exact"
-                ) {
-                  let filteredArray;
-                  if (field.target_field.length > 1) {
-                    field.target_field.forEach((fieldCode, index) => {
-                      queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
-                      if (changeToArray.includes(queryChild)) {
-                        changeToArray = changeToArray.filter(
-                          (item) => item !== queryChild
-                        );
-                      } else {
-                        filteredArray = changeToArray;
-                      }
-                    });
+            //   if (field.groupName.replace(/\s+/g, "_") == key) {
+            //     if (
+            //       field.groupName == selectedId &&
+            //       field.nameMarker &&
+            //       field.searchType == "dropdown_exact"
+            //     ) {
+            //       if (field.target_field.length > 1) {
+            //         field.target_field.forEach((fieldCode, index) => {
+            //           const isLastIndex =
+            //             index === field.target_field.length - 1;
+            //           if (queryChild) {
+            //             if (isLastIndex) {
+            //               queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+            //             } else {
+            //               queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+            //             }
+            //           } else {
+            //             queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+            //           }
+            //         });
 
-                    let string = filteredArray.join(" and ");
-                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
-                    query = string;
-                  } else {
-                    let changeToArray = changeToArray.filter(
-                      (item) =>
-                        item !==
-                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
-                    );
-                    let string = changeToArray.join(" and ");
-                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
-                    query = string;
-                  }
-                }
-              }
-            });
+            //         let filteredArray = changeToArray.filter(
+            //           (item) => item !== queryChild
+            //         );
+            //         let string = filteredArray.join(" and ");
+            //         delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+            //         query = string;
+            //       } else {
+            //         let filteredArray = changeToArray.filter(
+            //           (item) =>
+            //             item !==
+            //             `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+            //         );
+            //         let string = filteredArray.join(" and ");
+            //         delete bokTermObj[selectedId];
+            //         query = string;
+            //       }
+            //     } else if (
+            //       field.groupName == selectedId &&
+            //       field.nameMarker == "" &&
+            //       field.searchType == "dropdown_exact"
+            //     ) {
+            //       let filteredArray;
+            //       if (field.target_field.length > 1) {
+            //         field.target_field.forEach((fieldCode, index) => {
+            //           queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
+            //           if (changeToArray.includes(queryChild)) {
+            //             changeToArray = changeToArray.filter(
+            //               (item) => item !== queryChild
+            //             );
+            //           } else {
+            //             filteredArray = changeToArray;
+            //           }
+            //         });
+
+            //         let string = filteredArray.join(" and ");
+            //         delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+            //         query = string;
+            //       } else {
+            //         let changeToArray = changeToArray.filter(
+            //           (item) =>
+            //             item !==
+            //             `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+            //         );
+            //         let string = changeToArray.join(" and ");
+            //         delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+            //         query = string;
+            //       }
+            //     }
+            //   }
+            // });
           });
         } else {
           Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
             searchInfoList.forEach((field) => {
+              
               if (field.groupName.replace(/\s+/g, "_") == key) {
                 if (!$(`#${key}`).val()) {
                   delete bokTermObj[key];
                 }
               }
-
+              
               if (field.groupName != selectedId) {
                 if (
-                  field.groupName == bokTermsObj.active &&
+                  field.nameMarker == bokTermsObj.active &&
                   field.nameMarker &&
-                  field.searchType == "dropdown_exact"
+                  field.searchType.value == "exact"
                 ) {
-                  if (field.target_field.length > 1) {
-                    field.target_field.forEach((fieldCode, index) => {
-                      const isLastIndex =
-                        index === field.target_field.length - 1;
-                      if (queryChild) {
-                        if (isLastIndex) {
-                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
-                        } else {
-                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
-                        }
-                      } else {
-                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
-                      }
-                    });
-                    query += `${query ? " and " : ""}${queryChild}`;
-                  } else {
-                    query += `${query ? " and " : ""}(${field.target_field[0]} in ("${bokTermsObj.value}"))`;
-                  }
-                } else if (
-                  field.groupName == selectedId &&
-                  field.nameMarker == ""
-                ) {
+                  console.log("field.searchType::",field.searchType);
+                  // if (field.fieldType === "DATE" || field.fieldType === "DATE_TIME") {
+                  //   if (field.target_field.length > 1) {
+                  //     field.target_field.forEach((fieldCode, index) => {
+                  //       const isLastIndex = index === field.target_field.length - 1;
+                  //       if (queryChild) {
+                  //         if (isLastIndex) {
+                  //           queryChild += `or (${fieldCode} = "${bokTermsObj.value}"))`;
+                  //         } else {
+                  //           queryChild += `or (${fieldCode} = "${bokTermsObj.value}")`;
+                  //         }
+                  //       } else {
+                  //         queryChild = `((${fieldCode} = "${bokTermsObj.value}") `;
+                  //       }
+                  //     });
+                  //     query += `${query ? " and " : ""}${queryChild}`;
+                  //   } else {
+                  //     query += `${query ? " and " : ""}(${field.target_field[0]} = "${bokTermsObj.value}")`;
+                  //   }
+                  // } else {
+                  //   if (field.target_field.length > 1) {
+                  //     field.target_field.forEach((fieldCode, index) => {
+                  //       const isLastIndex =
+                  //         index === field.target_field.length - 1;
+                  //       if (queryChild) {
+                  //         if (isLastIndex) {
+                  //           queryChild += `or (${fieldCode} in "${bokTermsObj.value}"))`;
+                  //         } else {
+                  //           queryChild += `or (${fieldCode} in "${bokTermsObj.value}")`;
+                  //         }
+                  //       } else {
+                  //         queryChild = `((${fieldCode} in "${bokTermsObj.value}") `;
+                  //       }
+                  //     });
+                  //     query += `${query ? " and " : ""}${queryChild}`;
+                  //   } else {
+                  //     query += `${query ? " and " : ""}(${field.target_field[0]} in "${bokTermsObj.value}")`;
+                  //   }
+                  // }
+                  
+                } else if (field.groupName == selectedId && field.nameMarker == "") {
                   query += `${query ? " and " : ""}(${fieldCode} in ("${bokTermsObj.value}"))`;
                 } else if (
                   field.groupName == key &&
                   field.nameMarker == "" &&
-                  field.searchType == "dropdown_exact"
+                  field.searchType == "exact"
                 ) {
                   let getTargetField = searchContent.filter(
                     (item) => item.searchName == bokTermsObj.active
@@ -1783,9 +1878,12 @@ jQuery.noConflict();
               if (searchItem.nameMarker == "") {
                 let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                 const getId = $(`#${getIdElement}`);
+                console.log(bokTermsObj);
+                
                 const trimmedActive = bokTermsObj.active
                   ? bokTermsObj.active.trim()
                   : null;
+                  console.log("object", trimmedActive);
                 getId
                   .closest(".search-item")
                   .find(".custom-dropdownTitle")
