@@ -4,60 +4,61 @@ jQuery.noConflict();
 
   if (!CONFIG) return;
   CONFIG = JSON.parse(kintone.plugin.app.getConfig(PLUGIN_ID).config);
-  // async function setSessionStorageItems(configSettings) {
-  //   for (const setting of configSettings) {
-  //     try {
-  //       if (setting.appId !== "") {
-  //         const dataFromMaster = await window.RsComAPI.getRecords({
-  //           app: setting.appId,
-  //           query: setting.typeField,
-  //         });
+  async function setSessionStorageItems(configSettings) {
+    for (const setting of configSettings) {
+      try {
+        if (setting.appId !== "") {
+          const dataFromMaster = await window.RsComAPI.getRecords({
+            app: setting.appId,
+            query: setting.typeField,
+          });
 
-  //         const codeAndName = dataFromMaster.map((record) => ({
-  //           code: record.code.value,
-  //           name: record.name.value,
-  //         }));
+          const codeAndName = dataFromMaster.map((record) => ({
+            code: record.code.value,
+            name: record.name.value,
+          }));
 
-  //         const dataToStore = {
-  //           AppId: setting.appId,
-  //           ApiToken: setting.apiToken,
-  //           codeAndName: codeAndName,
-  //           condition: setting.typeField,
-  //         };
+          const dataToStore = {
+            AppId: setting.appId,
+            ApiToken: setting.apiToken,
+            codeAndName: codeAndName,
+            condition: setting.typeField,
+          };
 
-  //         sessionStorage.setItem(
-  //           `bokMst${setting.masterId}`,
-  //           JSON.stringify(dataToStore)
-  //         );
-  //       } else {
-  //         sessionStorage.setItem(
-  //           `bokMst${setting.masterId}`,
-  //           JSON.stringify([])
-  //         );
-  //       }
-  //     } catch (error) {
-  //       return error;
-  //     }
-  //   }
-  // }
+          sessionStorage.setItem(
+            `bokMst${setting.masterId}`,
+            JSON.stringify(dataToStore)
+          );
+        } else {
+          sessionStorage.setItem(
+            `bokMst${setting.masterId}`,
+            JSON.stringify([])
+          );
+        }
+      } catch (error) {
+        return error;
+      }
+    }
+  }
 
+  async function getCodeMasterData() {
+    let CODEMASTER = [];
 
-  // async function getCodeMasterData() {
-  //   let CODEMASTER = [];
+    for (const key of Array.from({ length: sessionStorage.length }, (_, i) =>
+      sessionStorage.key(i)
+    )) {
+      const numberId = key.match(/\d+/);
 
-  //   for (const key of Array.from({ length: sessionStorage.length }, (_, i) => sessionStorage.key(i))) {
-  //     const numberId = key.match(/\d+/);
+      if (numberId) {
+        const numericKey = numberId[0];
+        const data = sessionStorage.getItem(key);
+        const CodeMasterData = JSON.parse(data);
+        CODEMASTER.push({ numericKey, ...CodeMasterData });
+      }
+    }
 
-  //     if (numberId) {
-  //       const numericKey = numberId[0];
-  //       const data = sessionStorage.getItem(key);
-  //       const CodeMasterData = JSON.parse(data);
-  //       CODEMASTER.push({ numericKey, ...CodeMasterData });
-  //     }
-  //   }
-
-  //   return CODEMASTER;
-  // }
+    return CODEMASTER;
+  }
   async function getConditionView(GETVIEWS, viewId) {
     for (const key in GETVIEWS.views) {
       if (GETVIEWS.views.hasOwnProperty(key)) {
@@ -71,12 +72,13 @@ jQuery.noConflict();
   kintone.events.on("app.record.index.show", async (event) => {
     // get views from kintone app.
     let GETVIEWS = await kintone.api("/k/v1/app/views.json", "GET", {
-      app: kintone.app.getId()
+      app: kintone.app.getId(),
     });
     // get field form SCHEMA
-    // let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
-    // await setSessionStorageItems(CONFIG.codeMasterSetting);
-    // const CODEMASTER = await getCodeMasterData();
+    let DETFIELDlIST = cybozu.data.page.SCHEMA_DATA;
+    console.log("DETFIELDlIST", DETFIELDlIST);
+    await setSessionStorageItems(CONFIG.codeMasterSetting);
+    const CODEMASTER = await getCodeMasterData();
     let SETCOLOR = CONFIG.colorSetting;
     let queryForDropdow = "";
     let bokTermsGet = {};
@@ -138,7 +140,8 @@ jQuery.noConflict();
       const bokTermsString = JSON.stringify(bokTermsGet);
       const bokTerms = encodeURIComponent(bokTermsString);
       let url =
-        currentUrlBase + `?view=${event.viewId}${queryEscape ? "&query=" + queryEscape : ""}&bokTerms=${bokTerms}`;
+        currentUrlBase +
+        `?view=${event.viewId}${queryEscape ? "&query=" + queryEscape : ""}&bokTerms=${bokTerms}`;
 
       window.location.href = url;
     };
@@ -147,21 +150,23 @@ jQuery.noConflict();
       searchInfoList,
       dropDownChange
     ) {
-      let viewCond = await getConditionView(GETVIEWS, event.viewId)
+      let viewCond = await getConditionView(GETVIEWS, event.viewId);
       let query = event.viewId == 20 ? "" : viewCond ? `(${viewCond})` : "";
       let queryChild = "";
       let searchContent = CONFIG.searchContent;
       let mergedBokTermsObject = {};
 
       searchInfoList.forEach((searchInfo) => {
-        console.log("searchInfo",searchInfo);
-        checkFieldForSearch = searchContent.filter((item) => item.groupName == searchInfo.groupName);
+        console.log("searchInfo", searchInfo);
+        checkFieldForSearch = searchContent.filter(
+          (item) => item.groupName == searchInfo.groupName
+        );
         if (checkFieldForSearch && checkFieldForSearch[0]?.fieldForSearch) {
           searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
         }
 
         searchInfo["fieldType"] = checkFieldForSearch[0].searchTarget.type;
-        // Check type 
+        // Check type
         switch (searchInfo.searchType.value) {
           case "initial":
             query += buildTextInitialQuery(searchInfo, query);
@@ -215,7 +220,7 @@ jQuery.noConflict();
 
     //TODO:InitailQuery------------------------------------------------
     let buildTextInitialQuery = function (searchInfo, query) {
-      console.log("searchInfo",searchInfo);
+      console.log("searchInfo", searchInfo);
       let replacedText = searchInfo.groupName.replace(/\s+/g, "_");
       let queryChild;
       let searchValue;
@@ -275,7 +280,7 @@ jQuery.noConflict();
             } else {
               queryChild = `${query ? " and " : ""}((${field} like "${searchValue}") `;
             }
-          })
+          });
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} like "${searchValue}")`;
         }
@@ -292,10 +297,13 @@ jQuery.noConflict();
 
       if ($(`#${replacedText}`).length) {
         searchValue = $(`#${replacedText}`).val();
-          bokTermsGet[replacedText] = $(`#${replacedText}`).val();
+        bokTermsGet[replacedText] = $(`#${replacedText}`).val();
       }
 
-      if (searchInfo.fieldType === "DATE" || searchInfo.fieldType === "DATE_TIME") {
+      if (
+        searchInfo.fieldType === "DATE" ||
+        searchInfo.fieldType === "DATE_TIME"
+      ) {
         if (searchValue) {
           if (searchInfo.target_field.length > 1) {
             searchInfo.target_field.forEach((field) => {
@@ -304,10 +312,9 @@ jQuery.noConflict();
               } else {
                 queryChild = `${query ? " and " : ""}(${field} = "${searchValue}") `;
               }
-            })
+            });
           } else if ((searchInfo.target_field.length = 1)) {
             queryChild = `${query ? " and " : ""}(${searchInfo.target_field} = "${searchValue}")`;
-  
           }
           return queryChild;
         }
@@ -320,10 +327,9 @@ jQuery.noConflict();
               } else {
                 queryChild = `${query ? " and " : ""}(${field} in ("${searchValue}")) `;
               }
-            })
+            });
           } else if ((searchInfo.target_field.length = 1)) {
             queryChild = `${query ? " and " : ""}(${searchInfo.target_field} in ("${searchValue}"))`;
-  
           }
           return queryChild;
         }
@@ -352,20 +358,20 @@ jQuery.noConflict();
 
             if (queryChild) {
               if (isLastIndex) {
-                queryChild += `or (${field} = "${searchValue}"))`
+                queryChild += `or (${field} = "${searchValue}"))`;
               } else {
-                queryChild += `or (${field} = "${searchValue}")`
+                queryChild += `or (${field} = "${searchValue}")`;
               }
             } else {
               queryChild = `${query ? " and " : ""}((${field} = "${searchValue}") `;
             }
-          })
+          });
         } else if ((searchInfo.target_field.length = 1)) {
           queryChild = `${query ? " and " : ""}(${searchInfo.target_field} = "${searchValue}")`;
         }
         return queryChild;
       }
-      return '';
+      return "";
     };
 
     let buildNumberRangeQuery = function (searchInfo, query) {
@@ -376,31 +382,155 @@ jQuery.noConflict();
 
       if (searchInfo.target_field > 1) {
         searchInfo.target_field.forEach((field) => {
-          if (startValue && endValue == '') {
-            bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
-            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + ">=" + ' "' + startValue + '"' + "))" : "((" + field + ' ' + ">=" + ' "' + startValue + '"' + ")";
-          } else if (endValue && startValue == '') {
-            bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-            queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" : "((" + field + ' ' + "<=" + ' "' + endValue + '"' + ")";
+          if (startValue && endValue == "") {
+            bokTermsGet[`${replacedText}_start`] = $(
+              `#${replacedText}_start`
+            ).val();
+            queryChild += queryChild
+              ? `${query && !queryChild ? " and " : ""}` +
+              " or (" +
+              field +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '"' +
+              "))"
+              : "((" + field + " " + ">=" + ' "' + startValue + '"' + ")";
+          } else if (endValue && startValue == "") {
+            bokTermsGet[`${replacedText}_end`] = $(
+              `#${replacedText}_end`
+            ).val();
+            queryChild += queryChild
+              ? `${query && !queryChild ? " and " : ""}` +
+              " or (" +
+              field +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))"
+              : "((" + field + " " + "<=" + ' "' + endValue + '"' + ")";
           } else if (startValue && endValue) {
-            bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
-            bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-            queryChild += queryChild ? " or ((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))" :
-              "((" + field + ' ' + ">=" + ' "' + startValue + '")' + " and (" + field + ' ' + "<=" + ' "' + endValue + '"' + "))";
+            bokTermsGet[`${replacedText}_start`] = $(
+              `#${replacedText}_start`
+            ).val();
+            bokTermsGet[`${replacedText}_end`] = $(
+              `#${replacedText}_end`
+            ).val();
+            queryChild += queryChild
+              ? " or ((" +
+              field +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '")' +
+              " and (" +
+              field +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))"
+              : "((" +
+              field +
+              " " +
+              ">=" +
+              ' "' +
+              startValue +
+              '")' +
+              " and (" +
+              field +
+              " " +
+              "<=" +
+              ' "' +
+              endValue +
+              '"' +
+              "))";
           }
         });
       } else {
-        if (startValue && endValue == '') {
-          bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
-          queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '"' + ")" : "(" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '"' + ")";
-        } else if (endValue && startValue == '') {
+        if (startValue && endValue == "") {
+          bokTermsGet[`${replacedText}_start`] = $(
+            `#${replacedText}_start`
+          ).val();
+          queryChild += queryChild
+            ? `${query && !queryChild ? " and " : ""}` +
+            " or (" +
+            searchInfo.target_field[0] +
+            " " +
+            ">=" +
+            ' "' +
+            startValue +
+            '"' +
+            ")"
+            : "(" +
+            searchInfo.target_field[0] +
+            " " +
+            ">=" +
+            ' "' +
+            startValue +
+            '"' +
+            ")";
+        } else if (endValue && startValue == "") {
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-          queryChild += queryChild ? `${query && !queryChild ? " and " : ""}` + " or (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + ")" : "(" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + ")";
+          queryChild += queryChild
+            ? `${query && !queryChild ? " and " : ""}` +
+            " or (" +
+            searchInfo.target_field[0] +
+            " " +
+            "<=" +
+            ' "' +
+            endValue +
+            '"' +
+            ")"
+            : "(" +
+            searchInfo.target_field[0] +
+            " " +
+            "<=" +
+            ' "' +
+            endValue +
+            '"' +
+            ")";
         } else if (startValue && endValue) {
-          bokTermsGet[`${replacedText}_start`] = $(`#${replacedText}_start`).val();
+          bokTermsGet[`${replacedText}_start`] = $(
+            `#${replacedText}_start`
+          ).val();
           bokTermsGet[`${replacedText}_end`] = $(`#${replacedText}_end`).val();
-          queryChild += queryChild ? " or ((" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '")' + " and (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + "))" :
-            "((" + searchInfo.target_field[0] + ' ' + ">=" + ' "' + startValue + '")' + " and (" + searchInfo.target_field[0] + ' ' + "<=" + ' "' + endValue + '"' + "))";
+          queryChild += queryChild
+            ? " or ((" +
+            searchInfo.target_field[0] +
+            " " +
+            ">=" +
+            ' "' +
+            startValue +
+            '")' +
+            " and (" +
+            searchInfo.target_field[0] +
+            " " +
+            "<=" +
+            ' "' +
+            endValue +
+            '"' +
+            "))"
+            : "((" +
+            searchInfo.target_field[0] +
+            " " +
+            ">=" +
+            ' "' +
+            startValue +
+            '")' +
+            " and (" +
+            searchInfo.target_field[0] +
+            " " +
+            "<=" +
+            ' "' +
+            endValue +
+            '"' +
+            "))";
         }
       }
       let queryFinal;
@@ -414,1039 +544,1299 @@ jQuery.noConflict();
     };
 
     // Create dropdowns based on the configuration
-    // function createDropDowns(display) {
-    //   let relatedContent = CONFIG.searchContent.filter(
-    //     (content) => content.groupName === display.groupName
-    //   );
-    //   // Only show content if `name_marker` is not empty
-    //   if (display.nameMarker && relatedContent.length === 0) return;
+    function createDropDowns(display) {
+      let relatedContent = CONFIG.searchContent.filter(
+        (content) => content.groupName === display.groupName
+      );
+      // Only show content if `name_marker` is not empty
+      if (display.nameMarker && relatedContent.length === 0) return;
 
-    //   if (relatedContent.length > 0) {
-    //     const dropDownTitle = $("<label>")
-    //       .text(
-    //         display.nameMarker
-    //           ? display.nameMarker
-    //           : relatedContent[0].searchName
-    //       )
-    //       .addClass("custom-dropdownTitle")
-    //       .css({
-    //         cursor: display.nameMarker ? "default" : "pointer",
-    //         color: SETCOLOR?.titleColor,
-    //       })
-    //       .on("click", function () {
-    //         handleDropDownTitleClick(
-    //           display,
-    //           CONFIG,
-    //           relatedContent,
-    //           dropDownTitle,
-    //           dropDown
-    //         );
-    //       });
-    //     const dropDown = createDropDown(
-    //       display,
-    //       records,
-    //       relatedContent[0],
-    //       dropDownTitle
-    //     );
-    //     const DropdownAll = $("<div></div>")
-    //       .addClass("search-item")
-    //       .append(dropDownTitle, dropDown);
-    //     elementsAll.append(DropdownAll);
-    //   }
-    // }
+      if (relatedContent.length > 0) {
+        const dropDownTitle = $("<label>")
+          .text(
+            display.nameMarker
+              ? display.nameMarker
+              : relatedContent[0].searchName
+          )
+          .addClass("custom-dropdownTitle")
+          .css({
+            cursor: display.nameMarker ? "default" : "pointer",
+            color: SETCOLOR?.titleColor,
+          })
+          .on("click", function () {
+            handleDropDownTitleClick(
+              display,
+              CONFIG,
+              relatedContent,
+              dropDownTitle,
+              dropDown
+            );
+          });
+        const dropDown = createDropDown(
+          display,
+          records,
+          relatedContent[0],
+          dropDownTitle
+        );
+        const DropdownAll = $("<div></div>")
+          .addClass("search-item")
+          .append(dropDownTitle, dropDown);
+        elementsAll.append(DropdownAll);
+      }
+    }
 
-    // function handleDropDownTitleClick(
-    //   display,
-    //   CONFIG,
-    //   relatedContent,
-    //   dropDownTitle,
-    //   dropDown
-    // ) {
-    //   if (display.nameMarker === "") {
-    //     const existingMenu = $(".custom-context-menu");
-    //     if (existingMenu.length > 0) {
-    //       existingMenu.remove();
-    //     }
+    function handleDropDownTitleClick(
+      display,
+      CONFIG,
+      relatedContent,
+      dropDownTitle,
+      dropDown
+    ) {
+      if (display.nameMarker === "") {
+        const existingMenu = $(".custom-context-menu");
+        if (existingMenu.length > 0) {
+          existingMenu.remove();
+        }
 
-    //     // Filter items based on the group name
-    //     const filteredItems = CONFIG.searchContent.filter(
-    //       (content) =>
-    //         content.groupName === display.groupName && !display.nameMarker
-    //     );
-    //     const customContextMenu = $("<div></div>")
-    //       .addClass("custom-context-menu")
-    //       .css({
-    //         width: "150px",
-    //         display: "flex",
-    //         "flex-direction": "column",
-    //         "align-items": "center",
-    //         margin: "5px",
-    //         padding: "10px",
-    //         borderRadius: "5px",
-    //         "background-color": "#f0f0f0",
-    //         color: "#000",
-    //         position: "absolute",
-    //         zIndex: 1000,
-    //       });
+        // Filter items based on the group name
+        const filteredItems = CONFIG.searchContent.filter(
+          (content) =>
+            content.groupName === display.groupName && !display.nameMarker
+        );
+        const customContextMenu = $("<div></div>")
+          .addClass("custom-context-menu")
+          .css({
+            width: "150px",
+            display: "flex",
+            "flex-direction": "column",
+            "align-items": "center",
+            margin: "5px",
+            padding: "10px",
+            borderRadius: "5px",
+            "background-color": "#f0f0f0",
+            color: "#000",
+            position: "absolute",
+            zIndex: 1000,
+          });
 
-    //     // Position the pop-up to the left of the dropdown title
-    //     const offset = dropDownTitle.offset();
-    //     customContextMenu.css({
-    //       top: offset.top + dropDownTitle.outerHeight() - 250,
-    //       left: offset.left - customContextMenu.outerWidth() + 270,
-    //     });
+        // Position the pop-up to the left of the dropdown title
+        const offset = dropDownTitle.offset();
+        customContextMenu.css({
+          top: offset.top + dropDownTitle.outerHeight() - 250,
+          left: offset.left - customContextMenu.outerWidth() + 270,
+        });
 
-    //     // Dynamically create buttons using Kuc.Button for each item in the list
-    //     filteredItems.forEach((item, index) => {
-    //       const buttonLabel = item.searchName;
-    //       const targetField = filteredItems[index].searchTarget;
+        // Dynamically create buttons using Kuc.Button for each item in the list
+        filteredItems.forEach((item, index) => {
+          const buttonLabel = item.searchName;
+          const targetField = filteredItems[index].searchTarget;
 
-    //       const hoverBtn = new Kuc.Button({
-    //         text: buttonLabel,
-    //         type: "normal",
-    //         className: "class-btn-pop-up",
-    //         id: targetField,
-    //       });
-    //       $(hoverBtn).css({
-    //         margin: "5px 0",
-    //         width: "100%",
-    //       });
+          const hoverBtn = new Kuc.Button({
+            text: buttonLabel,
+            type: "normal",
+            className: "class-btn-pop-up",
+            id: targetField,
+          });
+          $(hoverBtn).css({
+            margin: "5px 0",
+            width: "100%",
+          });
 
-    //       customContextMenu.append(hoverBtn);
-    //       $(hoverBtn).on("click", async () => {
-    //         const selectedItem = filteredItems[index]; // Get the selected item by index
-    //         dropDownTitle.text(selectedItem.searchName);
-    //         updateDropDownOptions(
-    //           selectedItem,
-    //           filteredItems,
-    //           records,
-    //           dropDownTitle,
-    //           dropDown
-    //         );
-    //         customContextMenu.remove();
-    //       });
-    //     });
+          customContextMenu.append(hoverBtn);
+          $(hoverBtn).on("click", async () => {
+            const selectedItem = filteredItems[index]; // Get the selected item by index
+            dropDownTitle.text(selectedItem.searchName);
+            updateDropDownOptions(
+              selectedItem,
+              filteredItems,
+              records,
+              dropDownTitle,
+              dropDown
+            );
+            customContextMenu.remove();
+          });
+        });
 
-    //     elementsAll.append(customContextMenu);
+        elementsAll.append(customContextMenu);
 
-    //     $(document).on("click", function (event) {
-    //       if (
-    //         !customContextMenu.is(event.target) &&
-    //         customContextMenu.has(event.target).length === 0 &&
-    //         !dropDownTitle.is(event.target)
-    //       ) {
-    //         customContextMenu.remove();
-    //         $(document).off("click");
-    //       }
-    //     });
-    //   }
-    // }
+        $(document).on("click", function (event) {
+          if (
+            !customContextMenu.is(event.target) &&
+            customContextMenu.has(event.target).length === 0 &&
+            !dropDownTitle.is(event.target)
+          ) {
+            customContextMenu.remove();
+            $(document).off("click");
+          }
+        });
+      }
+    }
     // Create dropdown element
-    // function createDropDown(display, records, initialContent, dropDownTitle) {
-    //   const NameDropdown = display.groupName.replace(/\s+/g, "_");
-    //   const dropDown = $("<select>")
-    //     .addClass("kintoneplugin-dropdown")
-    //     .attr("id", `${NameDropdown}`)
-    //     .css({ width: display.searchLength });
-    //   dropDown.append($("<option>").text("-----").val(""));
-    //   let filteredRecords = CONFIG.searchContent.filter(
-    //     (item) => item.groupName === display.groupName
-    //   );
+    function createDropDown(display, records, initialContent, dropDownTitle) {
+      const NameDropdown = display.groupName.replace(/\s+/g, "_");
+      const dropDown = $("<select>")
+        .addClass("kintoneplugin-dropdown")
+        .attr("id", `${NameDropdown}`)
+        .css({ width: display.searchLength });
+      dropDown.append($("<option>").text("-----").val(""));
+      let filteredRecords = CONFIG.searchContent.filter(
+        (item) => item.groupName === display.groupName
+      );
 
-    //   if (display.nameMarker) {
-    //     if (filteredRecords[0]?.masterId !== "-----") {
+      if (display.nameMarker) {
+        if (filteredRecords[0]?.masterId !== "-----") {
+          let checkValue = [];
+          filteredRecords.forEach((item) => {
+            console.log("filteredRecords", item);
+            $.each(CODEMASTER, (index, data) => {
+              if (item.masterId === data.numericKey) {
+                let valueData = data.codeAndName;
+                if (!valueData) return;
+                let valueCheck = Array.isArray(valueData)
+                  ? valueData
+                  : [valueData];
+                $.each(valueCheck, (index, value) => {
+                  const existsData = checkValue.some(
+                    (entry) => entry.code === value.code
+                  );
+                  if (!existsData) {
+                    checkValue.push({ code: value.code, name: value.name });
+                    const option = $("<option>")
+                      .text(value.name)
+                      .addClass("option")
+                      .attr("value", value.code)
+                      .attr("fieldCode", item.searchTarget.code);
+                    dropDown.append(option);
+                  }
+                });
+              }
+            });
+          });
+        } else {
+          let checkValue = [];
+          $.each(filteredRecords, (index, item) => {
+            $.each(DETFIELDlIST, (index, data) => {
+              let fieldList = data.fieldList;
+              $.each(fieldList, (index, value) => {
+                if (item.searchTarget.code !== value.var) return;
+                let dataValue = value.properties?.options;
+                console.log("dataValue", dataValue);
+                if (!dataValue) return;
+                $.each(dataValue, (index, options) => {
+                  let optionValue = options?.label;
+                  let valuesCheck = Array.isArray(optionValue)
+                    ? optionValue
+                    : [optionValue];
+                  $.each(valuesCheck, (index, list) => {
+                    console.log(" ++++++", list);
+                    if (!checkValue.includes(list)) {
+                      checkValue.push(list);
+                      const option = $("<option>")
+                        .text(list)
+                        .addClass("option")
+                        .attr("value", list)
+                        .attr("fieldCode", item.searchTarget.code);
+                      dropDown.append(option);
+                    }
+                  });
+                });
+              });
+            });
+          });
+        }
+      } else {
+        if (filteredRecords[0]?.masterId !== "-----") {
+          let checkValue = [];
+          dropDownTitle.text(initialContent.searchName);
+          $.each(CODEMASTER, (index, value) => {
+            if (initialContent.masterId === value.numericKey) {
+              let valueData = value.codeAndName;
+              if (!valueData) return;
+              let valueCheck = Array.isArray(valueData)
+                ? valueData
+                : [valueData];
+              $.each(valueCheck, (index, data) => {
+                const existsData = checkValue.some(
+                  (entry) => entry.code === data.code
+                );
+                if (!existsData) {
+                  checkValue.push({
+                    code: data.code,
+                    name: data.name,
+                  });
+                  const initialOption = $("<option>")
+                    .text(data.name)
+                    .addClass("option")
+                    .attr("value", data.code)
+                    .attr("fieldCode", initialContent.searchTarget.code);
+                  dropDown.append(initialOption);
+                }
+              });
+            }
+          });
+        } else {
+          dropDownTitle.text(initialContent.searchName);
+          let checkValue = [];
+          $.each(DETFIELDlIST, (index, data) => {
+            let fieldList = data.fieldList;
+            $.each(fieldList, (index, value) => {
+              console.log("value.var", value.var);
+              if (initialContent.searchTarget.code !== value.var) return;
+              let dataValue = value.properties?.options;
+              if (!dataValue) return;
+              $.each(dataValue, (index, options) => {
+                let optionValue = options?.label;
+                let valuesCheck = Array.isArray(optionValue)
+                  ? optionValue
+                  : [optionValue];
+                $.each(valuesCheck, (index, item) => {
+                  console.log(" ++++++", item);
+                  if (!checkValue.includes(item)) {
+                    checkValue.push(item);
+                    const initialOption = $("<option>")
+                      .text(item)
+                      .addClass("option")
+                      .attr("value", item)
+                      .attr("fieldCode", initialContent.searchTarget.code);
+                    dropDown.append(initialOption);
+                  }
+                });
+              });
+            });
+          });
+        }
+      }
+      dropDown.on("change", (e) => {
+        const selectedValue = dropDown.val();
+        const selectedOption = dropDown.find("option:selected");
+        const fieldCode = selectedOption.attr("fieldCode");
+        const getDropdownId = dropDown.attr("id");
+        const dropdownId = getDropdownId.replace(/_/g, " ");
+        const labelValue = dropDown
+          .closest(".search-item")
+          .find(".custom-dropdownTitle")
+          .text()
+          .trim();
+        queryDropdown(selectedValue, fieldCode, dropdownId, labelValue);
+      });
 
-    //       let checkValue = [];
-    //       filteredRecords.forEach((item) => {
-    //         console.log("filteredRecords", item);
-    //         $.each(CODEMASTER, (index, data) => {
-    //           if (item.masterId === data.numericKey) {
-    //             let valueData = data.codeAndName;
-    //             if (!valueData) return;
-    //             let valueCheck = Array.isArray(valueData)
-    //               ? valueData
-    //               : [valueData];
-    //             $.each(valueCheck, (index, value) => {
-    //               const existsData = checkValue.some(
-    //                 (entry) => entry.code === value.code
-    //               );
-    //               if (!existsData) {
-    //                 checkValue.push({ code: value.code, name: value.name });
-    //                 const option = $("<option>")
-    //                   .text(value.name)
-    //                   .addClass("option")
-    //                   .attr("value", value.code)
-    //                   .attr("fieldCode", item.searchTarget);
-    //                 dropDown.append(option);
-    //               }
-    //             });
-    //           }
-    //         });
-    //       });
-    //     } else {
-    //       let checkValue = [];
-    //       $.each(filteredRecords, (index, item) => {
-    //         $.each(DETFIELDlIST, (index, data) => {
-    //           let fieldList = data.fieldList;
-    //           $.each(fieldList, (index, value) => {
-    //             if (item.searchTarget.type !== value.var) return;
-    //             let dataValue = value.properties?.options;
-    //             console.log("dataValue", dataValue);
-    //             if (!dataValue) return;
-    //             $.each(dataValue, (index, options) => {
-    //               let optionValue = options?.label;
-    //               let valuesCheck = Array.isArray(optionValue)
-    //                 ? optionValue
-    //                 : [optionValue];
-    //               $.each(valuesCheck, (index, value) => {
-    //                 console.log(" ++++++", value);
-    //                 if (!checkValue.includes(value)) {
-    //                   checkValue.push(value);
-    //                   const option = $("<option>")
-    //                     .text(value)
-    //                     .addClass("option")
-    //                     .attr("value", value)
-    //                     .attr("fieldCode", item.searchTarget.code);
-    //                   dropDown.append(option);
-    //                 }
-    //               });
-    //             });
-    //           });
-    //         });
-    //       });
-    //     }
-    //   } else {
-    //     if (filteredRecords[0]?.masterId !== "-----") {
-
-    //       let checkValue = [];
-    //       dropDownTitle.text(initialContent.searchName);
-    //       $.each(CODEMASTER, (index, value) => {
-    //         if (initialContent.masterId === value.numericKey) {
-    //           let valueData = value.codeAndName;
-    //           if (!valueData) return;
-    //           let valueCheck = Array.isArray(valueData)
-    //             ? valueData
-    //             : [valueData];
-    //           $.each(valueCheck, (index, data) => {
-    //             const existsData = checkValue.some(
-    //               (entry) => entry.code === data.code
-    //             );
-    //             if (!existsData) {
-    //               checkValue.push({
-    //                 code: data.code,
-    //                 name: data.name,
-    //               });
-    //               const initialOption = $("<option>")
-    //                 .text(data.name)
-    //                 .addClass("option")
-    //                 .attr("value", data.code)
-    //                 .attr("fieldCode", initialContent.searchTarget);
-    //               dropDown.append(initialOption);
-    //             }
-    //           });
-    //         }
-    //       });
-    //     } else {
-    //       dropDownTitle.text(initialContent.searchName);
-    //       let checkValue = [];
-    //       $.each(DETFIELDlIST, (index, data) => {
-    //         let fieldList = data.fieldList;
-    //         $.each(fieldList, (index, value) => {
-    //           if (initialContent.searchTarget.type !== value.var) return;
-    //           let dataValue = value.properties?.options;
-    //           if (!dataValue) return;
-    //           $.each(dataValue, (index, options) => {
-    //             let optionValue = options?.label;
-    //             let valuesCheck = Array.isArray(optionValue)
-    //               ? optionValue
-    //               : [optionValue];
-    //             $.each(valuesCheck, (index, item) => {
-    //               console.log(" ++++++", item);
-    //               if (!checkValue.includes(item)) {
-    //                 checkValue.push(item);
-    //                 const initialOption = $("<option>")
-    //                   .text(item)
-    //                   .addClass("option")
-    //                   .attr("value", item)
-    //                   .attr("fieldCode", initialContent.searchTarget.code);
-    //                 dropDown.append(initialOption);
-    //               }
-    //             });
-    //           });
-    //         });
-    //       });
-    //     }
-    //   }
-      // dropDown.on("change", (e) => {
-      //   const selectedValue = dropDown.val();
-      //   const selectedOption = dropDown.find("option:selected");
-      //   const fieldCode = selectedOption.attr("fieldCode");
-      //   const getDropdownId = dropDown.attr("id");
-      //   const dropdownId = getDropdownId.replace(/_/g, " ");
-      //   const labelValue = dropDown
-      //     .closest(".search-item")
-      //     .find(".custom-dropdownTitle")
-      //     .text()
-      //     .trim();
-      //   queryDropdown(selectedValue, fieldCode, dropdownId, labelValue);
-      // });
-
-      // return dropDown;
-    // }
+      return dropDown;
+    }
 
     // Update dropdown options
-    // function updateDropDownOptions(
-    //   selectedItem,
-    //   filteredItems,
-    //   records,
-    //   dropDownTitle,
-    //   groupName,
-    //   status
-    // ) {
-    //   if (status == "active") {
-    //     const dropDown = dropDownTitle;
-    //     dropDown.empty();
-    //     dropDown.append($("<option>").text("-----").val(""));
-    //     const selectedContent = filteredItems.filter(
-    //       (content) => content.groupName === groupName
-    //     );
-    //     const matchingContent = selectedContent.find(
-    //       (content) => content.searchName === selectedItem
-    //     );
-    //     console.log("matchingContent", matchingContent);
-    //     if (matchingContent) {
-    //       if (matchingContent.masterId !== "-----") {
+    function updateDropDownOptions(
+      selectedItem,
+      filteredItems,
+      records,
+      dropDownTitle,
+      groupName,
+      status
+    ) {
+      // console.log(object);
+      if (status == "active") {
+        const dropDown = dropDownTitle;
+        dropDown.empty();
+        dropDown.append($("<option>").text("-----").val(""));
+        const selectedContent = filteredItems.filter(
+          (content) => content.groupName === groupName
+        );
+        console.log("selectedItem", selectedItem);
+        const matchingContent = selectedContent.find(
+          (content) => content.searchName === selectedItem
+        );
+        console.log("matchingContent", matchingContent);
+        if (matchingContent) {
+          if (matchingContent.masterId !== "-----") {
+            let checkValue = [];
+            $.each(CODEMASTER, (index, value) => {
+              if (matchingContent.masterId === value.numericKey) {
+                let valueData = value.codeAndName;
+                if (!valueData) return;
+                let valueCheck = Array.isArray(valueData)
+                  ? valueData
+                  : [valueData];
+                $.each(valueCheck, (index, data) => {
+                  const existsData = checkValue.some(
+                    (entry) => entry.code === data.code
+                  );
+                  if (!existsData) {
+                    checkValue.push({
+                      code: data.code,
+                      name: data.name,
+                    });
+                    const selectedOption = $("<option>")
+                      .text(data.name)
+                      .addClass("option")
+                      .attr("value", data.code)
+                      .attr("fieldCode", matchingContent.searchTarget.code);
+                    dropDown.append(selectedOption);
+                  }
+                });
+              }
+            });
+          } else {
+            let checkValue = [];
+            $.each(DETFIELDlIST, (index, data) => {
+              let fieldList = data.fieldList;
+              $.each(fieldList, (index, value) => {
+                if (matchingContent.searchTarget.code !== value.var) return;
+                let dataValue = value.properties?.options;
+                if (!dataValue) return;
+                $.each(dataValue, (index, options) => {
+                  let optionValue = options?.label;
+                  let valuesCheck = Array.isArray(optionValue)
+                    ? optionValue
+                    : [optionValue];
+                  $.each(valuesCheck, (index, item) => {
+                    if (!checkValue.includes(item)) {
+                      checkValue.push(item);
+                      const selectedOption = $("<option>")
+                        .text(item)
+                        .addClass("option")
+                        .attr("value", item)
+                        .attr("fieldCode", matchingContent.searchTarget.code);
+                      dropDown.append(selectedOption);
+                    }
+                  });
+                });
+              });
+            });
+          }
+        }
+      } else {
+        const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
+        dropDown.empty();
+        dropDown.append($("<option>").text("-----").val(""));
+        const selectedContent = filteredItems.find(
+          (content) => content.searchTarget === selectedItem.searchTarget
+        );
+        if (selectedContent.masterId !== "-----") {
+          let checkValue = [];
+          $.each(CODEMASTER, (index, data) => {
+            if (selectedContent.masterId === data.numericKey) {
+              let valueData = data.codeAndName;
+              if (!valueData) return;
+              let valueCheck = Array.isArray(valueData)
+                ? valueData
+                : [valueData];
+              $.each(valueCheck, (index, value) => {
+                const existsData = checkValue.some(
+                  (entry) => entry.code === value.code
+                );
+                if (!existsData) {
+                  checkValue.push({
+                    code: value.code,
+                    name: value.name,
+                  });
+                  const selectedOption = $("<option>")
+                    .text(value.name)
+                    .addClass("option")
+                    .attr("value", value.code)
+                    .attr("fieldCode", selectedContent.searchTarget.code);
+                  dropDown.append(selectedOption);
+                }
+              });
+            }
+          });
+        } else {
+          let checkValue = [];
+          $.each(DETFIELDlIST, (index, data) => {
+            let fieldList = data.fieldList;
+            $.each(fieldList, (index, value) => {
+              if (selectedItem.searchTarget.code !== value.var) return;
+              let dataValue = value.properties?.options;
+              if (!dataValue) return;
+              $.each(dataValue, (index, options) => {
+                let optionValue = options?.label;
+                let valuesCheck = Array.isArray(optionValue)
+                  ? optionValue
+                  : [optionValue];
+                $.each(valuesCheck, (index, item) => {
+                  if (!checkValue.includes(item)) {
+                    checkValue.push(item);
+                    const selectedOption = $("<option>")
+                      .text(item)
+                      .addClass("option")
+                      .attr("value", item)
+                      .attr("fieldCode", selectedItem.searchTarget.code);
+                    dropDown.append(selectedOption);
+                  }
+                });
+              });
+            });
+          });
+        }
+      }
+    }
 
-    //         let checkValue = [];
-    //         $.each(CODEMASTER, (index, value) => {
-    //           if (matchingContent.masterId === value.numericKey) {
-    //             let valueData = value.codeAndName;
-    //             if (!valueData) return;
-    //             let valueCheck = Array.isArray(valueData)
-    //               ? valueData
-    //               : [valueData];
-    //             $.each(valueCheck, (index, data) => {
-    //               const existsData = checkValue.some(
-    //                 (entry) => entry.code === data.code
-    //               );
-    //               if (!existsData) {
-    //                 checkValue.push({
-    //                   code: data.code,
-    //                   name: data.name,
-    //                 });
-    //                 const selectedOption = $("<option>")
-    //                   .text(data.name)
-    //                   .addClass("option")
-    //                   .attr("value", data.code)
-    //                   .attr("fieldCode", matchingContent.searchTarget.code);
-    //                 dropDown.append(selectedOption);
-    //               }
-    //             });
-    //           }
-    //         });
-    //       } else {
-    //         let checkValue = [];
-    //         $.each(DETFIELDlIST, (index, data) => {
-    //           let fieldList = data.fieldList;
-    //           $.each(fieldList, (index, value) => {
-    //             if (matchingContent.searchTarget.type !== value.var) return;
-    //             let dataValue = value.properties?.options;
-    //             if (!dataValue) return;
-    //             $.each(dataValue, (index, options) => {
-    //               let optionValue = options?.label;
-    //               let valuesCheck = Array.isArray(optionValue)
-    //                 ? optionValue
-    //                 : [optionValue];
-    //               $.each(valuesCheck, (index, item) => {
-    //                 if (!checkValue.includes(item)) {
-    //                   checkValue.push(item);
-    //                   const selectedOption = $("<option>")
-    //                     .text(item)
-    //                     .addClass("option")
-    //                     .attr("value", item)
-    //                     .attr("fieldCode", matchingContent.searchTarget.code);
-    //                   dropDown.append(selectedOption);
-    //                 }
-    //               });
-    //             });
-    //           });
-    //         });
-    //       }
-    //     }
-    //   } else {
-    //     const dropDown = dropDownTitle.next("select"); // Find the corresponding dropdown
-    //     dropDown.empty();
-    //     dropDown.append($("<option>").text("-----").val(""));
-    //     const selectedContent = filteredItems.find(
-    //       (content) => content.searchTarget === selectedItem.searchTarget
-    //     );
-    //     if (selectedContent.masterId !== "-----") {
+    function createBokTermsObject(selectedValue, dropdownId, labelValue) {
+      return {
+        [dropdownId]: {
+          value: selectedValue,
+          active: labelValue,
+        },
+      };
+    }
 
-    //       let checkValue = [];
-    //       $.each(CODEMASTER, (index, data) => {
-    //         if (selectedContent.masterId === data.numericKey) {
-    //           let valueData = data.codeAndName;
-    //           if (!valueData) return;
-    //           let valueCheck = Array.isArray(valueData)
-    //             ? valueData
-    //             : [valueData];
-    //           $.each(valueCheck, (index, value) => {
-    //             const existsData = checkValue.some(
-    //               (entry) => entry.code === value.code
-    //             );
-    //             if (!existsData) {
-    //               checkValue.push({
-    //                 code: value.code,
-    //                 name: value.name,
-    //               });
-    //               const selectedOption = $("<option>")
-    //                 .text(value.name)
-    //                 .addClass("option")
-    //                 .attr("value", value.code)
-    //                 .attr("fieldCode", selectedContent.searchTarget.code);
-    //               dropDown.append(selectedOption);
-    //             }
-    //           });
-    //         }
-    //       });
-    //     } else {
-    //       let checkValue = [];
-    //       $.each(DETFIELDlIST, (index, data) => {
-    //         let fieldList = data.fieldList;
-    //         $.each(fieldList, (index, value) => {
-    //           if (selectedItem.searchTarget.type !== value.var) return;
-    //           let dataValue = value.properties?.options;
-    //           if (!dataValue) return;
-    //           $.each(dataValue, (index, options) => {
-    //             let optionValue = options?.label;
-    //             let valuesCheck = Array.isArray(optionValue)
-    //               ? optionValue
-    //               : [optionValue];
-    //             $.each(valuesCheck, (index, item) => {
-    //               if (!checkValue.includes(item)) {
-    //                 checkValue.push(item);
-    //                 const selectedOption = $("<option>")
-    //                   .text(item)
-    //                   .addClass("option")
-    //                   .attr("value", item)
-    //                   .attr("fieldCode", selectedItem.searchTarget.code);
-    //                 dropDown.append(selectedOption);
-    //               }
-    //             });
-    //           });
-    //         });
-    //       });
-    //     }
-    //   }
-    // }
+    async function queryDropdown(
+      selectedValue,
+      fieldCode,
+      dropdownId,
+      labelValue
+    ) {
+      let selectedId = dropdownId.replace("_", " ");
+      let queryChild;
+      let query;
+      let searchInfoList = CONFIG.groupSetting;
+      let searchContent = CONFIG.searchContent;
 
-    // function createBokTermsObject(selectedValue, dropdownId, labelValue) {
-    //   return {
-    //     [dropdownId]: {
-    //       value: selectedValue,
-    //       active: labelValue,
-    //     },
-    //   };
-    // }
+      let urlObjDropdown = new URL(window.location.href);
+      let getQueryFromUrl = urlObjDropdown.searchParams.get("query");
+      let changeToArray;
+      if (getQueryFromUrl) {
+        changeToArray = getQueryFromUrl.split(/ and /);
+      }
 
-    // async function queryDropdown(
-    //   selectedValue,
-    //   fieldCode,
-    //   dropdownId,
-    //   labelValue
-    // ) {
-    //   let selectedId = dropdownId.replace("_", " ");
-    //   let queryChild;
-    //   let query;
-    //   let searchInfoList = CONFIG.groupSetting;
-    //   let searchContent = CONFIG.searchContent;
+      let queryInput = await getValueConditionAndBuildQuery(
+        searchInfoList,
+        true
+      );
+      if (queryForDropdow) {
+        query = `${query ? " and" : ""} ${queryForDropdow}`;
+      }
+      searchInfoList.forEach((field, index) => {
+        if (field.groupName == selectedId && field.nameMarker) {
+          if (field.target_field.length > 1) {
+            field.target_field.forEach((fieldCode, index) => {
+              const isLastIndex = index === field.target_field.length - 1;
 
-    //   let urlObjDropdown = new URL(window.location.href);
-    //   let getQueryFromUrl = urlObjDropdown.searchParams.get("query");
-    //   let changeToArray;
-    //   if (getQueryFromUrl) {
-    //     changeToArray = getQueryFromUrl.split(/ and /);
-    //   }
+              if (queryChild) {
+                if (isLastIndex) {
+                  queryChild += `or (${fieldCode} in ("${selectedValue}")))`;
+                } else {
+                  queryChild += `or (${fieldCode} in ("${selectedValue}"))`;
+                }
+              } else {
+                queryChild = `((${fieldCode} in ("${selectedValue}")) `;
+              }
+            });
+            query = `${query ? " and " : ""}${queryChild}`;
+          } else {
+            query = `${query ? " and " : ""}(${field.target_field[0]} in ("${selectedValue}"))`;
+          }
+        } else if (field.groupName == selectedId && field.nameMarker == "") {
+          query = `${query ? " and " : ""}(${fieldCode} in ("${selectedValue}"))`;
+        }
+      });
 
-    //   let queryInput = await getValueConditionAndBuildQuery(
-    //     searchInfoList,
-    //     true
-    //   );
-    //   if (queryForDropdow) {
-    //     query = `${query ? " and" : ""} ${queryForDropdow}`;
-    //   }
-    //   searchInfoList.forEach((field, index) => {
-    //     if (field.groupName == selectedId && field.nameMarker) {
-    //       if (field.target_field.length > 1) {
-    //         field.target_field.forEach((fieldCode, index) => {
-    //           const isLastIndex = index === field.target_field.length - 1;
+      // bokTermsObject = {
+      //   ...bokTermsObject,
+      //   ...createBokTermsObject(selectedValue, dropdownId, labelValue),
+      // };
+      bokTermsObject = { ...bokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelValue) }
+      let joinObject = { ...bokTermsGet, ...bokTermsObject };
+      const url = new URL(window.location.href);
 
-    //           if (queryChild) {
-    //             if (isLastIndex) {
-    //               queryChild += `or (${fieldCode} in ("${selectedValue}")))`;
-    //             } else {
-    //               queryChild += `or (${fieldCode} in ("${selectedValue}"))`;
-    //             }
-    //           } else {
-    //             queryChild = `((${fieldCode} in ("${selectedValue}")) `;
-    //           }
-    //         });
-    //         query = `${query ? " and " : ""}${queryChild}`;
-    //       } else {
-    //         query = `${query ? " and " : ""}(${field.target_field[0]} in ("${selectedValue}"))`;
-    //       }
-    //     } else if (field.groupName == selectedId && field.nameMarker == "") {
-    //       query = `${query ? " and " : ""}(${fieldCode} in ("${selectedValue}"))`;
-    //     }
-    //   });
+      // Get the base URL with only the 'view' parameter
+      const baseUrl = `${url.origin}${url.pathname}`;
+      const currentUrlBase = baseUrl;
+      const bokTermsString = JSON.stringify(joinObject);
+      const bokTerms = encodeURIComponent(bokTermsString);
 
-    //   bokTermsObject = { ...bokTermsObject, ...createBokTermsObject(selectedValue, dropdownId, labelValue) }
-    //   let joinObject = { ...bokTermsGet, ...bokTermsObject };
-    //   const url = new URL(window.location.href);
+      if (queryInput) {
+        query += `${query ? " and" : ""} ${queryInput}`;
+      }
 
-    //   // Get the base URL with only the 'view' parameter
-    //   const baseUrl = `${url.origin}${url.pathname}`;
-    //   const currentUrlBase = baseUrl;
-    //   const bokTermsString = JSON.stringify(joinObject);
-    //   const bokTerms = encodeURIComponent(bokTermsString);
+      let querySuccess = encodeURIComponent(query);
 
-    //   if (queryInput) {
-    //     query += `${query ? " and" : ""} ${queryInput}`;
-    //   }
+      const QueryUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
+      const urlObj = new URL(window.location.href);
+      const bokTerm = urlObj.searchParams.get("bokTerms");
+      if (bokTerm == null) {
+        window.location.href = QueryUrl;
+      } else {
+        const decodedBokTerms = decodeURIComponent(bokTerm).replace(
+          /(^\{|\}$)/g,
+          ""
+        );
+        const cleanBokTerms = decodedBokTerms.replace(
+          /[^{}\[\]":,0-9a-zA-Z._-\s]/g,
+          ""
+        );
+        const wrappedBokTerms = `{${cleanBokTerms}}`;
+        let bokTermObj;
+        try {
+          bokTermObj = JSON.parse(wrappedBokTerms);
+        } catch (error) {
+          bokTermObj = {}; // initialize as an empty object in case of error
+        }
+        if (!selectedValue || !fieldCode) {
+          let queryChildRank = "";
+          let startData = "";
+          let endData = "";
+          let checkHaveStartData = "";
+          let checkHaveEndtData = "";
+          let startNew = "";
+          let endNew = "";
+          let Current_Date_id = "";
+          let checkFieldForSearchForDropDown;
 
-    //   let querySuccess = encodeURIComponent(query);
+          Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
+            // ====
+            // checkFieldForSearchForDropDown = searchContent.filter((item) => item.groupName == field.groupName.replace(/\s+/g, "_"));
+            searchInfoList.forEach((field) => {
+              if (
+                field.groupName.replace(/\s+/g, "_") == key &&
+                (field.searchType == "text_patial" ||
+                  field.searchType == "text_initial" ||
+                  field.searchType == "text_exact" ||
+                  field.searchType == "number_exact")
+              ) {
+                if (!$(`#${key}`).val()) {
+                  let valueForCheck;
+                  if (
+                    field.searchType == "text_patial" ||
+                    field.searchType == "multi_text_patial"
+                  ) {
+                    valueForCheck = transformStringPartial(bokTermsObj);
+                  } else if (
+                    field.searchType == "text_initial" ||
+                    field.searchType == "multi_text_initial"
+                  ) {
+                    valueForCheck = transformString(bokTermsObj);
+                  } else if (
+                    field.searchType == "text_exact" ||
+                    field.searchType == "number_exact"
+                  ) {
+                    valueForCheck = transformString(bokTermsObj);
+                  } else {
+                    valueForCheck = bokTermsObj;
+                  }
 
-    //   const QueryUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
-    //   const urlObj = new URL(window.location.href);
-    //   const bokTerm = urlObj.searchParams.get("bokTerms");
-    //   if (bokTerm == null) {
-    //     window.location.href = QueryUrl;
-    //   } else {
-    //     const decodedBokTerms = decodeURIComponent(bokTerm).replace(
-    //       /(^\{|\}$)/g,
-    //       ""
-    //     );
-    //     const cleanBokTerms = decodedBokTerms.replace(
-    //       /[^{}\[\]":,0-9a-zA-Z._-\s]/g,
-    //       ""
-    //     );
-    //     const wrappedBokTerms = `{${cleanBokTerms}}`;
-    //     let bokTermObj;
-    //     try {
-    //       bokTermObj = JSON.parse(wrappedBokTerms);
-    //     } catch (error) {
-    //       bokTermObj = {}; // initialize as an empty object in case of error
-    //     }
-    //     if (!selectedValue || !fieldCode) {
-    //       let queryChildRank = "";
-    //       let startData = "";
-    //       let endData = "";
-    //       let checkHaveStartData = "";
-    //       let checkHaveEndtData = "";
-    //       let startNew = "";
-    //       let endNew = "";
-    //       let Current_Date_id = "";
-    //       let checkFieldForSearchForDropDown;
+                  let queryForCheck;
+                  if (field.searchType == "number_exact") {
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((field, index) => {
+                        const isLastIndex =
+                          index === field.target_field.length - 1;
 
-    //       Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
-    //         searchInfoList.forEach((field) => {
-    //           if (
-    //             field.groupName.replace(/\s+/g, "_") == key &&
-    //             (field.searchType == "text_patial" ||
-    //               field.searchType == "text_initial" ||
-    //               field.searchType == "text_exact" ||
-    //               field.searchType == "number_exact")
-    //           ) {
-    //             if (!$(`#${key}`).val()) {
-    //               let valueForCheck;
-    //               if (
-    //                 field.searchType == "text_patial" ||
-    //                 field.searchType == "multi_text_patial"
-    //               ) {
-    //                 valueForCheck = transformStringPartial(bokTermsObj);
-    //               } else if (
-    //                 field.searchType == "text_initial" ||
-    //                 field.searchType == "multi_text_initial"
-    //               ) {
-    //                 valueForCheck = transformString(bokTermsObj);
-    //               } else if (
-    //                 field.searchType == "text_exact" ||
-    //                 field.searchType == "number_exact"
-    //               ) {
-    //                 valueForCheck = transformString(bokTermsObj);
-    //               } else {
-    //                 valueForCheck = bokTermsObj;
-    //               }
+                        if (queryForCheck) {
+                          if (isLastIndex) {
+                            queryForCheck += `or (${field} = "${valueForCheck}"))`;
+                          } else {
+                            queryForCheck += `or (${field} = "${valueForCheck}")`;
+                          }
+                        } else {
+                          queryForCheck = `((${field} = "${valueForCheck}")`;
+                        }
+                      });
+                    } else if ((field.target_field.length = 1)) {
+                      queryForCheck = `(${field.target_field} = "${valueForCheck}")`;
+                      changeToArray = changeToArray.filter(
+                        (item) => item !== queryForCheck
+                      );
+                      let string = changeToArray.join(" and ");
+                      delete bokTermObj[key];
+                      query = string;
+                    }
+                  } else {
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((field, index) => {
+                        const isLastIndex =
+                          index === field.target_field.length - 1;
 
-    //               let queryForCheck;
-    //               if (field.searchType == "number_exact") {
-    //                 if (field.target_field.length > 1) {
-    //                   field.target_field.forEach((field, index) => {
-    //                     const isLastIndex = index === field.target_field.length - 1;
+                        if (queryForCheck) {
+                          if (isLastIndex) {
+                            queryForCheck += `or (${field} like "${valueForCheck}"))`;
+                          } else {
+                            queryForCheck += `or (${field} like "${valueForCheck}")`;
+                          }
+                        } else {
+                          queryForCheck = `((${field} like "${valueForCheck}")`;
+                        }
+                      });
+                    } else if ((field.target_field.length = 1)) {
+                      queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
+                      changeToArray = changeToArray.filter(
+                        (item) => item !== queryForCheck
+                      );
+                      let string = changeToArray.join(" and ");
+                      delete bokTermObj[key];
+                      query = string;
+                    }
+                  }
+                }
+              }
 
-    //                     if (queryForCheck) {
-    //                       if (isLastIndex) {
-    //                         queryForCheck += `or (${field} = "${valueForCheck}"))`;
-    //                       } else {
-    //                         queryForCheck += `or (${field} = "${valueForCheck}")`;
-    //                       }
-    //                     } else {
-    //                       queryForCheck = `((${field} = "${valueForCheck}")`;
-    //                     }
-    //                   });
-    //                 } else if ((field.target_field.length = 1)) {
-    //                   queryForCheck = `(${field.target_field} = "${valueForCheck}")`;
-    //                   changeToArray = changeToArray.filter(item => item !== queryForCheck);
-    //                   let string = changeToArray.join(' and ');
-    //                   delete bokTermObj[key];
-    //                   query = string;
-    //                 }
-    //               } else {
-    //                 if (field.target_field.length > 1) {
-    //                   field.target_field.forEach((field, index) => {
-    //                     const isLastIndex = index === field.target_field.length - 1;
+              let afterparts = key.split("_");
+              let afterisLastPartStart =
+                afterparts[afterparts.length - 1] === "start";
+              let afterchangeKeyValue = "";
 
-    //                     if (queryForCheck) {
-    //                       if (isLastIndex) {
-    //                         queryForCheck += `or (${field} like "${valueForCheck}"))`;
-    //                       } else {
-    //                         queryForCheck += `or (${field} like "${valueForCheck}")`;
-    //                       }
-    //                     } else {
-    //                       queryForCheck = `((${field} like "${valueForCheck}")`;
-    //                     }
-    //                   });
-    //                 } else if ((field.target_field.length = 1)) {
-    //                   queryForCheck = `(${field.target_field} like "${valueForCheck}")`;
-    //                   changeToArray = changeToArray.filter(item => item !== queryForCheck);
-    //                   let string = changeToArray.join(' and ');
-    //                   delete bokTermObj[key];
-    //                   query = string;
-    //                 }
-    //               }
-    //             }
-    //           }
+              if (afterisLastPartStart) {
+                afterchangeKeyValue = key.replace(/_start$/, "");
+              } else {
+                afterchangeKeyValue = key.replace(/_end$/, "");
+              }
 
-    //           let afterparts = key.split("_");
-    //           let afterisLastPartStart = afterparts[afterparts.length - 1] === "start";
-    //           let afterchangeKeyValue = "";
+              if (
+                field.groupName.replace(/\s+/g, "_") == afterchangeKeyValue &&
+                (field.searchType == "number_range" ||
+                  field.searchType == "date_range")
+              ) {
+                let getGroupId;
+                const parts = key.split("_");
+                const isLastPartStart = parts[parts.length - 1] === "start";
 
-    //           if (afterisLastPartStart) {
-    //             afterchangeKeyValue = key.replace(/_start$/, "");
-    //           } else {
-    //             afterchangeKeyValue = key.replace(/_end$/, "");
-    //           }
+                if (!checkHaveStartData && isLastPartStart) {
+                  checkHaveStartData = 1;
+                  getGroupId = key.replace(/_start$/, "");
+                  Current_Date_id = getGroupId;
+                } else if (checkHaveStartData && isLastPartStart) {
+                  getGroupId = key.replace(/_start$/, "");
+                  checkHaveStartData = "";
+                  Current_Date_id = getGroupId;
+                } else if (checkHaveStartData && !isLastPartStart) {
+                  getGroupId = key.replace(/_end$/, "");
+                  checkHaveStartData = 1;
+                } else {
+                  getGroupId = key.replace(/_end$/, "");
+                  checkHaveEndtData = 1;
+                }
 
-    //           if (
-    //             (field.groupName.replace(/\s+/g, "_") == changeKeyValue) &&
-    //             (field.searchType == "number_range" ||
-    //               field.searchType == "date_range")
-    //           ) {
-    //             let getGroupId;
-    //             const parts = key.split("_");
-    //             const isLastPartStart = parts[parts.length - 1] === "start";
+                if (field.groupName == getGroupId.replace("_", " ")) {
+                  if (isLastPartStart) {
+                    startData = bokTermsObj;
+                  } else {
+                    if (Current_Date_id != getGroupId) {
+                      startData = "";
+                    }
+                    endData = bokTermsObj;
+                  }
 
-    //             if (!checkHaveStartData && isLastPartStart) {
-    //               checkHaveStartData = 1;
-    //               getGroupId = key.replace(/_start$/, "");
-    //               Current_Date_id = getGroupId;
-    //             } else if (checkHaveStartData && isLastPartStart) {
-    //               getGroupId = key.replace(/_start$/, "");
-    //               checkHaveStartData = "";
-    //               Current_Date_id = getGroupId;
-    //             } else if (checkHaveStartData && !isLastPartStart) {
-    //               getGroupId = key.replace(/_end$/, "");
-    //               checkHaveStartData = 1;
-    //             } else {
-    //               getGroupId = key.replace(/_end$/, "");
-    //               checkHaveEndtData = 1;
-    //             }
+                  if (!$(`#${key}`).val()) {
+                    delete bokTermObj[key];
+                  } else {
+                    if (isLastPartStart) {
+                      startNew = $(`#${key}`).val();
+                    } else {
+                      endNew = $(`#${key}`).val();
+                    }
+                  }
 
-    //             if (field.groupName == getGroupId.replace("_", " ")) {
-    //               if (isLastPartStart) {
-    //                 startData = bokTermsObj;
-    //               } else {
-    //                 if (Current_Date_id != getGroupId) {
-    //                   startData = "";
-    //                 }
-    //                 endData = bokTermsObj;
-    //               }
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fields) => {
+                      if (startData && endData == "") {
+                        queryChildRank += queryChildRank
+                          ? " or (" +
+                          fields +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '"' +
+                          "))"
+                          : "((" +
+                          fields +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '"' +
+                          ")";
+                      } else if (endData && startData == "") {
+                        queryChildRank += queryChildRank
+                          ? " or (" +
+                          fields +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          "))"
+                          : "((" +
+                          fields +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          ")";
+                      } else if (startData && endData) {
+                        queryChildRank += queryChildRank
+                          ? " or ((" +
+                          fields +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '")' +
+                          " and (" +
+                          fields +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          "))"
+                          : "((" +
+                          fields +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startData +
+                          '")' +
+                          " and (" +
+                          fields +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endData +
+                          '"' +
+                          "))";
+                      }
+                    });
+                  } else {
+                    if (startData && endData == "") {
+                      queryChildRank += queryChildRank
+                        ? " or (" +
+                        field.target_field[0] +
+                        " " +
+                        ">=" +
+                        ' "' +
+                        startData +
+                        '"' +
+                        ")"
+                        : "(" +
+                        field.target_field[0] +
+                        " " +
+                        ">=" +
+                        ' "' +
+                        startData +
+                        '"' +
+                        ")";
+                    } else if (endData && startData == "") {
+                      queryChildRank += queryChildRank
+                        ? " or (" +
+                        field.target_field[0] +
+                        " " +
+                        "<=" +
+                        ' "' +
+                        endData +
+                        '"' +
+                        ")"
+                        : "(" +
+                        field.target_field[0] +
+                        " " +
+                        "<=" +
+                        ' "' +
+                        endData +
+                        '"' +
+                        ")";
+                    } else if (startData && endData) {
+                      queryChildRank += queryChildRank
+                        ? " or ((" +
+                        field.target_field[0] +
+                        " " +
+                        ">=" +
+                        ' "' +
+                        startData +
+                        '")' +
+                        " and (" +
+                        field.target_field[0] +
+                        " " +
+                        "<=" +
+                        ' "' +
+                        endData +
+                        '"' +
+                        "))"
+                        : "((" +
+                        field.target_field[0] +
+                        " " +
+                        ">=" +
+                        ' "' +
+                        startData +
+                        '")' +
+                        " and (" +
+                        field.target_field[0] +
+                        " " +
+                        "<=" +
+                        ' "' +
+                        endData +
+                        '"' +
+                        "))";
+                    }
+                  }
 
-    //               if (!$(`#${key}`).val()) {
-    //                 delete bokTermObj[key];
-    //               } else {
-    //                 if (isLastPartStart) {
-    //                   startNew = $(`#${key}`).val();
-    //                 } else {
-    //                   endNew = $(`#${key}`).val();
-    //                 }
-    //               }
+                  //copy code
+                  let changeQueryToArray = queryChildRank.split(/ and /);
+                  if (checkHaveStartData && checkHaveEndtData) {
+                    changeToArray = changeToArray.filter(
+                      (item) => !changeQueryToArray.includes(item)
+                    );
+                    checkHaveStartData = "";
+                    checkHaveEndtData = "";
+                    queryChildRank = "";
 
-    //               if (field.target_field.length > 1) {
-    //                 field.target_field.forEach((fields) => {
-    //                   if (startData && endData == '') {
-    //                     queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startData + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startData + '"' + ")";
-    //                   } else if (endData && startData == '') {
-    //                     queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" : "((" + fields + ' ' + "<=" + ' "' + endData + '"' + ")";
-    //                   } else if (startData && endData) {
-    //                     queryChildRank += queryChildRank ? " or ((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))" :
-    //                       "((" + fields + ' ' + ">=" + ' "' + startData + '")' + " and (" + fields + ' ' + "<=" + ' "' + endData + '"' + "))";
-    //                   }
-    //                 });
-    //               } else {
-    //                 if (startData && endData == '') {
-    //                   queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '"' + ")" : "(" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '"' + ")";
-    //                 } else if (endData && startData == '') {
-    //                   queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + ")" : "(" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + ")";
-    //                 } else if (startData && endData) {
-    //                   queryChildRank += queryChildRank ? " or ((" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + "))" :
-    //                     "((" + field.target_field[0] + ' ' + ">=" + ' "' + startData + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endData + '"' + "))";
-    //                 }
-    //               }
+                    if (field.target_field.length > 1) {
+                      field.target_field.forEach((fields) => {
+                        if (startNew && endNew == "") {
+                          queryChildRank += queryChildRank
+                            ? " or (" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '"' +
+                            "))"
+                            : "((" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '"' +
+                            ")";
+                        } else if (endNew && startNew == "") {
+                          queryChildRank += queryChildRank
+                            ? " or (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            "))"
+                            : " or ((" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            ")";
+                        } else if (startNew && endNew) {
+                          queryChildRank += queryChildRank
+                            ? " or ((" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '")' +
+                            " and (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            "))"
+                            : "((" +
+                            fields +
+                            " " +
+                            ">=" +
+                            ' "' +
+                            startNew +
+                            '")' +
+                            " and (" +
+                            fields +
+                            " " +
+                            "<=" +
+                            ' "' +
+                            endNew +
+                            '"' +
+                            "))";
+                        }
+                      });
+                    } else {
+                      if (startNew && endNew == "") {
+                        queryChildRank += queryChildRank
+                          ? " or (" +
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startNew +
+                          '"' +
+                          ")"
+                          : "(" +
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startNew +
+                          '"' +
+                          ")";
+                      } else if (endNew && startNew == "") {
+                        queryChildRank += queryChildRank
+                          ? " or (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endNew +
+                          '"' +
+                          ")"
+                          : "or (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endNew +
+                          '"' +
+                          ")";
+                      } else if (startNew && endNew) {
+                        queryChildRank += queryChildRank
+                          ? " or ((" +
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startNew +
+                          '")' +
+                          " and (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endNew +
+                          '"' +
+                          "))"
+                          : "((" +
+                          field.target_field[0] +
+                          " " +
+                          ">=" +
+                          ' "' +
+                          startNew +
+                          '")' +
+                          " and (" +
+                          field.target_field[0] +
+                          " " +
+                          "<=" +
+                          ' "' +
+                          endNew +
+                          '"' +
+                          "))";
+                      }
+                    }
 
-    //               //copy code
-    //               let changeQueryToArray = queryChildRank.split(/ and /);
-    //               if (checkHaveStartData && checkHaveEndtData) {
-    //                 changeToArray = changeToArray.filter(item => !changeQueryToArray.includes(item));
-    //                 checkHaveStartData = "";
-    //                 checkHaveEndtData = "";
-    //                 queryChildRank = "";
+                    if (queryChildRank) {
+                      changeToArray = queryChildRank.split(/ and /);
+                    }
 
-    //                 if (field.target_field.length > 1) {
-    //                   field.target_field.forEach((fields) => {
-    //                     if (startNew && endNew == '') {
-    //                       queryChildRank += queryChildRank ? " or (" + fields + ' ' + ">=" + ' "' + startNew + '"' + "))" : "((" + fields + ' ' + ">=" + ' "' + startNew + '"' + ")";
-    //                     } else if (endNew && startNew == '') {
-    //                       queryChildRank += queryChildRank ? " or (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))" : " or ((" + fields + ' ' + "<=" + ' "' + endNew + '"' + ")";
-    //                     } else if (startNew && endNew) {
-    //                       queryChildRank += queryChildRank ? " or ((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))" :
-    //                         "((" + fields + ' ' + ">=" + ' "' + startNew + '")' + " and (" + fields + ' ' + "<=" + ' "' + endNew + '"' + "))";
-    //                     }
-    //                   });
-    //                 } else {
-    //                   if (startNew && endNew == '') {
-    //                     queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '"' + ")" : "(" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '"' + ")";
-    //                   } else if (endNew && startNew == '') {
-    //                     queryChildRank += queryChildRank ? " or (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + ")" : "or (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + ")";
-    //                   } else if (startNew && endNew) {
-    //                     queryChildRank += queryChildRank ? " or ((" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + "))" :
-    //                       "((" + field.target_field[0] + ' ' + ">=" + ' "' + startNew + '")' + " and (" + field.target_field[0] + ' ' + "<=" + ' "' + endNew + '"' + "))";
-    //                   }
-    //                 }
+                    let string = changeToArray.join(" and ");
+                    query = string;
+                    startNew = "";
+                    endNew = "";
+                  } else if (checkHaveStartData && !checkHaveEndtData) {
+                    changeToArray = changeToArray.filter(
+                      (item) => !changeQueryToArray.includes(item)
+                    );
+                  } else if (!checkHaveStartData && checkHaveEndtData) {
+                    changeToArray = changeToArray.filter(
+                      (item) => !changeQueryToArray.includes(item)
+                    );
+                  }
 
-    //                 if (queryChildRank) {
-    //                   changeToArray = queryChildRank.split(/ and /);
-    //                 }
+                  queryChildRank = "";
+                }
+              }
 
-    //                 let string = changeToArray.join(" and ");
-    //                 query = string;
-    //                 startNew = "";
-    //                 endNew = "";
-    //               } else if (checkHaveStartData && !checkHaveEndtData) {
-    //                 changeToArray = changeToArray.filter(
-    //                   (item) => !changeQueryToArray.includes(item)
-    //                 );
-    //               } else if (!checkHaveStartData && checkHaveEndtData) {
-    //                 changeToArray = changeToArray.filter(
-    //                   (item) => !changeQueryToArray.includes(item)
-    //                 );
-    //               }
+              if (field.groupName == selectedId) {
+                if (
+                  field.groupName == bokTermsObj.active &&
+                  field.nameMarker &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      const isLastIndex =
+                        index === field.target_field.length - 1;
+                      if (queryChild) {
+                        if (isLastIndex) {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+                        } else {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+                        }
+                      } else {
+                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+                      }
+                    });
 
-    //               queryChildRank = "";
-    //             }
-    //           }
+                    let filteredArray = changeToArray.filter(
+                      (item) => item !== queryChild
+                    );
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  } else {
+                    let filteredArray = changeToArray.filter(
+                      (item) =>
+                        item !==
+                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+                    );
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  }
+                } else if (
+                  field.groupName == selectedId &&
+                  field.nameMarker == "" &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  let filteredArray;
 
-    //           if (field.groupName == selectedId) {
-    //             if (
-    //               field.groupName == bokTermsObj.active &&
-    //               field.nameMarker &&
-    //               field.searchType == "dropdown_exact"
-    //             ) {
-    //               if (field.target_field.length > 1) {
-    //                 field.target_field.forEach((fieldCode, index) => {
-    //                   const isLastIndex =
-    //                     index === field.target_field.length - 1;
-    //                   if (queryChild) {
-    //                     if (isLastIndex) {
-    //                       queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
-    //                     } else {
-    //                       queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
-    //                     }
-    //                   } else {
-    //                     queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
-    //                   }
-    //                 });
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
 
-    //                 let filteredArray = changeToArray.filter(
-    //                   (item) => item !== queryChild
-    //                 );
-    //                 let string = filteredArray.join(" and ");
-    //                 delete bokTermObj[selectedId];
-    //                 query = string;
-    //               } else {
-    //                 let filteredArray = changeToArray.filter(
-    //                   (item) =>
-    //                     item !==
-    //                     `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
-    //                 );
-    //                 let string = filteredArray.join(" and ");
-    //                 delete bokTermObj[selectedId];
-    //                 query = string;
-    //               }
-    //             } else if (
-    //               field.groupName == selectedId &&
-    //               field.nameMarker == "" &&
-    //               field.searchType == "dropdown_exact"
-    //             ) {
-    //               let filteredArray;
+                      if (changeToArray.includes(queryChild)) {
+                        changeToArray = changeToArray.filter(
+                          (item) => item !== queryChild
+                        );
+                      } else {
+                        filteredArray = changeToArray;
+                      }
+                    });
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  } else {
+                    let changeToArray = changeToArray.filter(
+                      (item) =>
+                        item !==
+                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+                    );
+                    let string = changeToArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  }
+                }
+              }
 
-    //               if (field.target_field.length > 1) {
-    //                 field.target_field.forEach((fieldCode, index) => {
-    //                   queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
+              if (field.groupName.replace(/\s+/g, "_") == key) {
+                if (
+                  field.groupName == selectedId &&
+                  field.nameMarker &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      const isLastIndex =
+                        index === field.target_field.length - 1;
+                      if (queryChild) {
+                        if (isLastIndex) {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+                        } else {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+                        }
+                      } else {
+                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+                      }
+                    });
 
-    //                   if (changeToArray.includes(queryChild)) {
-    //                     changeToArray = changeToArray.filter(
-    //                       (item) => item !== queryChild
-    //                     );
-    //                   } else {
-    //                     filteredArray = changeToArray;
-    //                   }
-    //                 });
-    //                 let string = filteredArray.join(" and ");
-    //                 delete bokTermObj[selectedId];
-    //                 query = string;
-    //               } else {
-    //                 let changeToArray = changeToArray.filter(
-    //                   (item) =>
-    //                     item !==
-    //                     `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
-    //                 );
-    //                 let string = changeToArray.join(" and ");
-    //                 delete bokTermObj[selectedId];
-    //                 query = string;
-    //               }
-    //             }
-    //           }
+                    let filteredArray = changeToArray.filter(
+                      (item) => item !== queryChild
+                    );
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                    query = string;
+                  } else {
+                    let filteredArray = changeToArray.filter(
+                      (item) =>
+                        item !==
+                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+                    );
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId];
+                    query = string;
+                  }
+                } else if (
+                  field.groupName == selectedId &&
+                  field.nameMarker == "" &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  let filteredArray;
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
+                      if (changeToArray.includes(queryChild)) {
+                        changeToArray = changeToArray.filter(
+                          (item) => item !== queryChild
+                        );
+                      } else {
+                        filteredArray = changeToArray;
+                      }
+                    });
 
-    //           if (field.groupName.replace(/\s+/g, "_") == key) {
-    //             if (
-    //               field.groupName == selectedId &&
-    //               field.nameMarker &&
-    //               field.searchType == "dropdown_exact"
-    //             ) {
-    //               if (field.target_field.length > 1) {
-    //                 field.target_field.forEach((fieldCode, index) => {
-    //                   const isLastIndex =
-    //                     index === field.target_field.length - 1;
-    //                   if (queryChild) {
-    //                     if (isLastIndex) {
-    //                       queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
-    //                     } else {
-    //                       queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
-    //                     }
-    //                   } else {
-    //                     queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
-    //                   }
-    //                 });
+                    let string = filteredArray.join(" and ");
+                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                    query = string;
+                  } else {
+                    let changeToArray = changeToArray.filter(
+                      (item) =>
+                        item !==
+                        `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
+                    );
+                    let string = changeToArray.join(" and ");
+                    delete bokTermObj[selectedId.replace(/\s+/g, "_")];
+                    query = string;
+                  }
+                }
+              }
+            });
+          });
+        } else {
+          Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
+            searchInfoList.forEach((field) => {
+              if (field.groupName.replace(/\s+/g, "_") == key) {
+                if (!$(`#${key}`).val()) {
+                  delete bokTermObj[key];
+                }
+              }
 
-    //                 let filteredArray = changeToArray.filter(
-    //                   (item) => item !== queryChild
-    //                 );
-    //                 let string = filteredArray.join(" and ");
-    //                 delete bokTermObj[selectedId.replace(/\s+/g, "_")];
-    //                 query = string;
-    //               } else {
-    //                 let filteredArray = changeToArray.filter(
-    //                   (item) =>
-    //                     item !==
-    //                     `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
-    //                 );
-    //                 let string = filteredArray.join(" and ");
-    //                 delete bokTermObj[selectedId];
-    //                 query = string;
-    //               }
-    //             } else if (
-    //               field.groupName == selectedId &&
-    //               field.nameMarker == "" &&
-    //               field.searchType == "dropdown_exact"
-    //             ) {
-    //               let filteredArray;
-    //               if (field.target_field.length > 1) {
-    //                 field.target_field.forEach((fieldCode, index) => {
-    //                   queryChild = `(${fieldCode} in ("${bokTermsObj.value}"))`;
-    //                   if (changeToArray.includes(queryChild)) {
-    //                     changeToArray = changeToArray.filter(
-    //                       (item) => item !== queryChild
-    //                     );
-    //                   } else {
-    //                     filteredArray = changeToArray;
-    //                   }
-    //                 });
+              if (field.groupName != selectedId) {
+                if (
+                  field.groupName == bokTermsObj.active &&
+                  field.nameMarker &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  if (field.target_field.length > 1) {
+                    field.target_field.forEach((fieldCode, index) => {
+                      const isLastIndex =
+                        index === field.target_field.length - 1;
+                      if (queryChild) {
+                        if (isLastIndex) {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
+                        } else {
+                          queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
+                        }
+                      } else {
+                        queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
+                      }
+                    });
+                    query += `${query ? " and " : ""}${queryChild}`;
+                  } else {
+                    query += `${query ? " and " : ""}(${field.target_field[0]} in ("${bokTermsObj.value}"))`;
+                  }
+                } else if (
+                  field.groupName == selectedId &&
+                  field.nameMarker == ""
+                ) {
+                  query += `${query ? " and " : ""}(${fieldCode} in ("${bokTermsObj.value}"))`;
+                } else if (
+                  field.groupName == key &&
+                  field.nameMarker == "" &&
+                  field.searchType == "dropdown_exact"
+                ) {
+                  let getTargetField = searchContent.filter(
+                    (item) => item.searchName == bokTermsObj.active
+                  );
+                  query += `${query ? " and " : ""}(${getTargetField[0].searchTarget} in ("${bokTermsObj.value}"))`;
+                }
+              }
+            });
+          });
 
-    //                 let string = filteredArray.join(" and ");
-    //                 delete bokTermObj[selectedId.replace(/\s+/g, "_")];
-    //                 query = string;
-    //               } else {
-    //                 let changeToArray = changeToArray.filter(
-    //                   (item) =>
-    //                     item !==
-    //                     `(${field.target_field[0]} in ("${bokTermsObj.value}"))`
-    //                 );
-    //                 let string = changeToArray.join(" and ");
-    //                 delete bokTermObj[selectedId.replace(/\s+/g, "_")];
-    //                 query = string;
-    //               }
-    //             }
-    //           }
-    //         });
-    //       });
-    //     } else {
-    //       Object.entries(bokTermObj).forEach(([key, bokTermsObj]) => {
-    //         searchInfoList.forEach((field) => {
-    //           if (field.groupName.replace(/\s+/g, "_") == key) {
-    //             if (!$(`#${key}`).val()) {
-    //               delete bokTermObj[key];
-    //             }
-    //           }
+          // Update the bokTermObj only if the dropdownId exists
+          if (dropdownId in bokTermObj) {
+            bokTermObj[dropdownId].value = selectedValue;
+            bokTermObj[dropdownId].active = labelValue;
+          } else {
+            bokTermObj[dropdownId] = {
+              value: selectedValue,
+              active: labelValue,
+            };
+          }
+        }
 
-    //           if (field.groupName != selectedId) {
-    //             if (
-    //               field.groupName == bokTermsObj.active &&
-    //               field.nameMarker &&
-    //               field.searchType == "dropdown_exact"
-    //             ) {
-    //               if (field.target_field.length > 1) {
-    //                 field.target_field.forEach((fieldCode, index) => {
-    //                   const isLastIndex =
-    //                     index === field.target_field.length - 1;
-    //                   if (queryChild) {
-    //                     if (isLastIndex) {
-    //                       queryChild += `or (${fieldCode} in ("${bokTermsObj.value}")))`;
-    //                     } else {
-    //                       queryChild += `or (${fieldCode} in ("${bokTermsObj.value}"))`;
-    //                     }
-    //                   } else {
-    //                     queryChild = `((${fieldCode} in ("${bokTermsObj.value}")) `;
-    //                   }
-    //                 });
-    //                 query += `${query ? " and " : ""}${queryChild}`;
-    //               } else {
-    //                 query += `${query ? " and " : ""}(${field.target_field[0]} in ("${bokTermsObj.value}"))`;
-    //               }
-    //             } else if (
-    //               field.groupName == selectedId &&
-    //               field.nameMarker == ""
-    //             ) {
-    //               query += `${query ? " and " : ""}(${fieldCode} in ("${bokTermsObj.value}"))`;
-    //             } else if (
-    //               field.groupName == key &&
-    //               field.nameMarker == "" &&
-    //               field.searchType == "dropdown_exact"
-    //             ) {
-    //               let getTargetField = searchContent.filter(
-    //                 (item) => item.searchName == bokTermsObj.active
-    //               );
-    //               query += `${query ? " and " : ""}(${getTargetField[0].searchTarget} in ("${bokTermsObj.value}"))`;
-    //             }
-    //           }
-    //         });
-    //       });
+        querySuccess = encodeURIComponent(query);
+        const updatedUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
+        window.location.href = updatedUrl;
+      }
+    }
 
-    //       // Update the bokTermObj only if the dropdownId exists
-    //       if (dropdownId in bokTermObj) {
-    //         bokTermObj[dropdownId].value = selectedValue;
-    //         bokTermObj[dropdownId].active = labelValue;
-    //       } else {
-    //         bokTermObj[dropdownId] = {
-    //           value: selectedValue,
-    //           active: labelValue,
-    //         };
-    //       }
-    //     }
-
-    //     querySuccess = encodeURIComponent(query);
-    //     const updatedUrl = `${currentUrlBase}?view=${event.viewId}&query=${querySuccess}&bokTerms=${bokTerms}`;
-    //     window.location.href = updatedUrl;
-    //   }
-    // }
-
-    // async function getURL() {
-    //   const urlObj = new URL(window.location.href);
-    //   const bokTerms = urlObj.searchParams.get("bokTerms");
-    //   if (bokTerms != null) {
-    //     const decodedBokTerms = decodeURIComponent(bokTerms).replace(
-    //       /(^\{|\}$)/g,
-    //       ""
-    //     );
-    //     const cleanBokTerms = decodedBokTerms.replace(
-    //       /[^{}\[\]":,0-9a-zA-Z._-\s]/g,
-    //       ""
-    //     );
-    //     const wrappedBokTerms = `{${cleanBokTerms}}`;
-    //     let bokTerm;
-    //     try {
-    //       bokTerm = JSON.parse(wrappedBokTerms);
-    //     } catch (error) {
-    //       return; // Exit if there's an error parsing
-    //     }
-    //     Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
-    //       CONFIG.groupSetting.forEach((searchItem) => {
-    //         if (searchItem.groupName === key.replace("_", " ")) {
-    //           if (searchItem.nameMarker == "") {
-    //             let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-    //             const getId = $(`#${getIdElement}`);
-    //             const trimmedActive = bokTermsObj.active ? bokTermsObj.active.trim() : null;
-    //             getId
-    //               .closest(".search-item")
-    //               .find(".custom-dropdownTitle")
-    //               .text(trimmedActive);
-    //             // updateDropDownOptions(
-    //             //   trimmedActive,
-    //             //   CONFIG.searchContent,
-    //             //   records,
-    //             //   getId,
-    //             //   searchItem.groupName,
-    //             //   "active"
-    //             // );
-    //             // if (getId.hasClass("kintoneplugin-dropdown")) {
-    //             //   const optionExists =
-    //             //     getId.find(`option[value="${bokTermsObj.value}"]`).length >
-    //             //     0;
-    //             //   if (optionExists) {
-    //             //     getId.val(bokTermsObj.value);
-    //             //   } else {
-    //             //     getId.append(
-    //             //       $("<option>")
-    //             //         .text(bokTermsObj.value)
-    //             //         .val(bokTermsObj.value)
-    //             //     );
-    //             //     getId.val(bokTermsObj.value);
-    //             //   }
-    //             }
-    //           } else {
-    //             let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-    //             const getId = $(`#${getIdElement}`);
-    //             if (getId.hasClass("kintoneplugin-dropdown")) {
-    //               const optionExists =
-    //                 getId.find(`option[value="${bokTermsObj.value}"]`).length >
-    //                 0;
-    //               if (optionExists) {
-    //                 getId.val(bokTermsObj.value);
-    //               } else {
-    //                 getId.append(
-    //                   $("<option>")
-    //                     .text(bokTermsObj.value)
-    //                     .val(bokTermsObj.value)
-    //                 );
-    //                 getId.val(bokTermsObj.value);
-    //               }
-    //             }
-    //           }
-    //         }
-    //       });
-    //     });
-    //   }
-    // }
+    async function getURL() {
+      const urlObj = new URL(window.location.href);
+      const bokTerms = urlObj.searchParams.get("bokTerms");
+      if (bokTerms != null) {
+        const decodedBokTerms = decodeURIComponent(bokTerms).replace(
+          /(^\{|\}$)/g,
+          ""
+        );
+        const cleanBokTerms = decodedBokTerms.replace(
+          /[^{}\[\]":,0-9a-zA-Z._-\s]/g,
+          ""
+        );
+        const wrappedBokTerms = `{${cleanBokTerms}}`;
+        let bokTerm;
+        try {
+          bokTerm = JSON.parse(wrappedBokTerms);
+        } catch (error) {
+          return; // Exit if there's an error parsing
+        }
+        Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
+          CONFIG.groupSetting.forEach((searchItem) => {
+            if (searchItem.groupName === key.replace("_", " ")) {
+              if (searchItem.nameMarker == "") {
+                let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+                const getId = $(`#${getIdElement}`);
+                const trimmedActive = bokTermsObj.active
+                  ? bokTermsObj.active.trim()
+                  : null;
+                getId
+                  .closest(".search-item")
+                  .find(".custom-dropdownTitle")
+                  .text(trimmedActive);
+                updateDropDownOptions(
+                  trimmedActive,
+                  CONFIG.searchContent,
+                  records,
+                  getId,
+                  searchItem.groupName,
+                  "active"
+                );
+                if (getId.hasClass("kintoneplugin-dropdown")) {
+                  const optionExists =
+                    getId.find(`option[value="${bokTermsObj.value}"]`).length >
+                    0;
+                  if (optionExists) {
+                    getId.val(bokTermsObj.value);
+                  } else {
+                    getId.append(
+                      $("<option>")
+                        .text(bokTermsObj.value)
+                        .val(bokTermsObj.value)
+                    );
+                    getId.val(bokTermsObj.value);
+                  }
+                }
+              } else {
+                let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
+                const getId = $(`#${getIdElement}`);
+                if (getId.hasClass("kintoneplugin-dropdown")) {
+                  const optionExists =
+                    getId.find(`option[value="${bokTermsObj.value}"]`).length >
+                    0;
+                  if (optionExists) {
+                    getId.val(bokTermsObj.value);
+                  } else {
+                    getId.append(
+                      $("<option>")
+                        .text(bokTermsObj.value)
+                        .val(bokTermsObj.value)
+                    );
+                    getId.val(bokTermsObj.value);
+                  }
+                }
+              }
+            }
+          });
+        });
+      }
+    }
 
     //TODO: CreateElement
     // ========================
@@ -1472,13 +1862,16 @@ jQuery.noConflict();
       let initialNumber = groupName.replace(/\s+/g, "_");
       const InputNumber = $("<input>", {
         type: "number",
+        placeholder: 0,
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
-        "id": initialNumber
-      })
+        id: initialNumber,
+      });
 
       InputNumber.css("width", width);
-      result[`${initialNumber}`] ? InputNumber.val(result[`${initialNumber}`]) : "";
+      result[`${initialNumber}`]
+        ? InputNumber.val(result[`${initialNumber}`])
+        : "";
 
       return InputNumber;
     }
@@ -1488,6 +1881,7 @@ jQuery.noConflict();
       const wrapper = $('<div class="wrapperd-number"></div>');
       const start = $("<input>", {
         type: "number",
+        placeholder: 0,
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
         id: `${NumberRange}_start`,
@@ -1497,6 +1891,7 @@ jQuery.noConflict();
       start.css("width", width);
       const end = $("<input>", {
         type: "number",
+        placeholder: 0,
         class: "kintoneplugin-input-text",
         "data-search-type": searchType,
         id: `${NumberRange}_end`,
@@ -1627,19 +2022,25 @@ jQuery.noConflict();
       let setSearchTarget = [];
       let Titlename;
       let types;
+      let CheckCodeMaster;
       let afterFilter = CONFIG.searchContent.filter(
         (searchItem) => searchItem.groupName == groupName
       );
       afterFilter.forEach((searchItemTarget) => {
+        console.log("searchItemTarget", searchItemTarget);
         types = searchItemTarget.searchTarget.type;
+        CheckCodeMaster = searchItemTarget.masterId;
         Titlename = nameMarker ? nameMarker : searchItemTarget.searchName;
-        setSearchTarget.push(searchItemTarget.fieldForSearch != "-----" ? searchItemTarget.fieldForSearch : searchItemTarget.searchTarget.code);
+        setSearchTarget.push(
+          searchItemTarget.fieldForSearch != "-----"
+            ? searchItemTarget.fieldForSearch
+            : searchItemTarget.searchTarget.code
+        );
       });
 
       let matchResult = searchItem.searchLength
         .replace(/\s/g, "")
         .match(/(\d+)(rem|px|%)/i);
-
       let setWidth = matchResult ? `${matchResult[1]}${matchResult[2]}` : "5rem";
 
       if (afterFilter.length >= 1) {
@@ -1647,25 +2048,35 @@ jQuery.noConflict();
         const elementInput = $("<div></div>").addClass("search-item").css({
           color: SETCOLOR.titleColor,
         });
-
+        if (afterFilter.masterId !== "") console.log("types", types);
+        console.log("afterFilter ::", afterFilter);
+        console.log("CheckCodeMaster ::", CheckCodeMaster);
         let inputElement;
+
         switch (types) {
-          case "MULTI_LINE_TEXT":
           case "SINGLE_LINE_TEXT":
-            if (searchType === "initial") {
-              inputElement = createTextInput(searchType, groupName, setWidth);
-            }else if (searchType === "patial") {
+            if (searchType === "exact" || CheckCodeMaster !== "-----") {
+              inputElement = createDropDowns(searchItem, setWidth);
+            } else if (searchType === "initial" || searchType === "patial") {
               inputElement = createTextInput(searchType, groupName, setWidth);
             }
             break;
 
           case "NUMBER":
           case "CALC":
-            if (searchType === "exact") {
-              inputElement = createTextNumberInput(searchType, groupName, setWidth);
-            } else if (searchType === "range") {
+            if (searchType === "range") {
               inputElement = createNumberRangeInput(searchType, groupName, setWidth);
+            } else if (searchType === "exact" && CheckCodeMaster !== "-----") {
+              inputElement = createDropDowns(searchItem, setWidth);
+            } else {
+              inputElement = createTextNumberInput(searchType, groupName, setWidth);
             }
+            break;
+
+          case "MULTI_LINE_TEXT":
+            if (searchType === "initial" || searchType === "patial") {
+              inputElement = createTextInput(searchType, groupName, setWidth);
+            } ``
             break;
 
           case "DATE":
@@ -1690,24 +2101,29 @@ jQuery.noConflict();
           case "CHECK_BOX":
           case "DROP_DOWN":
           case "RADIO_BUTTON":
-          case "CODE_MASRTER":
             if (searchType === "exact") {
-              inputElement = createTextInput(searchType, groupName, setWidth);
+              inputElement = createDropDowns(searchItem, setWidth);
             }
             break;
+
 
           default:
             inputElement = null;
         }
+
+        if (!["CHECK_BOX", "DROP_DOWN", "RADIO_BUTTON", "CODE_MASRTER"].includes(types)){
+          if(searchType === "exact" && CheckCodeMaster !== "-----") return;
           const label = $("<label>").text(Titlename).addClass("label");
           elementInput.append(label);
+        }
+        
         elementInput.append(inputElement);
         elementsAll.append(elementInput);
       }
     });
     elementsAll.append(elementBtn);
     spaceElement.append(elementsAll);
-    // getURL();
+    getURL();
   });
 
   kintone.events.on(
@@ -1723,7 +2139,7 @@ jQuery.noConflict();
       let updateRecord = {};
       for (const searchItem of CONFIG.searchContent) {
         for (const item of CONFIG.groupSetting) {
-          if (item.groupName == searchItem.groupName) {            
+          if (item.groupName == searchItem.groupName) {
             if (
               item.searchType.value == "initial" ||
               item.searchType.value == "patial"
@@ -1733,30 +2149,28 @@ jQuery.noConflict();
                 false
               );
               let targetValue = record[searchItem.searchTarget.code].value;
-                let convertedValue = "";
-                if (targetValue == "" || targetValue == undefined) {
-                  convertedValue = "";
-                } else {
-                  switch (item.searchType.value) {
-                    case "initial":
-                      convertedValue = `_,${targetValue.split("").join(",")}`;
-                      break;
-                    case "patial":
-                      convertedValue = `${targetValue.split("").join(",")}`;
-                      break;
-                    default:
-                      break;
-                  }
+              let convertedValue = "";
+              if (targetValue == "" || targetValue == undefined) {
+                convertedValue = "";
+              } else {
+                switch (item.searchType.value) {
+                  case "initial":
+                    convertedValue = `_,${targetValue.split("").join(",")}`;
+                    break;
+                  case "patial":
+                    convertedValue = `${targetValue.split("").join(",")}`;
+                    break;
+                  default:
+                    break;
                 }
-                updateRecord[searchItem.fieldForSearch] = {
-                  value: convertedValue,
-                };
-                
-                if (
-                  searchItem.fieldForSearch !== "-----"
-                ) {
-                  record[searchItem.fieldForSearch].value = convertedValue;
-                }
+              }
+              updateRecord[searchItem.fieldForSearch] = {
+                value: convertedValue,
+              };
+
+              if (searchItem.fieldForSearch !== "-----") {
+                record[searchItem.fieldForSearch].value = convertedValue;
+              }
             }
           }
         }

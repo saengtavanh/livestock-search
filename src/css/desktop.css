@@ -136,6 +136,7 @@
   margin-bottom: 1px;
   padding: 5px;
   border-radius: 5px;
+  margin-inline-start: 3px;
 }
 
 .option {
