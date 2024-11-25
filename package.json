@@ -6,7 +6,8 @@
     "develop": "npm run build -- --watch",
     "build": "kintone-plugin-packer --ppk private.ppk --out dist/plugin.zip src",
     "lint": "eslint src",
-    "upload": "kintone-plugin-uploader dist/plugin.zip --watch --waiting-dialog-ms 3000 --base-url=https://3m44mspxdocy.cybozu.com/ --username=workingcompany911@gmail.com --password=ujxt5shs"
+    "upload": "kintone-plugin-uploader dist/plugin.zip --watch --waiting-dialog-ms 3000 --base-url=https://96ukgm3n7rg8.cybozu.com/ --username=navintarpt@gmail.com --password=m3njus5k"
+    
 
   },
   "devDependencies": {
