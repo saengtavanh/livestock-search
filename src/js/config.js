@@ -199,14 +199,14 @@ jQuery.noConflict();
 					return a.code.localeCompare(b.code);
 				});
 
-				$(row).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
-				$(row).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+				$(rowForClone).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+				$(rowForClone).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
 				for (let field of sortField) {
 					if (field.type === "SINGLE_LINE_TEXT" || field.type === "NUMBER") {
-						$(row).find('select#code_field').append(
+						$(rowForClone).find('select#code_field').append(
 							$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
 						);
-						$(row).find('select#name_field').append(
+						$(rowForClone).find('select#name_field').append(
 							$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
 						);
 					}
@@ -227,6 +227,7 @@ jQuery.noConflict();
 				$(rowForClone).find("#api_token").val(item.apiToken);
 				$(rowForClone).find("#type_field").val(item.typeField);
 			} catch (error) {
+				console.log(error);
 				// Set to the value selected.
 				$(rowForClone).find('select#code_field').val("-----");
 				$(rowForClone).find('select#name_field').val("-----");
@@ -450,10 +451,13 @@ jQuery.noConflict();
 				${groupSettingError.groupNameExist ? groupSettingError.groupNameExist : ''}`
 		}
 
+		let codeMasterError = "";
 		const codeMasterTable = $('#kintoneplugin-setting-code-master > tr:gt(0)').toArray();
 		//code master table
 		for (const [index, element] of codeMasterTable.entries()) {
 			let masterId = $(element).find('#master_id');
+			let code = $(element).find('#code_field');
+			let name = $(element).find('#name_field');
 			if (!masterId.val()) {
 				// errorMessage += `<p>Please enter Master ID on Code master difinition row: ${index + 1}</p>`;
 				// $(masterId).addClass('validation-error');
@@ -469,7 +473,22 @@ jQuery.noConflict();
 					hasError = true;
 				}
 			}
+
+			if ((code.val() !== "-----" && name.val() !== "-----") && (code.val() == name.val())){
+				$(code).parent().addClass('validation-error');
+				$(name).parent().addClass('validation-error');
+				codeMasterError += `<p>コードフィールドと名称フィールドが重複しています。</p>`;
+				hasError = true;
+			}else {
+				$(code).parent().removeClass('validation-error');
+				$(name).parent().removeClass('validation-error');
+			}
 		}
+		if (codeMasterError) {
+			errorMessage += `<p>【コードマスタの定義】</p>
+				${codeMasterError}`
+		}
+
 		if (condition == "save" || condition == "export") {
 			let searchContentError = {};
 			let searchContentMessage = "";
@@ -600,7 +619,7 @@ jQuery.noConflict();
 				}
 
 			}
-			if (searchContentError) {
+			if (Object.keys(searchContentError).length > 0) {
 				searchContentMessage += `
 					${searchContentError.searchName ? searchContentError.searchName : ''}
 					${searchContentError.targetField ? searchContentError.targetField : ''}
