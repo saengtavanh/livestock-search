@@ -3,7 +3,7 @@
 <form class="js-submit-settings">
   <div class="kintoneplugin-input-outer container">
     <div id="label-show-title">
-      <label for="select_field_column">Group setting<span class="kintoneplugin-require"></span></label>
+      <label for="select_field_column">検索項目表示の定義<span class="kintoneplugin-require"></span></label>
     </div>
     <div>
       <table class="kintoneplugin-table" id="kintoneplugin-setting-space">
@@ -24,7 +24,7 @@
             <td id="td-table-space-prompt-template-button">
               <div class="labelPrompt">
                 <div class="kintoneplugin-table-td-control">
-                  <label for="title-field" style="font-size: 14px;">Name marker<span
+                  <label for="title-field" style="font-size: 14px;">検索名標<span
                       class="kintoneplugin-require"></span></label>
                   <div class="kintoneplugin-input-outer">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="name_marker"
@@ -33,7 +33,7 @@
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="title-field" style="font-size: 14px;">Group name<span
+                  <label for="title-field" style="font-size: 14px;">検索対象グループ名<span
                       class="kintoneplugin-require">*</span></label>
                   <div class="kintoneplugin-input-outer">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="group_name" />
@@ -41,7 +41,7 @@
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="title-field" style="font-size: 14px;">Search length<span
+                  <label for="title-field" style="font-size: 14px;">検索表示長<span
                       class="kintoneplugin-require"></span></label>
                   <div class="kintoneplugin-input-outer">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="search_length" />
@@ -50,59 +50,22 @@
 
 
                 <div class="kintoneplugin-table-td-control" id="">
-                  <label for="select_field_column" style="font-size: 14px;">Search type<span
+                  <label for="select_field_column" style="font-size: 14px;">検索タイプ<span
                       class="kintoneplugin-require">*</span></label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
                       <select id="search_type">
                         <option value="-----">-----</option>
-                        <option value="text_initial">Text(Initial)</option>
-                        <option value="text_patial">Text(Partial)</option>
-                        <option value="text_exact">Text(Exact)</option>
-                        <option value="multi_text_initial">MultiText(Initial)</option>
-                        <option value="multi_text_patial">MultiText(Partial)</option>
-                        <option value="number_exact">Number(Exact)</option>
-                        <option value="number_range">Number(Range)</option>
-                        <option value="date_exact">Date(Exact)</option>
-                        <option value="date_range">Date(Range)</option>
-                        <option value="dropdown_exact">Dropdown(Exact)</option>
+                        <option value="initial" type="前方一致">前方一致</option>
+                        <option value="patial" type="部分一致">部分一致</option>
+                        <option value="exact" type="完全一致">完全一致</option>
+                        <option value="range" type="範囲">範囲</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
               </div>
-
-              <!-- <div class="labelPrompt">
-                <div class="kintoneplugin-table-td-control">
-                  <label for="title-field">Search length</label>
-                  <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id="search_length" />
-                  </div>
-                </div>
-
-
-                <div class="kintoneplugin-table-td-control" id="">
-                  <label for="select_field_column" style="font-size: 14px;">Search type<span class="kintoneplugin-require">*</span></label>
-                  <div class="kintoneplugin-select-outer">
-                    <div class="kintoneplugin-select">
-                      <select id="search_type">
-                        <option value="-----">-----</option>
-                        <option value="text_initial">Text(Initial)</option>
-                        <option value="text_patial">Text(Patial)</option>
-                        <option value="text_exact">Text(Exact)</option>
-                        <option value="multi_text_initial">MultiText(Initial)</option>
-                        <option value="multi_text_patial">MultiText(Patial)</option>
-                        <option value="number_exact">Number(Exact)</option>
-                        <option value="number_range">Number(Range)</option>
-                        <option value="date_exact">Date(Exact)</option>
-                        <option value="date_range">Date(Range)</option>
-                        <option value="dropdown_exact">Dropdown(Exact)</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div> -->
 
             </td>
             <td class="kintoneplugin-table-td-operation operation-column">
@@ -118,7 +81,7 @@
     </div>
 
     <div id="label-show-title">
-      <label for="select_field_column">Code Master Difinition</label>
+      <label for="select_field_column">コードマスタの定義</label>
     </div>
     <div id="table-code-master">
       <table class="kintoneplugin-table" id="kintoneplugin-code-master">
@@ -140,7 +103,7 @@
               <div class="labelPrompt">
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="title-field" style="font-size: 14px;">App ID<span
+                  <label for="title-field" style="font-size: 14px;">アプリID<span
                       class="kintoneplugin-require"></span></label>
                   <div class="kintoneplugin-input-outer">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="app_id" />
@@ -148,7 +111,7 @@
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="title-field" style="font-size: 14px;">Master ID<span
+                  <label for="title-field" style="font-size: 14px;">マスタID<span
                       class="kintoneplugin-require"></span></label>
                   <div class="kintoneplugin-input-outer">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="master_id" />
@@ -156,7 +119,7 @@
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="title-field" style="font-size: 14px;">Condition<span
+                  <label for="title-field" style="font-size: 14px;">選択条件<span
                       class="kintoneplugin-require"></span></label>
                   <div class="kintoneplugin-input-outer">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="type_field" placeholder="Ex: type in ('condition')"/>
@@ -164,7 +127,7 @@
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="select_field_column" style="font-size: 14px;">Code<span
+                  <label for="select_field_column" style="font-size: 14px;">コードフィールド<span
                       class="kintoneplugin-require"></span></label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
@@ -176,7 +139,7 @@
                 </div>
 
                 <div class="kintoneplugin-table-td-control">
-                  <label for="select_field_column" style="font-size: 14px;">Name<span
+                  <label for="select_field_column" style="font-size: 14px;">名称フィールド<span
                       class="kintoneplugin-require"></span></label>
                   <div class="kintoneplugin-select-outer">
                     <div class="kintoneplugin-select">
@@ -191,46 +154,13 @@
 
               <div class="labelPrompt">
                 <div class="kintoneplugin-table-td-control" style="width: 53.5rem;">
-                  <label for="title-field">API Token</label>
+                  <label for="title-field">API-Token</label>
                   <div class="kintoneplugin-input-outer" style="width: 100%;">
                     <input type="text" class="kintoneplugin-input-text labelForButton" id="api_token"
                       style="width: 100%;" />
                   </div>
                 </div>
               </div>
-
-              <!-- <div class="labelPrompt">
-                <div class="kintoneplugin-table-td-control">
-                  <label for="title-field">Condition</label>
-                  <div class="kintoneplugin-input-outer">
-                    <input type="text" class="kintoneplugin-input-text labelForButton" id="type_field" />
-                  </div>
-                </div>
-
-                <div class="kintoneplugin-table-td-control">
-                  <label for="select_field_column" style="font-size: 14px;">Code</label>
-                  <div class="kintoneplugin-select-outer">
-                    <div class="kintoneplugin-select">
-                      <select id="code_field">
-                        <option value="-----">-----</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="kintoneplugin-table-td-control">
-                  <label for="select_field_column" style="font-size: 14px;">Name</label>
-                  <div class="kintoneplugin-select-outer">
-                    <div class="kintoneplugin-select">
-                      <select id="name_field">
-                        <option value="-----">-----</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div> -->
-
-
             </td>
             <td class="kintoneplugin-table-td-operation operation-column">
               <br>
@@ -246,14 +176,13 @@
 
     <div class="button-update-space-space-button">
       <p class="kintoneplugin-row" id="button-action">
-        <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="button-update">Update</button>
-        <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="load_data">Load
-          data</button>
+        <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="button-update">更新</button>
+        <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="load_data">反映</button>
       </p>
     </div>
 
     <div id="label-show-title">
-      <label for="select_field_column">Search content<span class="kintoneplugin-require"></span></label>
+      <label for="select_field_column">検索内容の定義<span class="kintoneplugin-require"></span></label>
     </div>
     <div id="container-table-setting-prompt-template">
       <table class="kintoneplugin-table" id="kintoneplugin-setting-body">
@@ -272,7 +201,7 @@
               </div>
             </td>
             <td id="td-setting-prompt-template">
-              <div id="navbar-show-content">
+              <!-- <div id="navbar-show-content">
                 <div id="label-show-setting-name">
                   <div class="slide-down">
                     <i class="fa-solid fa-chevron-down"></i>
@@ -283,7 +212,7 @@
                 <div class="slide-up">
                   <i class="fa-solid fa-chevron-up slide-up"></i>
                 </div>
-              </div>
+              </div> -->
               <div id="container-table-settingPromptTemplate" class="td-search-content">
                 <!-- <div id="checkbox-slide-up">
                   <div class="slide-up">
@@ -292,7 +221,7 @@
                 </div> -->
                 <div class="labelPrompt">
                   <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Group name<span
+                    <label for="select_field_column" style="font-size: 14px;">検索グループ名<span
                         class="kintoneplugin-require"></span></label>
                     <div class="kintoneplugin-select-outer">
                       <div class="kintoneplugin-select">
@@ -304,7 +233,7 @@
                   </div>
 
                   <div class="kintoneplugin-table-td-control">
-                    <label for="title-field" style="font-size: 14px;">Search name<span
+                    <label for="title-field" style="font-size: 14px;">検索名<span
                         class="kintoneplugin-require">*</span></label>
                     <div class="kintoneplugin-input-outer">
                       <input type="text" class="kintoneplugin-input-text labelForButton" id="search_name" />
@@ -312,7 +241,7 @@
                   </div>
 
                   <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Master ID<span
+                    <label for="select_field_column" style="font-size: 14px;">コードマスタID<span
                         class="kintoneplugin-require"></span></label>
                     <div class="kintoneplugin-select-outer">
                       <div class="kintoneplugin-select">
@@ -324,7 +253,7 @@
                   </div>
 
                   <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Search target field<span
+                    <label for="select_field_column" style="font-size: 14px;">検索対象フィールド<span
                         class="kintoneplugin-require">*</span></label>
                     <div class="kintoneplugin-select-outer">
                       <div class="kintoneplugin-select">
@@ -336,7 +265,7 @@
                   </div>
 
                   <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Field for search<span
+                    <label for="select_field_column" style="font-size: 14px;">検索用フィールド<span
                         class="kintoneplugin-require"></span></label>
                     <div class="kintoneplugin-select-outer">
                       <div class="kintoneplugin-select">
@@ -349,52 +278,10 @@
 
                   <div class="recreate-area" id="">
                     <button type="button" class="js-save-button kintoneplugin-button-dialog-ok"
-                      id="recreate-button">Recreate</button>
+                      id="recreate-button">再作成</button>
                   </div>
 
                 </div>
-
-                <!-- <div class="labelPrompt">
-                  <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Master ID</label>
-                    <div class="kintoneplugin-select-outer">
-                      <div class="kintoneplugin-select">
-                        <select id="master_id_ref">
-                          <option value="-----">-----</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div> -->
-
-                <!-- <div class="labelPrompt">
-                  <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Search target field<span class="kintoneplugin-require">*</span></label>
-                    <div class="kintoneplugin-select-outer">
-                      <div class="kintoneplugin-select">
-                        <select id="search_target">
-                          <option value="-----">-----</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="kintoneplugin-table-td-control" id="">
-                    <label for="select_field_column" style="font-size: 14px;">Field for search</label>
-                    <div class="kintoneplugin-select-outer">
-                      <div class="kintoneplugin-select">
-                        <select id="field_for_search">
-                          <option value="-----">-----</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="recreate-area" id="">
-                    <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="recreate-button" >Recreate</button>
-                  </div>
-
-                </div> -->
 
               </div>
             </td>
@@ -409,18 +296,15 @@
           </tr>
         </tbody>
       </table>
-      <!-- <div class="recreate-button">
-        <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="recreate-button">Recreate</button>
-      </div> -->
     </div>
 
     <div id="label-show-title">
-      <label for="select_field_column">Color setting<span class="kintoneplugin-require"></span></label>
+      <label for="select_field_column">色設定<span class="kintoneplugin-require"></span></label>
     </div>
     <div class="color-container">
       <div class="color-group">
         <div class="item">
-          <label>Title color</label>
+          <label>タイトルの色</label>
           <div class="color-row">
             <div class="font-color-picker-read">
               <input type="text" id="title-color" class="kintoneplugin-input-text" style="width: 102px;">
@@ -434,7 +318,7 @@
         </div>
 
         <div class="item">
-          <label>Button color</label>
+          <label>ボタンの色</label>
           <div class="color-row">
             <div class="bg-color-picker-read">
               <input type="text" id="button-color" class="kintoneplugin-input-text" style="width: 102px;">
@@ -447,7 +331,7 @@
           </div>
         </div>
         <div class="item">
-          <label>Button text color</label>
+          <label>ボタンのテキストの色</label>
           <div class="color-row">
             <div class="bg-color-picker-read">
               <input type="text" id="button-text-color" class="kintoneplugin-input-text" style="width: 102px;">
@@ -460,42 +344,14 @@
           </div>
         </div>
       </div>
-      <!-- <div class="color-group">
-        <div class="item">
-          <label>Button color</label>
-          <div class="color-row">
-            <div class="bg-color-picker-read">
-              <input type="text" id="bg-color-picker-read" class="kintoneplugin-input-text" style="width: 102px;">
-            </div>
-            <svg id="bg-color-picker-button-icon" style="cursor: pointer;" value="#000000" height="40"
-              viewBox="0 -960 960 960" width="40">
-              <path
-                d="M211.593-103.434q-36.08 0-73.685-15.174-37.604-15.174-68.257-51.914 39.522-12 54.805-33.587 15.282-21.587 16.978-61.717 1.696-45.446 34.218-77.484 32.521-32.038 81-32.038 48.478 0 82.087 33.757 33.609 33.758 33.609 81.982 0 68.522-46.609 112.349-46.609 43.826-114.146 43.826Zm.016-70.175q35 0 62.5-25t27.5-61q0-20-12.5-32.5t-32.5-12.5q-20 0-32.5 12.5t-12.5 32.5q0 39-8.5 57.5t-31.5 22.5q6 1 20 3.5t20 2.5Zm241.87-175.869L350.478-457.479l395.218-395.783q14-13.435 31-14.218 17-.782 32 14.218l42.566 42.566q15 15 14.218 32.5-.783 17.5-14.218 31.5L453.479-349.478Zm-196.87 89.869Z" />
-            </svg>
-          </div>
-        </div>
-        <div class="item">
-          <label>Button text color</label>
-          <div class="color-row">
-            <div class="bg-color-picker-read">
-              <input type="text" id="bg-color-picker-read" class="kintoneplugin-input-text" style="width: 102px;">
-            </div>
-            <svg id="bg-color-picker-button-text-icon" style="cursor: pointer;" value="#000000" height="40"
-              viewBox="0 -960 960 960" width="40">
-              <path
-                d="M211.593-103.434q-36.08 0-73.685-15.174-37.604-15.174-68.257-51.914 39.522-12 54.805-33.587 15.282-21.587 16.978-61.717 1.696-45.446 34.218-77.484 32.521-32.038 81-32.038 48.478 0 82.087 33.757 33.609 33.758 33.609 81.982 0 68.522-46.609 112.349-46.609 43.826-114.146 43.826Zm.016-70.175q35 0 62.5-25t27.5-61q0-20-12.5-32.5t-32.5-12.5q-20 0-32.5 12.5t-12.5 32.5q0 39-8.5 57.5t-31.5 22.5q6 1 20 3.5t20 2.5Zm241.87-175.869L350.478-457.479l395.218-395.783q14-13.435 31-14.218 17-.782 32 14.218l42.566 42.566q15 15 14.218 32.5-.783 17.5-14.218 31.5L453.479-349.478Zm-196.87 89.869Z" />
-            </svg>
-          </div>
-        </div>
-      </div> -->
     </div>
 
     <p class="kintoneplugin-row" id="button-action">
-      <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="button_save">Save</button>
+      <button type="button" class="js-save-button kintoneplugin-button-dialog-ok" id="button_save">保存</button>
       <button type="button" class="js-cancel-button kintoneplugin-button-dialog-cancel cancel"
-        id="cancel">Cancel</button>
-      <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="Import">Import</button>
-      <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="Export">Export</button>
+        id="cancel">キャンセル</button>
+      <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="Import">設定情報の読み込み</button>
+      <button type="button" class="js-save-button kintoneplugin-button-dialog-cancel" id="Export">設定情報の書き出し</button>
       <input type="file" id="fileInput" accept=".json" style="display: none;">
     </p>
   </div>
