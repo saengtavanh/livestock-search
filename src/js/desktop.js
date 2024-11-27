@@ -152,6 +152,8 @@ jQuery.noConflict();
       let mergedBokTermsObject = {};
 
       searchInfoList.forEach((searchInfo) => {
+        console.log("searchInfo1", searchInfo);
+        
         let groupNameSlit = searchInfo.groupName.replace(/\s+/g, "_");
         if ($(`#${groupNameSlit}`).is("select")) {
           let selectedValue = $(`#${groupNameSlit} option:selected`).val();
@@ -163,6 +165,7 @@ jQuery.noConflict();
               ...mergedBokTermsObject,
               ...createBokTermsObject(selectedValue, dropdownId, labelText),
             };
+            
             if (!dropDownChange) {
               if (
                 searchInfo.groupName == groupNameSlit.replace("_", " ") &&
@@ -193,55 +196,73 @@ jQuery.noConflict();
                 searchInfo.nameMarker == "" &&
                 searchInfo.searchType.value == "exact"
               ) {
+                console.log("GGG");
+                console.log("labelText", labelText);
+                
                 let getTargetField = searchContent.filter(
                   (item) => item.searchName == labelText
                 );
-                query += `${query ? " and " : ""}(${getTargetField[0].searchTarget} in ("${selectedValue}"))`;
+
+                console.log("getTargetField",getTargetField);
+                searchInfo["fieldType"] = getTargetField[0].searchTarget.type;
+                query += `${query ? " and " : ""}(${getTargetField[0].searchTarget.code} in ("${selectedValue}"))`;
               }
             }
           }
         }
 
-        checkFieldForSearch = searchContent.filter(
-          (item) => item.groupName == searchInfo.groupName
-        );
+        
+        console.log("searchInfo>>>>>", searchInfo);
+        
+        if (searchInfo.fieldType !== "CHECK_BOX") {
 
-        if (checkFieldForSearch && checkFieldForSearch[0]?.fieldForSearch) {
-          searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
+          checkFieldForSearch = searchContent.filter(
+            (item) => item.groupName == searchInfo.groupName
+          );
+          console.log("checkFieldForSearch>>>>>", checkFieldForSearch);
+          if (checkFieldForSearch && checkFieldForSearch[0]?.fieldForSearch) {
+            console.log("checkFieldForSearch[0]?.fieldForSearch", checkFieldForSearch);
+            
+            searchInfo["fieldForSearch"] = checkFieldForSearch[0].fieldForSearch;
+            console.log("checkFieldForSearch[0]::", checkFieldForSearch[0].searchTarget.type);
+            // searchInfo["fieldType"] = checkFieldForSearch[0].searchTarget.type;
+            console.log("searchInfo", searchInfo);
+          }
+          
+          switch (searchInfo.searchType.value) {
+            case "initial":
+              query += buildTextInitialQuery(searchInfo, query);
+              break;
+            case "patial":
+              query += buildTextPartialQuery(searchInfo, query);
+              break;
+            case "exact":
+              query += buildTextExactQuery(searchInfo, query);
+              break;
+            // case "multi_text_initial":
+            //   query += buildTextInitialQuery(searchInfo, query);
+            //   break;
+            // case "multi_text_patial":
+            //   query += buildTextPartialQuery(searchInfo, query);
+            //   break;
+            // case "number_exact":
+            //   query += buildNumberExactQuery(searchInfo, query);
+            //   break;
+            case "range":
+              query += buildNumberRangeQuery(searchInfo, query);
+              break;
+            // case "date_exact":
+            //   query += buildNumberExactQuery(searchInfo, query);
+            //   break;
+            // case "date_range":
+            //   query += buildNumberRangeQuery(searchInfo, query);
+            //   break;
+            default:
+              break;
+          }
         }
+        
 
-        searchInfo["fieldType"] = checkFieldForSearch[0].searchTarget.type;
-        switch (searchInfo.searchType.value) {
-          case "initial":
-            query += buildTextInitialQuery(searchInfo, query);
-            break;
-          case "patial":
-            query += buildTextPartialQuery(searchInfo, query);
-            break;
-          case "exact":
-            query += buildTextExactQuery(searchInfo, query);
-            break;
-          // case "multi_text_initial":
-          //   query += buildTextInitialQuery(searchInfo, query);
-          //   break;
-          // case "multi_text_patial":
-          //   query += buildTextPartialQuery(searchInfo, query);
-          //   break;
-          // case "number_exact":
-          //   query += buildNumberExactQuery(searchInfo, query);
-          //   break;
-          case "range":
-            query += buildNumberRangeQuery(searchInfo, query);
-            break;
-          // case "date_exact":
-          //   query += buildNumberExactQuery(searchInfo, query);
-          //   break;
-          // case "date_range":
-          //   query += buildNumberRangeQuery(searchInfo, query);
-          //   break;
-          default:
-            break;
-        }
       });
 
       bokTermsObject = mergedBokTermsObject;
@@ -342,46 +363,48 @@ jQuery.noConflict();
         searchValue = $(`#${replacedText}`).val();
       }
 
-      if (searchInfo.fieldType === "DATE" || searchInfo.fieldType === "DATE_TIME") {
-        if (searchValue) {
-          bokTermsGet[replacedText] = searchValue;
-          if (searchInfo.target_field.length > 1) {
-            searchInfo.target_field.forEach((field, index) => {
-              const isLastIndex = index === field.target_field.length - 1;
-              if (queryChild) {
-                if (isLastIndex) {
-                  queryChild += `or (${field} = "${searchValue}"))`;
+      if (searchInfo.fieldType !== "CHECK_BOX" && searchInfo.fieldType !== "DROP_DOWN" && searchInfo.fieldType !== "RADIO_BUTTON" && searchInfo.fieldType !== undefined) {
+        if (searchInfo.fieldType === "DATE" || searchInfo.fieldType === "DATE_TIME") {
+          if (searchValue) {
+            bokTermsGet[replacedText] = searchValue;
+            if (searchInfo.target_field.length > 1) {
+              searchInfo.target_field.forEach((field, index) => {
+                const isLastIndex = index === field.target_field.length - 1;
+                if (queryChild) {
+                  if (isLastIndex) {
+                    queryChild += `or (${field} = "${searchValue}"))`;
+                  } else {
+                    queryChild += `or (${field} = "${searchValue}")`;
+                  }
                 } else {
-                  queryChild += `or (${field} = "${searchValue}")`;
+                  queryChild = `${query ? " and " : ""}((${field} = "${searchValue}") `;
                 }
-              } else {
-                queryChild = `${query ? " and " : ""}((${field} = "${searchValue}") `;
-              }
-            });
-          } else if ((searchInfo.target_field.length = 1)) {
-            queryChild = `${query ? " and " : ""}(${searchInfo.target_field[0]} = "${searchValue}")`;
+              });
+            } else if ((searchInfo.target_field.length = 1)) {
+              queryChild = `${query ? " and " : ""}(${searchInfo.target_field[0]} = "${searchValue}")`;
+            }
+            return queryChild;
           }
-          return queryChild;
-        }
-      } else {
-        if (searchValue) {
-          bokTermsGet[replacedText] = searchValue
-          if (searchInfo.target_field.length > 1) {
-            searchInfo.target_field.forEach((field, index) => {
-              const isLastIndex = index === field.target_field.length - 1;
-              if (queryChild) {
-                if (condition) {
-                  queryChild += `or (${field} in ("${searchValue}")))`;
+        } else {
+          if (searchValue) {
+            bokTermsGet[replacedText] = searchValue
+            if (searchInfo.target_field.length > 1) {
+              searchInfo.target_field.forEach((field, index) => {
+                const isLastIndex = index === searchInfo.target_field.length - 1;
+                if (queryChild) {
+                  if (isLastIndex) {
+                    queryChild += `or (${field} in ("${searchValue}")))`;
+                  }
+                  queryChild += `or (${field} in ("${searchValue}"))`;
+                } else {
+                  queryChild = `${query ? " and " : ""}((${field} in ("${searchValue}"))`;
                 }
-                queryChild += `or (${field} in ("${searchValue}"))`;
-              } else {
-                queryChild = `${query ? " and " : ""}((${field} in ("${searchValue}"))`;
-              }
-            });
-          } else if ((searchInfo.target_field.length = 1)) {
-            queryChild = `${query ? " and " : ""}(${searchInfo.target_field[0]} in ("${searchValue}"))`;
+              });
+            } else if ((searchInfo.target_field.length = 1)) {
+              queryChild = `${query ? " and " : ""}(${searchInfo.target_field[0]} in ("${searchValue}"))`;
+            }
+            return queryChild;
           }
-          return queryChild;
         }
       }
 
@@ -476,6 +499,7 @@ jQuery.noConflict();
     // Create dropdowns based on the configuration
     function createDropDowns(display) {
       let relatedContent = CONFIG.searchContent.filter((content) => content.groupName === display.groupName);
+      console.log("relatedContent",relatedContent);
       // Only show content if `name_marker` is not empty
       if (display.nameMarker && relatedContent.length === 0) return;
 
@@ -868,7 +892,7 @@ jQuery.noConflict();
 
       let queryInput = await getValueConditionAndBuildQuery(
         searchInfoList,
-        true
+        false
       );
 
       let joinObject = { ...bokTermsGet, ...bokTermsObject };
