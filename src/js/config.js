@@ -529,7 +529,7 @@ jQuery.noConflict();
 					$(targetFields).parent().removeClass('validation-error');
 
 					if (masterId.val() != "-----") {
-						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT" || fieldType == "NUMBER") {
+						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "NUMBER") {
 							$(targetFields).parent().removeClass('validation-error');
 						} else {
 							searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
