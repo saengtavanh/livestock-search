@@ -215,6 +215,11 @@ jQuery.noConflict();
                 query += `${query ? " and " : ""}(${getTargetField[0].searchTarget.code} in ("${selectedValue}"))`;
               }
             }
+          } else {
+            mergedBokTermsObject = {
+              ...mergedBokTermsObject,
+              ...createBokTermsObject("-----", dropdownId, labelText),
+            };
           }
         } else {
           checkFieldForSearch = searchContent.filter(
@@ -341,13 +346,8 @@ jQuery.noConflict();
       let getValFromAttribute = "";
 
       if ($(`#${replacedText}`).length) {
-        console.log("$(`#${replacedText}`)", $(`#${replacedText}`));
-
         searchValue = $(`#${replacedText}`).val();
         getValFromAttribute = $(`#${replacedText}`).attr("typefordropdown");
-        console.log("🚀 ~ buildTextExactQuery ~ searchValue:", searchValue)
-        console.log("🚀 ~ buildTextExactQuery ~ getValFromAttribute:", getValFromAttribute)
-
         if (!$(`#${replacedText}`).is("select")) {
           if (getValFromAttribute != "" && searchInfo.nameMarker == "") {
             if (searchValue) {
@@ -367,24 +367,30 @@ jQuery.noConflict();
         }
       }
       if (searchInfo.fieldType !== "CHECK_BOX" && searchInfo.fieldType !== "DROP_DOWN" && searchInfo.fieldType !== "RADIO_BUTTON" && searchInfo.fieldType !== undefined) {
-        if (searchInfo.fieldType === "DATE" || searchInfo.fieldType === "DATE_TIME") {
+        if (searchInfo.fieldType === "DATE" || searchInfo.fieldType === "DATETIME") {
           if (searchValue) {
+            let valueForDateTime = ""
+            if (searchInfo.fieldType === "DATETIME") {
+              valueForDateTime = searchValue + "T15:00:00.00Z";
+            } else {
+              valueForDateTime = searchValue;
+            }
             bokTermsGet[replacedText] = searchValue;
             if (searchInfo.target_field.length > 1) {
               searchInfo.target_field.forEach((field, index) => {
                 const isLastIndex = index === field.target_field.length - 1;
                 if (queryChild) {
                   if (isLastIndex) {
-                    queryChild += ` or (${field} = "${searchValue}"))`;
+                    queryChild += ` or (${field} = "${valueForDateTime}"))`;
                   } else {
-                    queryChild += ` or (${field} = "${searchValue}")`;
+                    queryChild += ` or (${field} = "${valueForDateTime}")`;
                   }
                 } else {
-                  queryChild = `${query ? " and " : ""}((${field} = "${searchValue}") `;
+                  queryChild = `${query ? " and " : ""}((${field} = "${valueForDateTime}") `;
                 }
               });
             } else if ((searchInfo.target_field.length = 1)) {
-              queryChild = `${query ? " and " : ""}(${searchInfo.target_field[0]} = "${searchValue}")`;
+              queryChild = `${query ? " and " : ""}(${searchInfo.target_field[0]} = "${valueForDateTime}")`;
             }
             return queryChild;
           }
@@ -791,10 +797,10 @@ jQuery.noConflict();
       return inputElement;
     }
 
-    function createNumber(display, fieldCode, nameInputTitle, width, status) { 
-      let setWidth = width.searchLength;
-      let initialNumber;
-      let groupName;
+    function createNumber(display, fieldCode, nameInputTitle, width, status) {
+      let setWidth = width.searchLength
+      let initialNumber
+      let groupName
       if (status === true) {
         initialNumber = display.groupName.replace(/\s+/g, "_");
       } else {
@@ -806,14 +812,14 @@ jQuery.noConflict();
         class: "kintoneplugin-input-text input-number-from-" + initialNumber,
         id: initialNumber,
         typeForDropdown: fieldCode,
-        searchName: display.searchName,
+        searchName: display.searchName
       });
-    
+
       InputNumber.css("width", setWidth);
-    
+      // result[`${initialNumber}`] ? InputNumber.val(result[`${initialNumber}`]) : "";
+
       return InputNumber;
     }
-    
 
     function createDate(display, fieldCode, nameInputTitle, status, value) {
       let dateInput
@@ -826,10 +832,8 @@ jQuery.noConflict();
         dateInput = groupName.replace(/\s+/g, "_");
       }
 
-      if ($(".date-from-" + display.groupName.replace(/\s+/g, "_")).length > 0) {
-        alert("Please select")
-        $(".date-from-" + display.groupName.replace(/\s+/g, "_")).remove();
-      }
+      let dateValue = bokTermForExact[`${dateInput}`];
+
 
 
       const datePicker = new Kuc.DatePicker({
@@ -840,7 +844,7 @@ jQuery.noConflict();
         visible: true,
         disabled: false,
         typeForDropdown: fieldCode,
-        value: bokTermForExact[`${dateInput}`] && bokTermForExact[`${dateInput}`].active == display.searchName ? bokTermForExact[`${dateInput}`].value : "",
+        value: bokTermForExact[`${dateInput}`] && bokTermForExact[`${dateInput}`].active == display.searchName ? bokTermForExact[`${dateInput}`].value : ""
       });
 
       datePicker.setAttribute("typeForDropdown", fieldCode);
@@ -978,6 +982,7 @@ jQuery.noConflict();
 
       return dropDown;
     }
+
     function createExactDropDown(display, records, initialContent, dropDownTitle) {
       const NameDropdown = display.groupName.replace(/\s+/g, "_");
       const dropDown = $("<select>")
@@ -1040,12 +1045,8 @@ jQuery.noConflict();
             });
           });
         }
-//999
-
       } else {
-        console.log($(dropDownTitle))
         $(dropDownTitle).text(initialContent.searchName);
-        console.log($(dropDownTitle).text())
         if (initialContent.masterId !== "-----") {
           let checkValue = [];
           $.each(CODEMASTER, (index, value) => {
@@ -1325,12 +1326,12 @@ jQuery.noConflict();
         let bokTerm;
         try {
           bokTerm = JSON.parse(wrappedBokTerms);
-          console.log(bokTerm)
         } catch (error) {
           return; // Exit if there's an error parsing
         }
 
         Object.entries(bokTerm).forEach(([key, bokTermsObj]) => {
+          console.log(bokTerm)
           CONFIG.groupSetting.forEach((searchItem) => {
             if (searchItem.groupName === key.replace(/_/g, " ")) {
               CONFIG.searchContent.forEach((Item) => {
@@ -1338,11 +1339,8 @@ jQuery.noConflict();
                   if (searchItem.searchType.value == "exact") {
                     if (searchItem.groupName == Item.groupName) {
                       if (Item.searchName == bokTermsObj.active) {
-                        let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
-                        const getId = $(`#${getIdElement}`);
                         const trimmedActive = bokTermsObj.active ? bokTermsObj.active.trim() : null;
                         let getAllofSearchItem = document.querySelectorAll(".search-item");
-                        let labelForCheck = "";
                         let getIdElements;
                         getAllofSearchItem.forEach((element) => {
                           const dropdownTitle = element.querySelector(".custom-dropdownTitle")
@@ -1358,7 +1356,7 @@ jQuery.noConflict();
                             if (valueLabel != trimmedActive) {
                               if (Item.groupName == searchItem.groupName) {
                                 let width = searchItem.searchLength;
-                                $(getIdElements).next().hide(); 
+                                $(getIdElements).next().hide();
                                 let elementNumber = createNumber(Item, Item.searchTarget.code, " ", width, true);
                                 elementNumber.val(bokTermsObj.value);
                                 $(getIdElements).after(elementNumber);
@@ -1367,17 +1365,18 @@ jQuery.noConflict();
                           } else if (Item.searchTarget.type == "DATE") {
                             if (valueLabel != trimmedActive) {
                               if (Item.groupName == searchItem.groupName) {
-                                $(getIdElements).next().hide(); 
-                                let elementDate = createDate(Item,Item.searchTarget.code, "", true, bokTermsObj.value)
+                                $(getIdElements).next().hide();
+                                let elementDate = createDate(Item, Item.searchTarget.code, "", true, bokTermsObj.value)
                                 elementDate.setAttribute("value", bokTermsObj.value);
                                 $(getIdElements).after(elementDate)
                               }
                             }
                           } else if (Item.searchTarget.type == "SINGLE_LINE_TEXT") {
+                            console.log(Item.searchTarget.type)
                             if (valueLabel != trimmedActive) {
                               if (Item.groupName == searchItem.groupName) {
                                 let width = searchItem.searchLength
-                                $(getIdElements).next().hide(); 
+                                $(getIdElements).next().hide();
                                 let elementText = TextInput(Item, Item.searchTarget.code, width, true)
                                 elementText.val(bokTermsObj.value)
                                 $(getIdElements).after(elementText)
@@ -1385,25 +1384,27 @@ jQuery.noConflict();
                             }
                           } else {
                             if (valueLabel != trimmedActive) {
-                              $(getIdElements).next().hide(); 
+                              $(getIdElements).next().hide();
                               let filteredRecords = CONFIG.searchContent.filter((item) => item.groupName === searchItem.groupName);
                               let filtered = filteredRecords.filter((item) => item.searchName === trimmedActive)
-                              console.log(filtered[0])
-                              console.log(filtered[0].searchName)
                               let element = createExactDropDown(filtered[0], filtered[0].searchName, filtered[0], getIdElements)
                               $(getIdElements).after(element)
                               let getId = $(getIdElements).next()
                               const optionExists = getId.find(`option[value="${bokTermsObj.value}"]`).length > 0;
-                              console.log(bokTermsObj.value);
-                              if (optionExists) {
-                                getId.val(bokTermsObj.value);
+                              if (bokTermsObj.value == "-----") {
+                                getId.val("");
                               } else {
-                                getId.append(
-                                  $("<option>")
-                                    .text(bokTermsObj.value)
-                                    .val(bokTermsObj.value)
-                                );
-                                getId.val(bokTermsObj.value);
+                                if (optionExists) {
+                                  getId.val(bokTermsObj.value);
+                                } else {
+                                  getId.append(
+                                    $("<option>")
+                                      .text(bokTermsObj.value)
+                                      .val(bokTermsObj.value)
+                                  );
+                                  getId.val(bokTermsObj.value);
+                                }
+
                               }
                             }
                           }
@@ -1416,15 +1417,20 @@ jQuery.noConflict();
                   const getId = $(`#${getIdElement}`);
                   if (getId.hasClass("kintoneplugin-dropdown")) {
                     const optionExists = getId.find(`option[value="${bokTermsObj.value}"]`).length > 0;
-                    if (optionExists) {
-                      getId.val(bokTermsObj.value);
+                    if (bokTermsObj.value == "-----") {
+                      getId.val("");
                     } else {
-                      getId.append(
-                        $("<option>")
-                          .text(bokTermsObj.value)
-                          .val(bokTermsObj.value)
-                      );
-                      getId.val(bokTermsObj.value);
+                      if (optionExists) {
+                        getId.val(bokTermsObj.value);
+                      } else {
+                        getId.append(
+                          $("<option>")
+                            .text(bokTermsObj.value)
+                            .val(bokTermsObj.value)
+                        );
+                        getId.val(bokTermsObj.value);
+                      }
+
                     }
                   }
                 }
@@ -1713,9 +1719,7 @@ jQuery.noConflict();
             if (searchType === "exact") {
               if (searchItem.nameMarker == "" && (searchItem.target_field.length >= 1 && afterFilter.length >= 1)) {
                 let groupName = searchItem.groupName.replace(/\s+/g, "_")
-                console.log("🚀 ~ CONFIG.groupSetting.forEach ~ groupName:", result.groupName)
                 if (result.groupName) {
-                  console.log("success", result.groupName.value);
                 }
 
                 inputElement = createDate(searchItem, searchItem.fieldCodeForExact, "", setWidth);
