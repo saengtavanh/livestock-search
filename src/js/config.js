@@ -186,48 +186,58 @@ jQuery.noConflict();
 			let selectedCode = item.codeField;
 			let selectedName = item.nameField;
 			try {
-				if (checkData.length <= 0) {
-					response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
-						app: appId
-					}).then(res => { return res.properties });
-					allResponse.push({ appId, response });
-				} else {
-					response = checkData[0].response;
-				}
-				// sort field.
-				let sortField = Object.values(response).sort((a, b) => {
-					return a.code.localeCompare(b.code);
-				});
-
-				$(rowForClone).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
-				$(rowForClone).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
-				for (let field of sortField) {
-					if (field.type === "SINGLE_LINE_TEXT" || field.type === "NUMBER") {
-						$(rowForClone).find('select#code_field').append(
-							$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
-						);
-						$(rowForClone).find('select#name_field').append(
-							$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
-						);
+				if (appId) {
+					if (checkData.length <= 0) {
+						response = await kintone.api("/k/v1/preview/app/form/fields", "GET", {
+							app: appId
+						}).then(res => { return res.properties });
+						allResponse.push({ appId, response });
+					} else {
+						response = checkData[0].response;
 					}
-				}
-				// Check to see if not same value is set "-----".
-				if ($(rowForClone).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
-					selectedCode = "-----";
-				}
-				if ($(rowForClone).find('select#name_field option[value="' + selectedName + '"]').length == 0) {
-					selectedName = "-----";
-				}
+					// sort field.
+					let sortField = Object.values(response).sort((a, b) => {
+						return a.code.localeCompare(b.code);
+					});
 
-				// Set to the value selected.
-				$(rowForClone).find("#master_id").val(item.masterId);
-				$(rowForClone).find('select#code_field').val(selectedCode);
-				$(rowForClone).find('select#name_field').val(selectedName);
-				$(rowForClone).find("#app_id").val(item.appId);
-				$(rowForClone).find("#api_token").val(item.apiToken);
-				$(rowForClone).find("#type_field").val(item.typeField);
+					$(rowForClone).find('select#code_field').empty().append($('<option>').val('-----').text("-----"));
+					$(rowForClone).find('select#name_field').empty().append($('<option>').val('-----').text("-----"));
+					for (let field of sortField) {
+						if (field.type === "SINGLE_LINE_TEXT" || field.type === "NUMBER") {
+							$(rowForClone).find('select#code_field').append(
+								$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+							);
+							$(rowForClone).find('select#name_field').append(
+								$('<option>').attr("value", field.code).text(`${field.label}(${field.code})`)
+							);
+						}
+					}
+					// Check to see if not same value is set "-----".
+					if ($(rowForClone).find('select#code_field option[value="' + selectedCode + '"]').length == 0) {
+						selectedCode = "-----";
+					}
+					if ($(rowForClone).find('select#name_field option[value="' + selectedName + '"]').length == 0) {
+						selectedName = "-----";
+					}
+
+					// Set to the value selected.
+					$(rowForClone).find("#master_id").val(item.masterId);
+					$(rowForClone).find('select#code_field').val(selectedCode);
+					$(rowForClone).find('select#name_field').val(selectedName);
+					$(rowForClone).find("#app_id").val(item.appId);
+					$(rowForClone).find("#api_token").val(item.apiToken);
+					$(rowForClone).find("#type_field").val(item.typeField);
+				} else {
+					// Set to the value selected.
+					$(rowForClone).find('select#code_field').val("-----");
+					$(rowForClone).find('select#name_field').val("-----");
+					$(rowForClone).find("#master_id").val(item.masterId);
+					$(rowForClone).find("#app_id").val(item.appId);
+					$(rowForClone).find("#api_token").val(item.apiToken);
+					$(rowForClone).find("#type_field").val(item.typeField);
+				}
 			} catch (error) {
-				console.log(error);
+				// console.log(error);
 				// Set to the value selected.
 				$(rowForClone).find('select#code_field').val("-----");
 				$(rowForClone).find('select#name_field').val("-----");
@@ -311,7 +321,7 @@ jQuery.noConflict();
 		}
 		checkRow();
 		checkRecreateButton();
-		checkMasterId();
+		// checkMasterId();
 	}
 
 	//check recreate button function
@@ -400,7 +410,7 @@ jQuery.noConflict();
 				text: 'データの更新に成功しました。',
 				showConfirmButton: true,
 			});
-			checkMasterId();
+			// checkMasterId();
 		}
 	}
 
@@ -528,26 +538,30 @@ jQuery.noConflict();
 					let fieldType = $(element).find('#search_target option:selected').attr('type');
 					$(targetFields).parent().removeClass('validation-error');
 
-					if (masterId.val() != "-----") {
-						if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "NUMBER") {
-							$(targetFields).parent().removeClass('validation-error');
+					
+					if (currentGroup.length > 0) {
+						if (masterId.val() != "-----") {
+							if ((fieldType == "SINGLE_LINE_TEXT" || fieldType == "NUMBER") && (currentGroup[0].searchType.value == "exact")) {
+								$(masterId).parent().removeClass('validation-error');
+							} else {
+								searchContentMessage += `<p>このグループ名「${groupName.val()}」はコードマスタをサポートしていません。</p>`;
+								$(masterId).parent().addClass('validation-error');
+								hasError = true;
+							}
+	
+							// if (!groupNameArray.includes(groupName.val())) {
+							// 	$(groupName).parent().removeClass('validation-error');
+							// 	groupNameArray.push(groupName.val());
+							// } else {
+							// 	$(groupName).parent().addClass('validation-error');
+							// 	searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
+							// 	hasError = true;
+							// }
+	
 						} else {
-							searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」がテキスト型ではありません。</p>`;
-							$(targetFields).parent().addClass('validation-error');
-							hasError = true;
+							$(masterId).parent().removeClass('validation-error');
 						}
-
-						if (!groupNameArray.includes(groupName.val())) {
-							$(groupName).parent().removeClass('validation-error');
-							groupNameArray.push(groupName.val());
-						} else {
-							$(groupName).parent().addClass('validation-error');
-							searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
-							hasError = true;
-						}
-
-					} else {
-						if (currentGroup.length > 0 && (currentGroup[0].searchType.value == "exact")) {
+						if (currentGroup[0].searchType.value == "exact") {
 							if (currentGroup[0].nameMarker) {
 								if (!groupNameArray.includes(groupName.val())) {
 									$(groupName).parent().removeClass('validation-error');
@@ -557,6 +571,8 @@ jQuery.noConflict();
 									searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
 									hasError = true;
 								}
+							}else {
+								$(groupName).parent().removeClass('validation-error');
 							}
 							if (fieldType == "NUMBER" || fieldType == "CALC" || fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN" || fieldType == "SINGLE_LINE_TEXT") {
 								$(targetFields).parent().removeClass('validation-error');
@@ -640,24 +656,24 @@ jQuery.noConflict();
 		return hasError;
 	}
 
-	async function checkMasterId() {
-		let data = await getData();
-		const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
-		for (const [index, element] of searchContentTable.entries()) {
-			let groupName = $(element).find('#group_name_ref');
-			if (groupName.val() != "-----") {
-				let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
-				if (currentGroup[0].searchType.value == "exact") {
-					$(element).find('select#master_id_ref').prop('disabled', false).parent().removeClass('disabled-select');
-				} else {
-					$(element).find('select#master_id_ref').val('-----').prop('disabled', true).parent().addClass('disabled-select');
-				}
-			} else {
-				$(element).find('select#master_id_ref').prop('disabled', true).parent().addClass('disabled-select');
-			}
+	// async function checkMasterId() {
+	// 	let data = await getData();
+	// 	const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
+	// 	for (const [index, element] of searchContentTable.entries()) {
+	// 		let groupName = $(element).find('#group_name_ref');
+	// 		if (groupName.val() != "-----") {
+	// 			let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
+	// 			if (currentGroup[0].searchType.value == "exact") {
+	// 				$(element).find('select#master_id_ref').prop('disabled', false).parent().removeClass('disabled-select');
+	// 			} else {
+	// 				$(element).find('select#master_id_ref').val('-----').prop('disabled', true).parent().addClass('disabled-select');
+	// 			}
+	// 		} else {
+	// 			$(element).find('select#master_id_ref').prop('disabled', true).parent().addClass('disabled-select');
+	// 		}
 
-		}
-	}
+	// 	}
+	// }
 
 	//function start when open the plugin.
 	$(document).ready(function () {
@@ -1019,9 +1035,9 @@ jQuery.noConflict();
 		$("#search_type").on("change", function () {
 			HASUPDATED = false;
 		});
-		$("#group_name_ref").on("change", function () {
-			checkMasterId();
-		});
+		// $("#group_name_ref").on("change", function () {
+		// 	checkMasterId();
+		// });
 
 		$("input#app_id").on("input", function () {
 			$(this).val($(this).val().replace(/[^0-9]/g, ''));
@@ -1079,7 +1095,7 @@ jQuery.noConflict();
 			$(this).closest("tr").after(clonedRow);
 			checkRow();
 			checkRecreateButton();
-			checkMasterId();
+			// checkMasterId();
 		});
 
 		//remove row function
