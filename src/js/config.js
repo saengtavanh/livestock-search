@@ -595,6 +595,18 @@ jQuery.noConflict();
 						} else if (currentGroup.length > 0 && (
 							currentGroup[0].searchType.value == "range"
 						)) {
+							if (currentGroup[0].nameMarker) {
+								if (!groupNameArray.includes(groupName.val())) {
+									$(groupName).parent().removeClass('validation-error');
+									groupNameArray.push(groupName.val());
+								} else {
+									$(groupName).parent().addClass('validation-error');
+									searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
+									hasError = true;
+								}
+							}else {
+								$(groupName).parent().removeClass('validation-error');
+							}
 							if (fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
 							} else {
