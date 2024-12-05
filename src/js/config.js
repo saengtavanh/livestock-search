@@ -556,22 +556,12 @@ jQuery.noConflict();
 							}
 
 							if (currentGroup[0].nameMarker) {
-								// if (!groupNameArray.includes(groupName.val())) {
-								// 	$(groupName).parent().removeClass('validation-error');
-								// 	groupNameArray.push(groupName.val());
-								// } else {
-								// 	$(groupName).parent().addClass('validation-error');
-								// 	searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
-								// 	hasError = true;
-								// }
 								//check field different type
 								if (groupCheck.hasOwnProperty($(groupName).val())){
 									if (fieldType != groupCheck[$(groupName).val()]) {
 										searchContentMessage += `<p>同じフィールドタイプを選択できません。</p>`;
 										$(targetFields).parent().addClass('validation-error');
 										hasError = true;
-									}else {
-										// $(targetFields).parent().removeClass('validation-error');
 									}
 								} else {
 									groupCheck[$(groupName).val()] = fieldType;
@@ -583,8 +573,6 @@ jQuery.noConflict();
 										searchContentMessage += `<p>同じフィールドを選択できません。</p>`;
 										$(targetFields).parent().addClass('validation-error');
 										hasError = true;
-									}else {
-										// $(targetFields).parent().removeClass('validation-error');
 									}
 								} else {
 									groupFieldExist[$(groupName).val()] = targetFields.val();
@@ -618,18 +606,6 @@ jQuery.noConflict();
 						} else if (currentGroup.length > 0 && (
 							currentGroup[0].searchType.value == "range"
 						)) {
-							// if (currentGroup[0].nameMarker) {
-							// 	// if (!groupNameArray.includes(groupName.val())) {
-							// 	// 	$(groupName).parent().removeClass('validation-error');
-							// 	// 	groupNameArray.push(groupName.val());
-							// 	// } else {
-							// 	// 	$(groupName).parent().addClass('validation-error');
-							// 	// 	searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
-							// 	// 	hasError = true;
-							// 	// }
-							// }else {
-							// 	$(groupName).parent().removeClass('validation-error');
-							// }
 							$(targetFields).parent().removeClass('validation-error');
 							if (fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "NUMBER" || fieldType == "CALC") {
 								$(targetFields).parent().removeClass('validation-error');
@@ -640,22 +616,12 @@ jQuery.noConflict();
 							}
 
 							if (currentGroup[0].nameMarker) {
-								// if (!groupNameArray.includes(groupName.val())) {
-								// 	$(groupName).parent().removeClass('validation-error');
-								// 	groupNameArray.push(groupName.val());
-								// } else {
-								// 	$(groupName).parent().addClass('validation-error');
-								// 	searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
-								// 	hasError = true;
-								// }
 								//check field different type
 								if (groupCheck.hasOwnProperty($(groupName).val())){
 									if (fieldType != groupCheck[$(groupName).val()]) {
 										searchContentMessage += `<p>同じフィールドタイプを選択できません。</p>`;
 										$(targetFields).parent().addClass('validation-error');
 										hasError = true;
-									}else {
-										// $(targetFields).parent().removeClass('validation-error');
 									}
 								} else {
 									groupCheck[$(groupName).val()] = fieldType;
@@ -667,8 +633,6 @@ jQuery.noConflict();
 										searchContentMessage += `<p>同じフィールドを選択できません。</p>`;
 										$(targetFields).parent().addClass('validation-error');
 										hasError = true;
-									}else {
-										// $(targetFields).parent().removeClass('validation-error');
 									}
 								} else {
 									groupFieldExist[$(groupName).val()] = targetFields.val();
@@ -704,16 +668,6 @@ jQuery.noConflict();
 								$(masterId).parent().addClass('validation-error');
 								hasError = true;
 							}
-	
-							// if (!groupNameArray.includes(groupName.val())) {
-							// 	$(groupName).parent().removeClass('validation-error');
-							// 	groupNameArray.push(groupName.val());
-							// } else {
-							// 	$(groupName).parent().addClass('validation-error');
-							// 	searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
-							// 	hasError = true;
-							// }
-	
 						} else {
 							$(masterId).parent().removeClass('validation-error');
 						}
@@ -771,25 +725,6 @@ jQuery.noConflict();
 		});
 		return hasError;
 	}
-
-	// async function checkMasterId() {
-	// 	let data = await getData();
-	// 	const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
-	// 	for (const [index, element] of searchContentTable.entries()) {
-	// 		let groupName = $(element).find('#group_name_ref');
-	// 		if (groupName.val() != "-----") {
-	// 			let currentGroup = data.groupSetting.filter(item => item.groupName == groupName.val());
-	// 			if (currentGroup[0].searchType.value == "exact") {
-	// 				$(element).find('select#master_id_ref').prop('disabled', false).parent().removeClass('disabled-select');
-	// 			} else {
-	// 				$(element).find('select#master_id_ref').val('-----').prop('disabled', true).parent().addClass('disabled-select');
-	// 			}
-	// 		} else {
-	// 			$(element).find('select#master_id_ref').prop('disabled', true).parent().addClass('disabled-select');
-	// 		}
-
-	// 	}
-	// }
 
 	//function start when open the plugin.
 	$(document).ready(function () {
@@ -1086,9 +1021,6 @@ jQuery.noConflict();
 						convertedValue = `${targetValue.split('').join(',')}`
 						break;
 
-					// case "text_exact":
-					// 	convertedValue = `_,${targetValue.split('').join(',')},_`
-					// 	break;
 
 					default:
 						break;
