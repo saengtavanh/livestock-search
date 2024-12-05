@@ -505,6 +505,9 @@ jQuery.noConflict();
 			const searchContentTable = $('#kintoneplugin-setting-prompt-template > tr:gt(0)').toArray();
 			let searchNameArray = [];
 			let groupNameArray = [];
+			let groupCheck = {};
+			let groupFieldExist = {};
+			let masterIdExist = {};
 			for (const [index, element] of searchContentTable.entries()) {
 
 				let groupName = $(element).find('#group_name_ref');
@@ -540,9 +543,162 @@ jQuery.noConflict();
 
 					
 					if (currentGroup.length > 0) {
+						
+						if (currentGroup[0].searchType.value == "exact") {
+							$(targetFields).parent().removeClass('validation-error');
+							
+							if (fieldType == "NUMBER" || fieldType == "CALC" || fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN" || fieldType == "SINGLE_LINE_TEXT") {
+								$(targetFields).parent().removeClass('validation-error');
+							} else {
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
+								$(targetFields).parent().addClass('validation-error');
+								hasError = true;
+							}
+
+							if (currentGroup[0].nameMarker) {
+								// if (!groupNameArray.includes(groupName.val())) {
+								// 	$(groupName).parent().removeClass('validation-error');
+								// 	groupNameArray.push(groupName.val());
+								// } else {
+								// 	$(groupName).parent().addClass('validation-error');
+								// 	searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
+								// 	hasError = true;
+								// }
+								//check field different type
+								if (groupCheck.hasOwnProperty($(groupName).val())){
+									if (fieldType != groupCheck[$(groupName).val()]) {
+										searchContentMessage += `<p>同じフィールドタイプを選択できません。</p>`;
+										$(targetFields).parent().addClass('validation-error');
+										hasError = true;
+									}else {
+										// $(targetFields).parent().removeClass('validation-error');
+									}
+								} else {
+									groupCheck[$(groupName).val()] = fieldType;
+								}
+
+								//check field exist
+								if (groupFieldExist.hasOwnProperty($(groupName).val())){
+									if (targetFields.val() == groupFieldExist[$(groupName).val()]) {
+										searchContentMessage += `<p>同じフィールドを選択できません。</p>`;
+										$(targetFields).parent().addClass('validation-error');
+										hasError = true;
+									}else {
+										// $(targetFields).parent().removeClass('validation-error');
+									}
+								} else {
+									groupFieldExist[$(groupName).val()] = targetFields.val();
+								}
+								//check masterId exist
+								if (masterIdExist.hasOwnProperty($(groupName).val())){
+									if (masterId.val() == masterIdExist[$(groupName).val()]) {
+										searchContentMessage += `<p>同じコードマスタIDを選択できません。</p>`;
+										$(masterId).parent().addClass('validation-error');
+										hasError = true;
+									}else {
+										$(masterId).parent().removeClass('validation-error');
+									}
+								} else {
+									if (masterId.val() != "-----") masterIdExist[$(groupName).val()] = masterId.val();
+								}
+							}else {
+								$(groupName).parent().removeClass('validation-error');
+							}
+						} else if (currentGroup.length > 0 && (
+							currentGroup[0].searchType.value == "initial" ||
+							currentGroup[0].searchType.value == "patial"
+						)) {
+							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
+								$(targetFields).parent().removeClass('validation-error');
+							} else {
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
+								$(targetFields).parent().addClass('validation-error');
+								hasError = true;
+							}
+						} else if (currentGroup.length > 0 && (
+							currentGroup[0].searchType.value == "range"
+						)) {
+							// if (currentGroup[0].nameMarker) {
+							// 	// if (!groupNameArray.includes(groupName.val())) {
+							// 	// 	$(groupName).parent().removeClass('validation-error');
+							// 	// 	groupNameArray.push(groupName.val());
+							// 	// } else {
+							// 	// 	$(groupName).parent().addClass('validation-error');
+							// 	// 	searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
+							// 	// 	hasError = true;
+							// 	// }
+							// }else {
+							// 	$(groupName).parent().removeClass('validation-error');
+							// }
+							$(targetFields).parent().removeClass('validation-error');
+							if (fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "NUMBER" || fieldType == "CALC") {
+								$(targetFields).parent().removeClass('validation-error');
+							} else {
+								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
+								$(targetFields).parent().addClass('validation-error');
+								hasError = true;
+							}
+
+							if (currentGroup[0].nameMarker) {
+								// if (!groupNameArray.includes(groupName.val())) {
+								// 	$(groupName).parent().removeClass('validation-error');
+								// 	groupNameArray.push(groupName.val());
+								// } else {
+								// 	$(groupName).parent().addClass('validation-error');
+								// 	searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
+								// 	hasError = true;
+								// }
+								//check field different type
+								if (groupCheck.hasOwnProperty($(groupName).val())){
+									if (fieldType != groupCheck[$(groupName).val()]) {
+										searchContentMessage += `<p>同じフィールドタイプを選択できません。</p>`;
+										$(targetFields).parent().addClass('validation-error');
+										hasError = true;
+									}else {
+										// $(targetFields).parent().removeClass('validation-error');
+									}
+								} else {
+									groupCheck[$(groupName).val()] = fieldType;
+								}
+
+								//check field exist
+								if (groupFieldExist.hasOwnProperty($(groupName).val())){
+									if (targetFields.val() == groupFieldExist[$(groupName).val()]) {
+										searchContentMessage += `<p>同じフィールドを選択できません。</p>`;
+										$(targetFields).parent().addClass('validation-error');
+										hasError = true;
+									}else {
+										// $(targetFields).parent().removeClass('validation-error');
+									}
+								} else {
+									groupFieldExist[$(groupName).val()] = targetFields.val();
+								}
+								//check masterId exist
+								if (masterIdExist.hasOwnProperty($(groupName).val())){
+									if (masterId.val() == masterIdExist[$(groupName).val()]) {
+										searchContentMessage += `<p>同じコードマスタIDを選択できません。</p>`;
+										$(masterId).parent().addClass('validation-error');
+										hasError = true;
+									}else {
+										$(masterId).parent().removeClass('validation-error');
+									}
+								} else {
+									if (masterId.val() != "-----") masterIdExist[$(groupName).val()] = masterId.val();
+								}
+							}else {
+								$(groupName).parent().removeClass('validation-error');
+							}
+						}
 						if (masterId.val() != "-----") {
-							if ((fieldType == "SINGLE_LINE_TEXT" || fieldType == "NUMBER") && (currentGroup[0].searchType.value == "exact")) {
+							if (currentGroup[0].searchType.value == "exact") {
 								$(masterId).parent().removeClass('validation-error');
+								if (fieldType != "SINGLE_LINE_TEXT" && fieldType != "NUMBER"){
+									searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」はコードマスタをサポートしていません。</p>`;
+									$(targetFields).parent().addClass('validation-error');
+									hasError = true;
+								}else {
+									$(targetFields).parent().removeClass('validation-error');
+								}
 							} else {
 								searchContentMessage += `<p>このグループ名「${groupName.val()}」はコードマスタをサポートしていません。</p>`;
 								$(masterId).parent().addClass('validation-error');
@@ -560,60 +716,6 @@ jQuery.noConflict();
 	
 						} else {
 							$(masterId).parent().removeClass('validation-error');
-						}
-						if (currentGroup[0].searchType.value == "exact") {
-							if (currentGroup[0].nameMarker) {
-								if (!groupNameArray.includes(groupName.val())) {
-									$(groupName).parent().removeClass('validation-error');
-									groupNameArray.push(groupName.val());
-								} else {
-									$(groupName).parent().addClass('validation-error');
-									searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
-									hasError = true;
-								}
-							}else {
-								$(groupName).parent().removeClass('validation-error');
-							}
-							if (fieldType == "NUMBER" || fieldType == "CALC" || fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "CHECK_BOX" || fieldType == "RADIO_BUTTON" || fieldType == "DROP_DOWN" || fieldType == "SINGLE_LINE_TEXT") {
-								$(targetFields).parent().removeClass('validation-error');
-							} else {
-								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
-								$(targetFields).parent().addClass('validation-error');
-								hasError = true;
-							}
-						} else if (currentGroup.length > 0 && (
-							currentGroup[0].searchType.value == "initial" ||
-							currentGroup[0].searchType.value == "patial"
-						)) {
-							if (fieldType == "SINGLE_LINE_TEXT" || fieldType == "MULTI_LINE_TEXT") {
-								$(targetFields).parent().removeClass('validation-error');
-							} else {
-								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
-								$(targetFields).parent().addClass('validation-error');
-								hasError = true;
-							}
-						} else if (currentGroup.length > 0 && (
-							currentGroup[0].searchType.value == "range"
-						)) {
-							if (currentGroup[0].nameMarker) {
-								if (!groupNameArray.includes(groupName.val())) {
-									$(groupName).parent().removeClass('validation-error');
-									groupNameArray.push(groupName.val());
-								} else {
-									$(groupName).parent().addClass('validation-error');
-									searchContentError.groupTypeDropdown = `<p>このグループでは「${groupName.val()}」を1つしか選択できません。</p>`;
-									hasError = true;
-								}
-							}else {
-								$(groupName).parent().removeClass('validation-error');
-							}
-							if (fieldType == "DATE" || fieldType == "DATETIME" || fieldType == "NUMBER" || fieldType == "CALC") {
-								$(targetFields).parent().removeClass('validation-error');
-							} else {
-								searchContentMessage += `<p>検索対象フィールド「${targetFields.val()}」は、このタイプを対応していません。</p>`;
-								$(targetFields).parent().addClass('validation-error');
-								hasError = true;
-							}
 						}
 					}
 				}
@@ -649,6 +751,8 @@ jQuery.noConflict();
 				}
 
 			}
+			console.log(groupCheck);
+			console.log(masterIdExist);
 			if (Object.keys(searchContentError).length > 0) {
 				searchContentMessage += `
 					${searchContentError.searchName ? searchContentError.searchName : ''}
@@ -1313,6 +1417,5 @@ jQuery.noConflict();
 		}
 	});
 })(jQuery, Sweetalert2_10.noConflict(true), kintone.$PLUGIN_ID);
-
 
 
