@@ -19,7 +19,7 @@
 }
 
 .separatornumber {
-  margin: 0;
+  margin: none;
   font-size: 15px;
   margin-top: -3px;
   color: #4CAF50;
@@ -32,7 +32,7 @@
 }
 
 .separator-datepicker {
-  margin: 0;
+  margin: none;
   font-size: 15px;
   margin-top: -6px;
   color: #4CAF50;
@@ -99,6 +99,7 @@
 }
 
 .kintoneplugin-dropdown {
+  max-width: none;
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -109,7 +110,6 @@
   border-radius: 5px;
   /* margin-inline: auto; */
 }
-
 .element-button {
   display: flex;
   flex-direction: row;
@@ -119,16 +119,21 @@
 }
 
 .options-class-date .kuc-date-picker-1-18-0__group input[type=text].kuc-base-date-1-18-0__input {
+  width: 0;
   margin: 0;
   padding: 0;
   height: 35.2px !important;
   font-size: 15px;
   border-radius: 5px;
 }
-
-  kuc-date-picker-1-18-0{
+  /* kuc-date-picker-1-18-0 { */
+  kuc-date-picker-1-18-0 {
     width: 0 !important;
   }
+
+  /* .options-class-date .kuc-date-picker-1-18-0__group kuc-base-date-1-18-0 {
+    width: 0 !important;
+  } */
 
 .kintoneplugin-input-text {
   margin-top: 0.3px;
