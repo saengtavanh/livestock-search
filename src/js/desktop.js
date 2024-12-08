@@ -111,7 +111,7 @@ jQuery.noConflict();
     const bokTermsForExact = urlObjForExact.searchParams.get("bokTerms");
     if (bokTermsForExact != null) {
       const decodedBokTermsForExact = decodeURIComponent(bokTermsForExact).replace(/(^\{|\}$)/g, "");
-      const cleanBokTermsForExact = decodedBokTermsForExact.replace(/[^{}\[\]":,0-9a-zA-Z._-\s]/g, "");
+      const cleanBokTermsForExact = decodedBokTermsForExact.replace(/[^{}\[\]":,0-9a-zA-Z._-\s\u3000-\u303F\u3040-\u30FF\u4E00-\u9FFF\uFF00-\uFFEF]/g, "");
       const wrappedBokTermsForExact = `{${cleanBokTermsForExact}}`;
       bokTermForExact = JSON.parse(wrappedBokTermsForExact);
     }
@@ -948,6 +948,12 @@ jQuery.noConflict();
                 $(".dropdown-from-" + groupNameForExact).val("");
                 $(".dropdown-from-" + groupNameForExact).hide();
               }
+
+              if ($(".input-text-from-" + groupNameForExact)) {
+                $(".input-text-from-" + groupNameForExact).attr("id", "");
+                $(".input-text-from-" + groupNameForExact).val("");
+                $(".input-text-from-" + groupNameForExact).hide();
+              }
             }
             else if (typeInput === "NUMBER" && getSearchTypeFromGroup == "range") {
               nameInputTitle = selectedItem.searchName;
@@ -1039,7 +1045,7 @@ jQuery.noConflict();
 
       const inputElement = $("<input>", {
         type: "text",
-        class: "kintoneplugin-input-text input-text-from-" + initialText,
+        class: "kintoneplugin-input-text-custome input-text-from-" + initialText,
         id: initialText,
         typeForDropdown: fieldCode,
         indexForInitail: index,
@@ -1062,7 +1068,7 @@ jQuery.noConflict();
       }
       const InputNumber = $("<input>", {
         type: "number",
-        class: "kintoneplugin-input-text input-number-from-" + initialNumber,
+        class: "kintoneplugin-input-text-custome input-number-from-" + initialNumber,
         id: initialNumber,
         typeForDropdown: fieldCode,
         searchName: display.searchName,
@@ -1113,7 +1119,7 @@ jQuery.noConflict();
       const wrapper = $(`<div id="${NumberRange}" class="wrapperd-number number-range-from-${initialNumber}"></div>`);
       const start = $("<input>", {
         type: "number",
-        class: "kintoneplugin-input-text number-range-from-" + initialNumber,
+        class: "kintoneplugin-input-text-custome number-range-from-" + initialNumber,
         typeForDropdown: fieldCode,
         // "data-search-type": type,
         id: `${NumberRange}_start`,
@@ -1124,7 +1130,7 @@ jQuery.noConflict();
       start.css("width", width);
       const end = $("<input>", {
         type: "number",
-        class: "kintoneplugin-input-text number-range-from-" + initialNumber,
+        class: "kintoneplugin-input-text-custome number-range-from-" + initialNumber,
         typeForDropdown: fieldCode,
         // "data-search-type": type,
         id: `${NumberRange}_end`,
@@ -1149,6 +1155,7 @@ jQuery.noConflict();
       } else {
         initialNumber = display.groupName.replace(/\s+/g, "_");
       }
+      
       let dateRange = initialNumber;
       const datePickerSatrt = new Kuc.DatePicker({
         requiredIcon: true,
@@ -1193,7 +1200,7 @@ jQuery.noConflict();
       let width = display.searchLength;
       const NameDropdown = display.groupName.replace(/\s+/g, "_");
       const dropDown = $("<select>")
-        .addClass("kintoneplugin-dropdown")
+        .addClass("kintoneplugin-dropdown-find")
         .attr("id", `${NameDropdown}`)
         .css({ width: width});
       dropDown.append($("<option>").text("-----").val(""));
@@ -1330,7 +1337,7 @@ jQuery.noConflict();
       }
       const NameDropdown = display.groupName.replace(/\s+/g, "_");
       const dropDown = $("<select>")
-        .addClass("kintoneplugin-dropdown dropdown-from-" + NameDropdown)
+        .addClass("kintoneplugin-dropdown-find dropdown-from-" + NameDropdown)
         .attr("id", `${NameDropdown}`)
         .attr("searchName", `${records}`)
         .css({ width: setWidth});
@@ -1675,7 +1682,7 @@ jQuery.noConflict();
       const bokTerms = urlObj.searchParams.get("bokTerms");
       if (bokTerms != null) {
         const decodedBokTerms = decodeURIComponent(bokTerms).replace(/(^\{|\}$)/g, "");
-        const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-\s]/g, "");
+        const cleanBokTerms = decodedBokTerms.replace(/[^{}\[\]":,0-9a-zA-Z._-\s\u3000-\u303F\u3040-\u30FF\u4E00-\u9FFF\uFF00-\uFFEF]/g, "");
         const wrappedBokTerms = `{${cleanBokTerms}}`;
         let bokTerm;
         try {
@@ -1856,7 +1863,7 @@ jQuery.noConflict();
                 } else {
                   let getIdElement = searchItem.groupName.replace(/\s+/g, "_");
                   const getId = $(`#${getIdElement}`);
-                  if (getId.hasClass("kintoneplugin-dropdown")) {
+                  if (getId.hasClass("kintoneplugin-dropdown-find")) {
                     const optionExists = getId.find(`option[value="${bokTermsObj.value}"]`).length > 0;
                     if (bokTermsObj.value == "-----") {
                       getId.val("");
@@ -1888,7 +1895,7 @@ jQuery.noConflict();
       let initialText = groupName.replace(/\s+/g, "_");
       const inputElement = $("<input>", {
         type: searchType,
-        class: "kintoneplugin-input-text input-text-from-" + initialText,
+        class: "kintoneplugin-input-text-custome input-text-from-" + initialText,
         "data-serach-type": searchType,
         id: initialText,
       });
@@ -1906,7 +1913,7 @@ jQuery.noConflict();
       let initialNumber = groupName.replace(/\s+/g, "_");
       const InputNumber = $("<input>", {
         type: "number",
-        class: "kintoneplugin-input-text",
+        class: "kintoneplugin-input-text-custome",
         "data-search-type": searchType,
         id: initialNumber,
       });
@@ -1924,7 +1931,7 @@ jQuery.noConflict();
       const wrapper = $('<div class="wrapperd-number"></div>');
       const start = $("<input>", {
         type: "number",
-        class: "kintoneplugin-input-text",
+        class: "kintoneplugin-input-text-custome",
         "data-search-type": searchType,
         id: `${NumberRange}_start`,
       });
@@ -1933,7 +1940,7 @@ jQuery.noConflict();
       start.css("width", width);
       const end = $("<input>", {
         type: "number",
-        class: "kintoneplugin-input-text",
+        class: "kintoneplugin-input-text-custome",
         "data-search-type": searchType,
         id: `${NumberRange}_end`,
       });
@@ -2004,7 +2011,7 @@ jQuery.noConflict();
     function createButton(text, callback) {
       return $("<button>")
         .text(text)
-        .addClass("kintoneplugin-button-dialog-ok")
+        .addClass("kintoneplugin-button-dialog-ok-custome")
         .css({
           background: SETCOLOR.buttonColor,
           color: SETCOLOR.buttonTextColor,
@@ -2323,7 +2330,6 @@ jQuery.noConflict();
           sessionStorage.getItem("kintoneRecords")
         );
         let storedDataSpace = JSON.parse(sessionStorage.getItem("dataspace"));
-
         if (storedDataSpace && storedDataSpace.length > 0) {
           storedDataSpace.forEach((item) => {
             sortedSpaces.forEach((space) => {
@@ -2354,7 +2360,7 @@ jQuery.noConflict();
                   });
                   let inputBox = $("<input>", {
                     type: "number",
-                    class: "modern-input-box kintoneplugin-input-text",
+                    class: "modern-input-box kintoneplugin-input-text-custome",
                     min: "0",
                   }).css({
                     width: "50px",
@@ -2436,7 +2442,7 @@ jQuery.noConflict();
                     const selectedOption = $(e.target).find("option:selected");
                     let nearestInput = $(this)
                       .closest(".custom-container")
-                      .find(".kintoneplugin-input-text");
+                      .find(".kintoneplugin-input-text-custome");
                     nearestInput.val("");
                     const selectedCode = selectedOption.attr("code");
                     const selectedValue = selectedOption.attr("value");

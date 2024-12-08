@@ -559,7 +559,7 @@ jQuery.noConflict();
 								//check field different type
 								if (groupCheck.hasOwnProperty($(groupName).val())){
 									if (fieldType != groupCheck[$(groupName).val()]) {
-										searchContentMessage += `<p>同じフィールドタイプを選択できません。</p>`;
+										searchContentError.typeError = `<p>同じフィールドタイプを選択できません。</p>`;
 										$(targetFields).parent().addClass('validation-error');
 										hasError = true;
 									}
@@ -570,7 +570,7 @@ jQuery.noConflict();
 								//check field exist
 								if (groupFieldExist.hasOwnProperty($(groupName).val())){
 									if (targetFields.val() == groupFieldExist[$(groupName).val()]) {
-										searchContentMessage += `<p>同じフィールドを選択できません。</p>`;
+										searchContentError.duplicateField= `<p>同じフィールドを選択できません。</p>`;
 										$(targetFields).parent().addClass('validation-error');
 										hasError = true;
 									}
@@ -580,7 +580,7 @@ jQuery.noConflict();
 								//check masterId exist
 								if (masterIdExist.hasOwnProperty($(groupName).val())){
 									if (masterId.val() == masterIdExist[$(groupName).val()]) {
-										searchContentMessage += `<p>同じコードマスタIDを選択できません。</p>`;
+										searchContentError.duplicateMaster = `<p>同じコードマスタIDを選択できません。</p>`;
 										$(masterId).parent().addClass('validation-error');
 										hasError = true;
 									}else {
@@ -619,7 +619,7 @@ jQuery.noConflict();
 								//check field different type
 								if (groupCheck.hasOwnProperty($(groupName).val())){
 									if (fieldType != groupCheck[$(groupName).val()]) {
-										searchContentMessage += `<p>同じフィールドタイプを選択できません。</p>`;
+										searchContentError.typeError = `<p>同じフィールドタイプを選択できません。</p>`;
 										$(targetFields).parent().addClass('validation-error');
 										hasError = true;
 									}
@@ -630,7 +630,7 @@ jQuery.noConflict();
 								//check field exist
 								if (groupFieldExist.hasOwnProperty($(groupName).val())){
 									if (targetFields.val() == groupFieldExist[$(groupName).val()]) {
-										searchContentMessage += `<p>同じフィールドを選択できません。</p>`;
+										searchContentError.duplicateField = `<p>同じフィールドを選択できません。</p>`;
 										$(targetFields).parent().addClass('validation-error');
 										hasError = true;
 									}
@@ -640,7 +640,7 @@ jQuery.noConflict();
 								//check masterId exist
 								if (masterIdExist.hasOwnProperty($(groupName).val())){
 									if (masterId.val() == masterIdExist[$(groupName).val()]) {
-										searchContentMessage += `<p>同じコードマスタIDを選択できません。</p>`;
+										searchContentError.duplicateMaster= `<p>同じコードマスタIDを選択できません。</p>`;
 										$(masterId).parent().addClass('validation-error');
 										hasError = true;
 									}else {
@@ -705,14 +705,16 @@ jQuery.noConflict();
 				}
 
 			}
-			console.log(groupCheck);
-			console.log(masterIdExist);
+			
 			if (Object.keys(searchContentError).length > 0) {
 				searchContentMessage += `
 					${searchContentError.searchName ? searchContentError.searchName : ''}
 					${searchContentError.targetField ? searchContentError.targetField : ''}
 					${searchContentError.fieldForSearch ? searchContentError.fieldForSearch : ''}
-					${searchContentError.groupTypeDropdown ? searchContentError.groupTypeDropdown : ''}`;
+					${searchContentError.groupTypeDropdown ? searchContentError.groupTypeDropdown : ''}
+					${searchContentError.duplicateField ? searchContentError.duplicateField : ''}
+					${searchContentError.duplicateMaster ? searchContentError.duplicateMaster : ''}
+					${searchContentError.typeError ? searchContentError.typeError : ''}`;
 			}
 			if (searchContentMessage) errorMessage += "<p>【検索内容の定義】</p>" + searchContentMessage;
 		}

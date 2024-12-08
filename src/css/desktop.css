@@ -1,7 +1,7 @@
 .custom-space-el {
   display: flex;
   flex-direction: row;
-  /* flex-wrap: none; */
+  flex-wrap: none;
   gap: 5px;
   margin-top: -20px;
 }
@@ -19,7 +19,7 @@
 }
 
 .separatornumber {
-  margin: none;
+  margin: 0;
   font-size: 15px;
   margin-top: -3px;
   color: #4CAF50;
@@ -32,7 +32,7 @@
 }
 
 .separator-datepicker {
-  margin: none;
+  margin: 0;
   font-size: 15px;
   margin-top: -6px;
   color: #4CAF50;
@@ -55,6 +55,26 @@
   box-shadow: none !important;
   background-color: #F5F5F5;
   border-radius: 5px;
+}
+
+.kintoneplugin-button-dialog-ok-custome {
+  display: inline-block;
+  box-sizing: border-box;
+  padding: 0 16px;
+  font-size: 15px;
+  min-Width: 20px;
+  height: 48px;
+  margin-Left: 1px;
+  color: black;
+  border: none !important;
+  cursor: pointer;
+  margin-top: 20px;
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: #F5F5F5;
+  border-radius: 5px;
+  text-align: center;
+  line-height: 48px;
 }
 
 .btn-search {
@@ -95,21 +115,30 @@
 .label {
   margin-bottom: -20px;
   font-size: 15px;
-  /* margin-inline-start: 3px; */
+  /* color: white; */
 }
 
-.kintoneplugin-dropdown {
-  max-width: none;
+.kintoneplugin-dropdown-find {
   min-width: 0;
   margin: 0;
   padding: 0;
-  /* margin-right: -3.5px; */
   height: 35px;
   font-size: 15px;
   color: rgb(93, 92, 92);
   border-radius: 5px;
-  /* margin-inline: auto; */
+
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  box-sizing: border-box;
+  margin-bottom: 0;
+  max-width: 280px;
+  border: 1px solid #e3e7e8;
+  background-color: #f7f9fa;
+  box-shadow: 1px 1px 1px #fff inset;
+  text-overflow: ellipsis;
 }
+
 .element-button {
   display: flex;
   flex-direction: row;
@@ -119,23 +148,20 @@
 }
 
 .options-class-date .kuc-date-picker-1-18-0__group input[type=text].kuc-base-date-1-18-0__input {
-  width: 0;
   margin: 0;
   padding: 0;
   height: 35.2px !important;
   font-size: 15px;
   border-radius: 5px;
 }
-  /* kuc-date-picker-1-18-0 { */
-  kuc-date-picker-1-18-0 {
+
+  kuc-date-picker-1-18-0{
     width: 0 !important;
   }
 
-  /* .options-class-date .kuc-date-picker-1-18-0__group kuc-base-date-1-18-0 {
-    width: 0 !important;
-  } */
-
-.kintoneplugin-input-text {
+.kintoneplugin-input-text-custome {
+  display: inline-block;
+  box-sizing: border-box;
   margin-top: 0.3px;
   height: 35px;
   font-size: 15px;
@@ -143,8 +169,13 @@
   margin-bottom: 1px;
   padding: 5px;
   border-radius: 5px;
-  /* margin-left: -3px;
-  margin-inline: auto; */
+  border: 1px solid #e3e7e8;
+
+
+  outline: none;
+  background-color: #fff;
+  box-shadow: 4px 4px 12px #f5f5f5 inset, -4px -4px 12px #f5f5f5 inset;
+  color: #a7a7a7;
 }
 
 .option {
