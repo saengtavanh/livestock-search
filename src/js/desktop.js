@@ -177,7 +177,6 @@ jQuery.noConflict();
             labelText = $(`#${groupNameSlit}`).attr("searchName")
           }
           if (selectedValue) {
-            // bokTermsObject = createBokTermsObject(selectedValue, dropdownId, labelText);
             mergedBokTermsObject = {
               ...mergedBokTermsObject,
               ...createBokTermsObject(selectedValue, dropdownId, labelText),
@@ -328,29 +327,38 @@ jQuery.noConflict();
       let queryChild;
       let searchValue;
       let indexForSearch = 0;
-
+      
+      
       if ($(`#${replacedText}`).length) {
         indexForSearch = ($(`#${replacedText}`)).attr("indexforinitail");
-        if ($(`#${replacedText}`).val()) {
+        let getSearchCon = CONFIG.searchContent.filter((field) => field.groupName == searchInfo.groupName)
+                                               .filter((subFilter) => subFilter.fieldForSearch == searchInfo.target_field[indexForSearch]);
+        
+        if ($(`#${replacedText}`).val() && getSearchCon.length > 0) {
           searchValue = transformStringPartial($(`#${replacedText}`).val());
+        } else {
+          searchValue = $(`#${replacedText}`).val();
         }
       }
 
       if (searchValue) {
+        let getSearchConForCheck = [];
         if (searchInfo.target_field.length >= 1 && searchInfo.nameMarker != "") {
           let active = `${$(`#${replacedText}`).attr("searchName")}`;
           bokTermsGet = { ...bokTermsGet, ...createBokTermsObject($(`#${replacedText}`).val(), replacedText, active) }
           if (searchInfo.target_field.length > 1) {
-            searchInfo.target_field.forEach((field) => {
+            searchInfo.target_field.forEach((field, index) => {
+              getSearchConForCheck = CONFIG.searchContent.filter((field) => field.groupName == searchInfo.groupName)
+                                               .filter((subFilter) => subFilter.fieldForSearch == field);
               const isLastIndex = index === searchInfo.target_field.length - 1;
               if (queryChild) {
                 if (isLastIndex) {
-                  queryChild += `or (${field} like "${searchValue}"))`;
+                  queryChild += `or (${field} like "${getSearchConForCheck.length > 0 ? searchValue : $(`#${replacedText}`).val()}"))`;
                 } else {
-                  queryChild += `or (${field} like "${searchValue}")`;
+                  queryChild += `or (${field} like "${getSearchConForCheck.length > 0 ? searchValue : $(`#${replacedText}`).val()}")`;
                 }
               } else {
-                queryChild = `${query ? " and " : ""}((${field} like "${searchValue}") `;
+                queryChild = `${query ? " and " : ""}((${field} like "${getSearchConForCheck.length > 0 ? searchValue : $(`#${replacedText}`).val()}") `;
               }
             });
           } else {
