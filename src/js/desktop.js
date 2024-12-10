@@ -50,10 +50,12 @@ jQuery.noConflict();
     for (const key of Array.from({ length: sessionStorage.length }, (_, i) =>
       sessionStorage.key(i)
     )) {
-      const numberId = key.match(/\d+/);
+      const numberId = key.slice(6, key.length);
+      
 
       if (numberId) {
-        const numericKey = numberId[0];
+        const numericKey = numberId;
+        
         const data = sessionStorage.getItem(key);
         const CodeMasterData = JSON.parse(data);
         CODEMASTER.push({ numericKey, ...CodeMasterData });
